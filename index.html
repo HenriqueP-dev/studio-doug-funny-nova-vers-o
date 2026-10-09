@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Studio Doug Funny | Barbearia & Formação Profissional</title>
+
+  <!-- Google Fonts: Montserrat (Headings) & Inter (Body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:ital,wght@0,700;0,800;0,900;1,800;1,900&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- GSAP Animation Engine -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+  <style>
+    /* ==========================================================================
+       1. TOKENS & DESIGN SYSTEM (VISUAL CLARO / LIGHT MODE EDITORIAL)
+       ========================================================================== */
+    :root {
+      --bg-dark: #F7F7F4;           /* Fundo principal Off-White / Creme claro */
+      --bg-surface: #FFFFFF;        /* Superfícies e Cards em Branco Puro */
+      --bg-surface-hover: #EFEFEA;  /* Hover em elementos neutros */
+      --accent-orange: #FF5500;     /* Laranja Vibrante Institucional */
+      --accent-orange-hover: #E04B00;
+      --text-main: #121212;         /* Texto Principal Preto */
+      --text-muted: #666666;        /* Texto Secundário / Descrições */
+      --border-color: rgba(0, 0, 0, 0.08); /* Linhas e Bordas Sutis */
+      --font-heading: 'Montserrat', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --radius-pill: 50px;
+      --radius-card: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 6rem;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      overflow-x: hidden;
+    }
+
+    body {
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      object-fit: cover;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* ==========================================================================
+       2. OPENING ANIMATION (INTRO)
+       ========================================================================== */
+    #intro-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: #121212;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .intro-slice {
+      position: absolute;
+      width: 100%;
+      height: 50%;
+      background: var(--accent-orange);
+      z-index: 1;
+    }
+
+    .intro-slice.top { top: 0; }
+    .intro-slice.bottom { bottom: 0; }
+
+    .intro-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 5vw, 4.5rem);
+      font-weight: 900;
+      color: #000;
+      z-index: 2;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+    }
+
+    /* ==========================================================================
+       3. HEADER & NAVEGAÇÃO
+       ========================================================================== */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 1.25rem 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+      background: rgba(247, 247, 244, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .brand-logo {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+    }
+
+    .brand-logo .sub {
+      font-size: 0.6rem;
+      letter-spacing: 0.25em;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .brand-logo .main {
+      font-family: var(--font-heading);
+      font-weight: 900;
+      font-size: 1.35rem;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+      color: var(--text-main);
+    }
+
+    .nav-menu {
+      display: flex;
+      gap: 1.8rem;
+      list-style: none;
+    }
+
+    .menu-toggle {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      border: 1px solid var(--border-color);
+      border-radius: 50%;
+      background: transparent;
+      color: var(--text-main);
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .nav-link {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      transition: color 0.3s ease;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--accent-orange);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .social-icon {
+      color: var(--text-main);
+      font-size: 1.1rem;
+      transition: color 0.3s ease;
+    }
+
+    .social-icon:hover {
+      color: var(--accent-orange);
+    }
+
+    .btn-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.7rem 1.5rem;
+      border-radius: var(--radius-pill);
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-pill-orange {
+      background: var(--accent-orange);
+      color: #FFFFFF;
+    }
+
+    .btn-pill-orange:hover {
+      background: var(--accent-orange-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(255, 85, 0, 0.25);
+    }
+
+    .btn-pill-outline {
+      background: transparent;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      color: var(--text-main);
+    }
+
+    .btn-pill-outline:hover {
+      border-color: var(--accent-orange);
+      color: var(--accent-orange);
+    }
+
+    /* ==========================================================================
+       4. HERO SECTION
+       ========================================================================== */
+    .hero-section {
+      min-height: 100vh;
+      padding: 8rem 5% 4rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+    }
+
+    .hero-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      color: var(--accent-orange);
+      margin-bottom: 1.5rem;
+      text-transform: uppercase;
+    }
+
+    .hero-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 5vw, 4.2rem);
+      font-weight: 900;
+      line-height: 1.05;
+      text-transform: uppercase;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.5rem;
+      color: var(--text-main);
+    }
+
+    .hero-title .highlight {
+      color: var(--accent-orange);
+      font-style: italic;
+      display: block;
+    }
+
+    .hero-quote {
+      font-size: 1rem;
+      color: var(--text-muted);
+      border-left: 2px solid var(--accent-orange);
+      padding-left: 1rem;
+      margin-bottom: 2.5rem;
+      font-weight: 500;
+    }
+
+    .hero-media {
+      position: relative;
+      height: 75vh;
+      max-height: 640px;
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+    }
+
+    .hero-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* ==========================================================================
+       5. ESTRUTURA GERAL DAS SEÇÕES
+       ========================================================================== */
+    .section {
+      padding: 6rem 5%;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .section-header {
+      margin-bottom: 3.5rem;
+    }
+
+    .section-header .tag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      color: var(--accent-orange);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .section-header .title {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      line-height: 1.1;
+      color: var(--text-main);
+    }
+
+    /* ==========================================================================
+       6. SERVIÇOS (TABELA EDITORIAL LIMPA)
+       ========================================================================== */
+    .services-editorial {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 4rem;
+    }
+
+    .service-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.2rem 0;
+      border-bottom: 1px solid var(--border-color);
+      transition: border-color 0.3s ease;
+    }
+
+    .service-row:hover {
+      border-bottom-color: var(--accent-orange);
+    }
+
+    .service-name {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--text-main);
+    }
+
+    .service-price {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--accent-orange);
+    }
+
+    /* ==========================================================================
+       7. PACOTES & COMBOS
+       ========================================================================== */
+    .packages-featured {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .package-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-card);
+      padding: 2.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+      transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .package-card.highlight-card {
+      border-color: var(--accent-orange);
+      background: #FFFFFF;
+      box-shadow: 0 10px 30px rgba(255, 85, 0, 0.08);
+    }
+
+    .package-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 25px rgba(0,0,0,0.06);
+    }
+
+    .package-badge {
+      position: absolute;
+      top: -12px;
+      right: 20px;
+      background: var(--accent-orange);
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      letter-spacing: 0.1em;
+    }
+
+    .package-title {
+      font-family: var(--font-heading);
+      font-size: 1.4rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      color: var(--text-main);
+    }
+
+    .package-price {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--accent-orange);
+      margin-bottom: 1.5rem;
+    }
+
+    .package-features {
+      list-style: none;
+      margin-bottom: 2rem;
+      flex-grow: 1;
+    }
+
+    .package-features li {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .package-features li i {
+      color: var(--accent-orange);
+      font-size: 0.8rem;
+    }
+
+    .packages-compact {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-card);
+      padding: 2rem;
+    }
+
+    .compact-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .compact-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.8rem 1rem;
+      background: #F9F9F6;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+    }
+
+    /* ==========================================================================
+       8. FORMAÇÃO PROFISSIONAL
+       ========================================================================== */
+    .course-wrapper {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 4rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-card);
+      padding: 3.5rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    }
+
+    .course-stat {
+      display: inline-flex;
+      align-items: center;
+      gap: 1rem;
+      background: rgba(255, 85, 0, 0.08);
+      border: 1px solid rgba(255, 85, 0, 0.2);
+      padding: 0.6rem 1.2rem;
+      border-radius: var(--radius-pill);
+      color: var(--accent-orange);
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .course-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin: 1.5rem 0 2.5rem;
+    }
+
+    .tag-item {
+      background: #F0F0EA;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.4rem 0.9rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .turmas-box {
+      background: #121212;
+      color: #FFFFFF;
+      border-radius: var(--radius-card);
+      padding: 2.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .turma-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* ==========================================================================
+       9. GALERIA DE TRABALHOS
+       ========================================================================== */
+    .gallery-grid-6 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+    }
+
+    .gallery-card {
+      height: 300px;
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .gallery-card img {
+      width: 100%;
+      height: 100%;
+      transition: transform 0.5s ease, filter 0.5s ease;
+    }
+
+    .gallery-card:hover img {
+      transform: scale(1.05);
+    }
+
+    .gallery-label {
+      position: absolute;
+      bottom: 15px;
+      left: 15px;
+      background: rgba(255, 255, 255, 0.95);
+      color: #121212;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border-radius: 4px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+
+    /* ==========================================================================
+       10. BARBEIROS (EQUIPE)
+       ========================================================================== */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .team-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+      transition: border-color 0.3s ease, transform 0.3s ease;
+    }
+
+    .team-card:hover {
+      border-color: var(--accent-orange);
+      transform: translateY(-4px);
+    }
+
+    .team-photo {
+      height: 340px;
+      overflow: hidden;
+    }
+
+    .team-photo img {
+      width: 100%;
+      height: 100%;
+      transition: transform 0.4s ease;
+    }
+
+    .team-card:hover .team-photo img {
+      transform: scale(1.03);
+    }
+
+    .team-info {
+      padding: 1.5rem;
+    }
+
+    .team-name {
+      font-family: var(--font-heading);
+      font-size: 1.2rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: var(--text-main);
+    }
+
+    .team-role {
+      font-size: 0.75rem;
+      color: var(--accent-orange);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ==========================================================================
+       11. AGENDA VISUAL
+       ========================================================================== */
+    .agenda-card {
+      background: #FFFFFF;
+      color: #121212;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-card);
+      padding: 3rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    }
+
+    .agenda-notice {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.7rem;
+      margin-bottom: 1.25rem;
+      padding: 0.9rem 1rem;
+      border: 1px solid rgba(255, 85, 0, 0.2);
+      border-radius: var(--radius-card);
+      background: rgba(255, 85, 0, 0.05);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .agenda-notice i {
+      margin-top: 0.15rem;
+      color: var(--accent-orange);
+    }
+
+    .agenda-controls-panel {
+      display: grid;
+      grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+      align-items: end;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .agenda-control-label {
+      display: block;
+      margin-bottom: 0.65rem;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .barber-tabs,
+    .days-horizontal-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+    }
+
+    .barber-tab-btn,
+    .day-card-btn {
+      min-height: 48px;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      background: #F7F7F4;
+      color: var(--text-main);
+      font: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .barber-tab-btn {
+      min-width: 110px;
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .barber-tab-btn:hover,
+    .day-card-btn:hover {
+      border-color: var(--accent-orange);
+      color: var(--accent-orange);
+    }
+
+    .barber-tab-btn.active,
+    .day-card-btn.active {
+      border-color: var(--accent-orange);
+      background: var(--accent-orange);
+      color: #FFFFFF;
+    }
+
+    .days-horizontal-strip {
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .day-card-btn {
+      display: flex;
+      flex: 1 0 105px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.2rem;
+      padding: 0.75rem 0.7rem;
+      border-radius: 14px;
+      min-height: 74px;
+    }
+
+    .day-card-name {
+      font-size: 0.63rem;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .day-card-date {
+      font-family: var(--font-heading);
+      font-size: 0.92rem;
+      font-weight: 800;
+    }
+
+    .day-schedule-view {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(260px, 0.8fr);
+      gap: 1.25rem;
+      align-items: stretch;
+    }
+
+    .schedule-periods,
+    .request-summary-card {
+      padding: 1.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-card);
+      background: #FAFAF7;
+    }
+
+    .schedule-detail-heading {
+      margin-bottom: 1rem;
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .schedule-period + .schedule-period {
+      margin-top: 1.5rem;
+    }
+
+    .schedule-period h3 {
+      margin-bottom: 0.8rem;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .time-slots-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+    }
+
+    .time-slot-btn {
+      min-width: 84px;
+      padding: 0.7rem 0.8rem;
+      border: 1px solid rgba(40, 167, 69, 0.4);
+      border-radius: 10px;
+      background: rgba(40, 167, 69, 0.08);
+      color: #1e7e34;
+      font: inherit;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .time-slot-btn:hover,
+    .time-slot-btn.selected {
+      border-color: #28a745;
+      background: #28a745;
+      color: #FFFFFF;
+    }
+
+    .time-slots-empty {
+      color: var(--text-muted);
+      font-size: 0.82rem;
+    }
+
+    .request-summary-card {
+      display: flex;
+      flex-direction: column;
+      border-top: 3px solid var(--accent-orange);
+      background: #FFFFFF;
+    }
+
+    .request-summary-card h3 {
+      margin-bottom: 1rem;
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .request-summary-card p {
+      margin-bottom: 0.55rem;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+    }
+
+    .request-summary-card strong {
+      color: var(--text-main);
+    }
+
+    .request-summary-card .btn-pill {
+      justify-content: center;
+      width: 100%;
+      margin-top: auto;
+    }
+
+    .request-summary-hint {
+      margin: 1rem 0 1.25rem;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+    }
+
+    /* ==========================================================================
+       12. CONTATO E HORÁRIOS
+       ========================================================================== */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+    }
+
+    .contact-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-card);
+      padding: 2.5rem;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    }
+
+    .info-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.2rem;
+      margin-bottom: 1.8rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .info-item i {
+      color: var(--accent-orange);
+      font-size: 1.2rem;
+      margin-top: 3px;
+    }
+
+    /* ==========================================================================
+       13. FOOTER
+       ========================================================================== */
+    .footer {
+      padding: 3rem 5% 2rem;
+      background: #FFFFFF;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .footer-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .footer-copy {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid var(--border-color);
+      padding-top: 1.5rem;
+    }
+
+    /* RESPONSIVIDADE */
+    @media (max-width: 1024px) {
+      .hero-section { grid-template-columns: 1fr; height: auto; padding-top: 7rem; }
+      .hero-media { height: 400px; }
+      .services-editorial { grid-template-columns: 1fr; gap: 0; }
+      .packages-featured { grid-template-columns: 1fr; }
+      .compact-grid { grid-template-columns: 1fr; }
+      .course-wrapper { grid-template-columns: 1fr; }
+      .gallery-grid-6 { grid-template-columns: repeat(2, 1fr); }
+      .contact-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 1300px) {
+      .header { gap: 1rem; }
+      .menu-toggle { display: inline-flex; margin-left: auto; }
+      .nav-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        padding: 1rem 5% 1.5rem;
+        flex-direction: column;
+        gap: 0;
+        background: rgba(247, 247, 244, 0.98);
+        border-bottom: 1px solid var(--border-color);
+      }
+      .nav-menu.is-open { display: flex; }
+      .nav-menu li { border-bottom: 1px solid var(--border-color); }
+      .nav-link { display: block; padding: 0.85rem 0; }
+    }
+
+    @media (max-width: 900px) {
+      .agenda-controls-panel { grid-template-columns: minmax(0, 1fr); }
+      .day-schedule-view { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 600px) {
+      .gallery-grid-6, .team-grid { grid-template-columns: 1fr; }
+      .header { padding: 0.9rem 5%; }
+      .header-actions { gap: 0.5rem; }
+      .header-actions .social-icon { display: none; }
+      .header-actions .btn-pill { padding: 0.6rem 0.8rem; font-size: 0.62rem; }
+      .footer-copy { flex-direction: column; gap: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. OPENING ANIMATION (INTRO) -->
+  <div id="intro-overlay">
+    <div class="intro-slice top"></div>
+    <div class="intro-title">Studio Doug Funny</div>
+    <div class="intro-slice bottom"></div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="header">
+    <a href="#" class="brand-logo">
+      <span class="sub">STUDIO</span>
+      <span class="main">DOUG<span style="color:var(--accent-orange)">FUNNY</span></span>
+    </a>
+
+    <ul class="nav-menu" id="primary-navigation">
+      <li><a href="#inicio" class="nav-link active">Início</a></li>
+      <li><a href="#servicos" class="nav-link">Serviços</a></li>
+      <li><a href="#pacotes" class="nav-link">Pacotes</a></li>
+      <li><a href="#cursos" class="nav-link">Formação</a></li>
+      <li><a href="#trabalhos" class="nav-link">Trabalhos</a></li>
+      <li><a href="#equipe" class="nav-link">Equipe</a></li>
+      <li><a href="#agenda" class="nav-link">Agenda</a></li>
+      <li><a href="#contato" class="nav-link">Contato</a></li>
+    </ul>
+
+    <button class="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="primary-navigation">
+      <i class="fas fa-bars" aria-hidden="true"></i>
+    </button>
+
+    <div class="header-actions">
+      <a href="https://wa.me/5517991052256?text=Ol%C3%A1%2C%20gostaria%20de%20agendar%20um%20hor%C3%A1rio." target="_blank" rel="noopener noreferrer" class="btn-pill btn-pill-orange">Agendar via WhatsApp</a>
+      <a href="https://instagram.com/studiodougfunny" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="Instagram do Studio Doug Funny"><i class="fab fa-instagram" aria-hidden="true"></i></a>
+    </div>
+  </header>
+
+  <main>
+    <!-- 2. HERO SECTION -->
+    <section class="hero-section" id="inicio">
+      <div class="hero-content">
+        <span class="hero-label">Studio Doug Funny • Barretos – SP</span>
+        <h1 class="hero-title">
+          Barbearia & Formação
+          <span class="highlight">Profissional.</span>
+        </h1>
+        <p class="hero-quote">
+          “Bom gosto e qualidade, desde 2014.”
+        </p>
+
+        <div style="display: flex; gap: 1rem;">
+          <a href="#servicos" class="btn-pill btn-pill-orange">Ver Tabela de Serviços</a>
+          <a href="#cursos" class="btn-pill btn-pill-outline">Formação de Barbeiros</a>
+        </div>
+      </div>
+
+      <div class="hero-media">
+        <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=1000&auto=format&fit=crop" alt="Studio Doug Funny Barbearia">
+      </div>
+    </section>
+
+    <!-- 3. TABELA COMPLETA DE SERVIÇOS -->
+    <section class="section" id="servicos">
+      <div class="section-header">
+        <span class="tag">Atendimento Individual</span>
+        <h2 class="title">Serviços & Procedimentos</h2>
+      </div>
+
+      <div class="services-editorial">
+        <!-- Coluna 1 -->
+        <div>
+          <div class="service-row">
+            <span class="service-name">Corte</span>
+            <span class="service-price">R\$ 40</span>
+          </div>
+          <div class="service-row">
+            <span class="service-name">Barba</span>
+            <span class="service-price">R\$ 35</span>
+          </div>
+          <div class="service-row">
+            <span class="service-name">Corte Kids</span>
+            <span class="service-price">R\$ 35</span>
+          </div>
+          <div class="service-row">
+            <span class="service-name">Sobrancelha</span>
+            <span class="service-price">R\$ 10</span>
+          </div>
+          <div class="service-row">
+            <span class="service-name">Pezinho</span>
+            <span class="service-price">R\$ 15</span>
+          </div>
+          <div class="service-row">
+            <span class="service-name">Barba Terapia</span>
+            <span class="service-price">R\$ 50</span>
+          </div>
+        </div>
+
+        <!-- Coluna 2 -->
+        <div>
+          <div class="service-row">
+            <span class="service-name">Hidratação</span>
+            <span class="service-price">R\$ 40</span>
+          </div>
+          <div class="service-row">
+            <span class="service-name">Relaxamento</span>
+            <span class="service-price">R\$ 60</span>
+          </div>
+          <div class="service-row">
+            <span class="service-name">Pigmentação</span>
+            <span class="service-price">R\$ 25</span>
+          </div>
+          <div class="service-row">
+            <span class="service-name">Limpeza de Pele</span>
+            <span class="service-price">R\$ 60</span>
+          </div>
+          <div class="service-row">
+            <span class="service-name">Luzes</span>
+            <span class="service-price">a partir de R\$ 120</span>
+          </div>
+          <div class="service-row">
+            <span class="service-name">Platinado</span>
+            <span class="service-price">a partir de R\$ 160</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. PACOTES & COMBOS -->
+    <section class="section" id="pacotes">
+      <div class="section-header">
+        <span class="tag">Planos & Assinaturas</span>
+        <h2 class="title">Pacotes Exclusivos</h2>
+      </div>
+
+      <!-- Destaques -->
+      <div class="packages-featured">
+        <!-- Card 1 -->
+        <div class="package-card highlight-card">
+          <span class="package-badge">Economia de R\$ 80</span>
+          <h3 class="package-title">Semana Perfeita</h3>
+          <div class="package-price">R\$ 160</div>
+          <ul class="package-features">
+            <li><i class="fas fa-check"></i> Corte toda terça-feira</li>
+            <li><i class="fas fa-check"></i> Pezinho ou corte no sábado</li>
+            <li><i class="fas fa-check"></i> Sobrancelha grátis</li>
+          </ul>
+          <a href="https://wa.me/5517991052256?text=Quero%20assinar%20o%20pacote%20Semana%20Perfeita" target="_blank" class="btn-pill btn-pill-orange" style="justify-content: center;">Assinar Pacote</a>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="package-card">
+          <span class="package-badge" style="background:#121212;">Economia de R\$ 40</span>
+          <h3 class="package-title">Mais Pedido</h3>
+          <div class="package-price">R\$ 120</div>
+          <ul class="package-features">
+            <li><i class="fas fa-check"></i> 4 cortes no mês</li>
+            <li><i class="fas fa-check"></i> Manutenção completa do estilo</li>
+          </ul>
+          <a href="https://wa.me/5517991052256?text=Quero%20assinar%20o%20pacote%20Mais%20Pedido" target="_blank" class="btn-pill btn-pill-outline" style="justify-content: center;">Assinar Pacote</a>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="package-card">
+          <h3 class="package-title">Combo Completo</h3>
+          <div class="package-price">R\$ 170</div>
+          <ul class="package-features">
+            <li><i class="fas fa-check"></i> 4 cortes no mês</li>
+            <li><i class="fas fa-check"></i> 2 barbas completas</li>
+          </ul>
+          <a href="https://wa.me/5517991052256?text=Quero%20assinar%20o%20pacote%20Combo%20Completo" target="_blank" class="btn-pill btn-pill-outline" style="justify-content: center;">Assinar Pacote</a>
+        </div>
+      </div>
+
+      <!-- Outros Combos -->
+      <div class="packages-compact">
+        <h4 style="font-family: var(--font-heading); text-transform: uppercase; font-size: 0.9rem;">Outras Opções de Combos</h4>
+        <div class="compact-grid">
+          <div class="compact-item">
+            <span style="font-weight: 700; font-size: 0.85rem;">Prático</span>
+            <span style="color: var(--accent-orange); font-weight: 800;">R\$ 90</span>
+          </div>
+          <div class="compact-item">
+            <span style="font-weight: 700; font-size: 0.85rem;">Combo Pigmentação</span>
+            <span style="color: var(--accent-orange); font-weight: 800;">R\$ 150</span>
+          </div>
+          <div class="compact-item">
+            <span style="font-weight: 700; font-size: 0.85rem;">Versátil</span>
+            <span style="color: var(--accent-orange); font-weight: 800;">R\$ 180</span>
+          </div>
+          <div class="compact-item">
+            <span style="font-weight: 700; font-size: 0.85rem;">Pai & Filho</span>
+            <span style="color: var(--accent-orange); font-weight: 800;">R\$ 190</span>
+          </div>
+          <div class="compact-item">
+            <span style="font-weight: 700; font-size: 0.85rem;">Premium</span>
+            <span style="color: var(--accent-orange); font-weight: 800;">R\$ 200</span>
+          </div>
+          <div class="compact-item">
+            <span style="font-weight: 700; font-size: 0.85rem;">Premium Plus</span>
+            <span style="color: var(--accent-orange); font-weight: 800;">R\$ 225</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. FORMAÇÃO PROFISSIONAL -->
+    <section class="section" id="cursos">
+      <div class="section-header">
+        <span class="tag">Academia de Barbeiros</span>
+        <h2 class="title">Formação Profissional</h2>
+      </div>
+
+      <div class="course-wrapper">
+        <div>
+          <div class="course-stat">
+            <i class="fas fa-graduation-cap"></i> +500 Barbeiros Formados
+          </div>
+          <h3 style="font-family: var(--font-heading); font-size: 1.8rem; font-weight: 900; text-transform: uppercase; margin-bottom: 1rem; color: var(--text-main);">
+            Curso: Formação de Barbeiro Profissional
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.95rem;">
+            Curso prático intensivo com foco em técnica, experiência real de atendimento e evolução profissional.
+          </p>
+
+          <div class="course-tags">
+            <span class="tag-item">Técnicas Modernas</span>
+            <span class="tag-item">Corte Masculino</span>
+            <span class="tag-item">Barba Profissional</span>
+            <span class="tag-item">Degradês</span>
+            <span class="tag-item">Atendimento ao Cliente</span>
+            <span class="tag-item">Marketing Pessoal</span>
+          </div>
+
+          <div style="display: flex; gap: 1.5rem; color: var(--text-muted); font-size: 0.85rem; flex-wrap: wrap;">
+            <span><i class="fas fa-certificate" style="color:var(--accent-orange)"></i> Certificado Incluso</span>
+            <span><i class="fas fa-users" style="color:var(--accent-orange)"></i> Turmas Reduzidas</span>
+            <span><i class="fas fa-laptop-house" style="color:var(--accent-orange)"></i> Presencial & Prático</span>
+          </div>
+        </div>
+
+        <div class="turmas-box">
+          <div>
+            <h4 style="font-family: var(--font-heading); text-transform: uppercase; font-size: 1rem; margin-bottom: 1rem;">Investimento & Turmas</h4>
+            <div class="turma-row">
+              <span style="font-size: 0.85rem; color: #AAA;">Turma 1</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; color: var(--accent-orange);">R\$ 2.600</span>
+            </div>
+            <div class="turma-row">
+              <span style="font-size: 0.85rem; color: #AAA;">Turma 2</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; color: var(--accent-orange);">R\$ 2.600</span>
+            </div>
+            <div class="turma-row">
+              <span style="font-size: 0.85rem; color: #AAA;">Turma 3</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; color: var(--accent-orange);">R\$ 1.400</span>
+            </div>
+          </div>
+
+          <a href="https://wa.me/5517991052256?text=Quero%20informacoes%20sobre%20o%20Curso%20de%20Barbeiro" target="_blank" class="btn-pill btn-pill-orange" style="margin-top: 1.5rem; justify-content: center;">Garantir Minha Vaga</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. GALERIA / TRABALHOS -->
+    <section class="section" id="trabalhos">
+      <div class="section-header">
+        <span class="tag">Portfólio</span>
+        <h2 class="title">Trabalhos, Aulas & Ambiente</h2>
+      </div>
+
+      <div class="gallery-grid-6">
+        <div class="gallery-card">
+          <img src="https://images.unsplash.com/photo-1622286342621-4bd786c2447c?q=80&w=800&auto=format&fit=crop" alt="Degradê Perfeito">
+          <span class="gallery-label">Cortes Masculinos</span>
+        </div>
+        <div class="gallery-card">
+          <img src="https://images.unsplash.com/photo-1599351431202-1e0f0137899a?q=80&w=800&auto=format&fit=crop" alt="Barba Terapia">
+          <span class="gallery-label">Barba & Estilo</span>
+        </div>
+        <div class="gallery-card">
+          <img src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=80&w=800&auto=format&fit=crop" alt="Ambiente Barbearia">
+          <span class="gallery-label">Ambiente Studio</span>
+        </div>
+        <div class="gallery-card">
+          <img src="https://images.unsplash.com/photo-1512690459411-b9245aed614b?q=80&w=800&auto=format&fit=crop" alt="Ferramentas">
+          <span class="gallery-label">Equipamentos</span>
+        </div>
+        <div class="gallery-card">
+          <img src="https://images.unsplash.com/photo-1534778101976-62847782c213?q=80&w=800&auto=format&fit=crop" alt="Atendimento Especial">
+          <span class="gallery-label">Atendimento</span>
+        </div>
+        <div class="gallery-card">
+          <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=800&auto=format&fit=crop" alt="Aulas e Formação">
+          <span class="gallery-label">Formação Profissional</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. EQUIPE (BARBEIROS) -->
+    <section class="section" id="equipe">
+      <div class="section-header">
+        <span class="tag">Profissionais</span>
+        <h2 class="title">Nossa Equipe</h2>
+      </div>
+
+      <div class="team-grid">
+        <div class="team-card">
+          <div class="team-photo">
+            <img src="funny.png" alt="Funny, barbeiro e instrutor">
+          </div>
+          <div class="team-info">
+            <h3 class="team-name">FUNNY</h3>
+            <span class="team-role">Barbeiro & Instrutor</span>
+          </div>
+        </div>
+
+        <div class="team-card">
+          <div class="team-photo">
+            <img src="miguel.png" alt="Miguel, barbeiro">
+          </div>
+          <div class="team-info">
+            <h3 class="team-name">MIGUEL</h3>
+            <span class="team-role">Barbeiro</span>
+          </div>
+        </div>
+
+        <div class="team-card">
+          <div class="team-photo">
+            <img src="thaylor.png" alt="Thaylor, barbeiro">
+          </div>
+          <div class="team-info">
+            <h3 class="team-name">THAYLOR</h3>
+            <span class="team-role">Barbeiro</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. AGENDAMENTO -->
+    <section class="section" id="agenda">
+      <div class="section-header">
+        <span class="tag">Agendamento</span>
+        <h2 class="title">Disponibilidade semanal</h2>
+        <p style="color: var(--text-muted); max-width: 620px; margin-top: 1rem;">Escolha o profissional e o dia para conferir os horários disponíveis. A confirmação final é feita diretamente pelo WhatsApp.</p>
+      </div>
+
+      <div class="agenda-notice" role="note">
+        <i class="fas fa-circle-info" aria-hidden="true"></i>
+        <span><strong>Interface de demonstração:</strong> as datas e disponibilidades são exemplos para avaliar a agenda. A confirmação final da vaga é feita diretamente com a equipe pelo WhatsApp.</span>
+      </div>
+
+      <h3 class="schedule-detail-heading">Ver horários e solicitar</h3>
+      <div class="agenda-controls-panel">
+        <div>
+          <span class="agenda-control-label" id="barber-select-label">1. Escolha o profissional</span>
+          <div class="barber-tabs" role="group" aria-labelledby="barber-select-label">
+            <button class="barber-tab-btn active" type="button" aria-pressed="true" data-barber="Funny">Funny</button>
+            <button class="barber-tab-btn" type="button" aria-pressed="false" data-barber="Miguel">Miguel</button>
+            <button class="barber-tab-btn" type="button" aria-pressed="false" data-barber="Thaylor">Thaylor</button>
+          </div>
+        </div>
+        <div>
+          <span class="agenda-control-label" id="day-select-label">2. Escolha o dia</span>
+          <div class="days-horizontal-strip" role="group" aria-labelledby="day-select-label"></div>
+        </div>
+      </div>
+
+      <div class="day-schedule-view">
+        <div class="schedule-periods" aria-live="polite" aria-atomic="true">
+          <div class="schedule-period">
+            <h3>Manhã</h3>
+            <div class="time-slots-list" id="morning-slots"></div>
+          </div>
+          <div class="schedule-period">
+            <h3>Tarde</h3>
+            <div class="time-slots-list" id="afternoon-slots"></div>
+          </div>
+        </div>
+
+        <aside class="request-summary-card" aria-live="polite">
+          <h3>Seu pedido</h3>
+          <p>Profissional: <strong id="summary-barber">Funny</strong></p>
+          <p>Dia: <strong id="summary-day">Terça-feira, 13/10</strong></p>
+          <p>Horário: <strong id="summary-time">Selecione um horário</strong></p>
+          <p class="request-summary-hint">A solicitação abre uma conversa no WhatsApp. O horário só fica confirmado após o retorno da equipe.</p>
+          <a class="btn-pill btn-pill-orange" id="agenda-whatsapp-link" href="https://wa.me/5517991052256" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-whatsapp" aria-hidden="true"></i> Consultar no WhatsApp
+          </a>
+        </aside>
+      </div>
+    </section>
+
+    <!-- 9. LOCALIZAÇÃO, CONTATO & HORÁRIOS -->
+    <section class="section" id="contato">
+      <div class="contact-grid">
+        <div class="contact-box">
+          <span style="font-size: 0.75rem; letter-spacing: 0.2em; color: var(--accent-orange); font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 1.5rem;">ONDE ESTAMOS</span>
+          
+          <div class="info-item">
+            <i class="fas fa-map-marker-alt"></i>
+            <div>
+              <strong style="color:var(--text-main); display:block; font-size:1.05rem;">Rua Doutor Riolando Prado, 62</strong>
+              Nogueira — Barretos – SP <br>
+              CEP 14783-254
+            </div>
+          </div>
+
+          <div class="info-item">
+            <i class="fab fa-whatsapp"></i>
+            <div>
+              <strong style="color:var(--text-main); display:block;">WhatsApp</strong>
+              (17) 99105-2256
+            </div>
+          </div>
+
+          <div class="info-item">
+            <i class="fas fa-envelope"></i>
+            <div>
+              <strong style="color:var(--text-main); display:block;">E-mail</strong>
+              studiodfunny@hotmail.com
+            </div>
+          </div>
+
+          <div class="info-item">
+            <i class="fab fa-instagram"></i>
+            <div>
+              <strong style="color:var(--text-main); display:block;">Instagram Official</strong>
+              @studiodougfunny
+            </div>
+          </div>
+        </div>
+
+        <div class="contact-box">
+          <span style="font-size: 0.75rem; letter-spacing: 0.2em; color: var(--accent-orange); font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 1.5rem;">HORÁRIO DE FUNCIONAMENTO</span>
+
+          <div class="service-row" style="padding: 0.8rem 0;">
+            <span style="font-weight: 600;">Terça a Sexta-feira</span>
+            <span style="color: var(--text-muted); font-size: 0.85rem;">08:00–12:30 | 14:00–19:00</span>
+          </div>
+
+          <div class="service-row" style="padding: 0.8rem 0;">
+            <span style="font-weight: 600;">Sábado</span>
+            <span style="color: var(--text-muted); font-size: 0.85rem;">08:00–13:30 | 15:00–18:30</span>
+          </div>
+
+          <div class="service-row" style="padding: 0.8rem 0;">
+            <span style="font-weight: 600;">Domingo e Segunda-feira</span>
+            <span style="color: var(--accent-orange); font-weight: 700; font-size: 0.85rem;">Fechado</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-content">
+      <a href="#" class="brand-logo">
+        <span class="sub">STUDIO</span>
+        <span class="main">DOUG<span style="color:var(--accent-orange)">FUNNY</span></span>
+      </a>
+
+      <div style="font-size: 0.8rem; color: var(--text-muted);">
+        Barretos – SP • Desde 2014
+      </div>
+    </div>
+
+    <div class="footer-copy">
+      <span>&copy; Studio Doug Funny. Todos os direitos reservados.</span>
+      <span>Desenvolvimento Web & UI/UX</span>
+    </div>
+  </footer>
+
+  <!-- SCRIPT ANIMATIONS & AGENDAMENTO (CÓDIGO INTACTO) -->
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const introOverlay = document.querySelector('#intro-overlay');
+      const menuToggle = document.querySelector('.menu-toggle');
+      const navigation = document.querySelector('#primary-navigation');
+
+      if (window.gsap && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        gsap.timeline()
+          .to('.intro-slice.top', { yPercent: -100, duration: 0.8, ease: 'power4.inOut', delay: 0.3 })
+          .to('.intro-slice.bottom', { yPercent: 100, duration: 0.8, ease: 'power4.inOut' }, '-=0.8')
+          .to('.intro-title', { opacity: 0, scale: 0.9, duration: 0.3 }, '-=0.6')
+          .to('#intro-overlay', { opacity: 0, pointerEvents: 'none', duration: 0.3 })
+          .from('.hero-title', { y: 30, opacity: 0, duration: 0.8, ease: 'power3.out' }, '-=0.1');
+      } else {
+        introOverlay?.remove();
+      }
+
+      const setMenuOpen = (isOpen) => {
+        menuToggle.setAttribute('aria-expanded', String(isOpen));
+        menuToggle.setAttribute('aria-label', isOpen ? 'Fechar menu' : 'Abrir menu');
+        navigation.classList.toggle('is-open', isOpen);
+        menuToggle.querySelector('i').className = isOpen ? 'fas fa-times' : 'fas fa-bars';
+      };
+
+      menuToggle.addEventListener('click', () => {
+        setMenuOpen(menuToggle.getAttribute('aria-expanded') !== 'true');
+      });
+
+      navigation.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => setMenuOpen(false));
+      });
+
+      const schedule = {
+        Funny: {
+          ter: { morning: ['08:30', '09:00', '10:00'], afternoon: ['14:30', '16:20', '17:00'] },
+          qua: { morning: ['09:00', '10:30'], afternoon: ['15:00', '16:00', '17:30'] },
+          qui: { morning: ['08:30', '10:00'], afternoon: ['13:30', '15:30', '18:00'] },
+          sex: { morning: ['09:30', '11:00'], afternoon: ['14:00', '16:00', '17:30'] },
+          sab: { morning: ['08:00', '09:30', '11:00'], afternoon: ['15:00'] }
+        },
+        Miguel: {
+          ter: { morning: ['09:30', '11:00'], afternoon: ['15:30', '16:30'] },
+          qua: { morning: ['08:00', '09:30'], afternoon: ['14:00', '17:00'] },
+          qui: { morning: ['10:00'], afternoon: ['14:30', '16:30', '18:00'] },
+          sex: { morning: [], afternoon: ['13:00', '15:00', '17:00'] },
+          sab: { morning: ['08:30', '10:00'], afternoon: ['13:00'] }
+        },
+        Thaylor: {
+          ter: { morning: ['08:30'], afternoon: ['16:00', '17:00'] },
+          qua: { morning: ['10:00', '11:00'], afternoon: ['14:30'] },
+          qui: { morning: [], afternoon: ['15:00', '17:00'] },
+          sex: { morning: ['09:00', '10:30'], afternoon: [] },
+          sab: { morning: ['08:30', '11:00'], afternoon: [] }
+        }
+      };
+
+      const phoneWhatsApp = '5517991052256';
+      const dayStrip = document.querySelector('.days-horizontal-strip');
+      const weekdayCodes = { 2: 'ter', 3: 'qua', 4: 'qui', 5: 'sex', 6: 'sab' };
+      const weekdayNames = { ter: 'Terça-feira', qua: 'Quarta-feira', qui: 'Quinta-feira', sex: 'Sexta-feira', sab: 'Sábado' };
+
+      const formatDay = date => {
+        const code = weekdayCodes[date.getDay()];
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const monthName = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(date).replace('.', '');
+        return {
+          code,
+          full: `${weekdayNames[code]}, ${day}/${month}`,
+          short: `${date.getDate()} ${monthName}`
+        };
+      };
+
+      const addUpcomingBusinessDays = () => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let daysAdded = 0;
+        let daysChecked = 0;
+
+        while (daysAdded < 5) {
+          const date = new Date(today);
+          date.setDate(today.getDate() + daysChecked);
+          daysChecked += 1;
+          const formatted = formatDay(date);
+          if (formatted.code) {
+            const button = document.createElement('button');
+            button.className = `day-card-btn${daysAdded === 0 ? ' active' : ''}`;
+            button.type = 'button';
+            button.setAttribute('aria-pressed', String(daysAdded === 0));
+            button.dataset.day = formatted.full;
+            button.dataset.dayCode = formatted.code;
+
+            const name = document.createElement('span');
+            name.className = 'day-card-name';
+            name.textContent = weekdayNames[formatted.code].replace('-feira', '');
+            const dayDate = document.createElement('span');
+            dayDate.className = 'day-card-date';
+            dayDate.textContent = formatted.short;
+            button.append(name, dayDate);
+            dayStrip.append(button);
+            daysAdded += 1;
+          }
+        }
+      };
+
+      addUpcomingBusinessDays();
+
+      const barberButtons = document.querySelectorAll('.barber-tab-btn');
+      const dayButtons = document.querySelectorAll('.day-card-btn');
+      const morningSlots = document.querySelector('#morning-slots');
+      const afternoonSlots = document.querySelector('#afternoon-slots');
+      const summaryBarber = document.querySelector('#summary-barber');
+      const summaryDay = document.querySelector('#summary-day');
+      const summaryTime = document.querySelector('#summary-time');
+      const whatsappLink = document.querySelector('#agenda-whatsapp-link');
+      let selectedBarber = 'Funny';
+      let selectedDay = document.querySelector('.day-card-btn.active');
+      let selectedTime = '';
+
+      const renderTimes = (container, times) => {
+        container.replaceChildren();
+        if (times.length === 0) {
+          const emptyMessage = document.createElement('span');
+          emptyMessage.className = 'time-slots-empty';
+          emptyMessage.textContent = 'Sem horários disponíveis neste período.';
+          container.append(emptyMessage);
+          return;
+        }
+
+        times.forEach(time => {
+          const button = document.createElement('button');
+          button.className = 'time-slot-btn';
+          button.type = 'button';
+          button.textContent = time;
+          button.setAttribute('aria-pressed', String(selectedTime === time));
+          if (selectedTime === time) button.classList.add('selected');
+          button.addEventListener('click', () => {
+            selectedTime = time;
+            renderSchedule();
+          });
+          container.append(button);
+        });
+      };
+
+      const updateWhatsAppLink = () => {
+        const timeText = selectedTime ? `às ${selectedTime}` : 'em qualquer horário disponível';
+        const message = `Olá! Gostaria de consultar a disponibilidade para ${selectedDay.dataset.day}, ${timeText}, com ${selectedBarber}.`;
+        whatsappLink.href = `https://wa.me/${phoneWhatsApp}?text=${encodeURIComponent(message)}`;
+      };
+
+      const renderSchedule = () => {
+        const daySchedule = schedule[selectedBarber][selectedDay.dataset.dayCode];
+        if (!daySchedule.morning.includes(selectedTime) && !daySchedule.afternoon.includes(selectedTime)) {
+          selectedTime = '';
+        }
+        summaryBarber.textContent = selectedBarber;
+        summaryDay.textContent = selectedDay.dataset.day;
+        summaryTime.textContent = selectedTime || 'Selecione um horário';
+        renderTimes(morningSlots, daySchedule.morning);
+        renderTimes(afternoonSlots, daySchedule.afternoon);
+        updateWhatsAppLink();
+      };
+
+      barberButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          barberButtons.forEach(item => {
+            item.classList.remove('active');
+            item.setAttribute('aria-pressed', 'false');
+          });
+          button.classList.add('active');
+          button.setAttribute('aria-pressed', 'true');
+          selectedBarber = button.dataset.barber;
+          selectedTime = '';
+          renderSchedule();
+        });
+      });
+
+      dayButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          dayButtons.forEach(item => {
+            item.classList.remove('active');
+            item.setAttribute('aria-pressed', 'false');
+          });
+          button.classList.add('active');
+          button.setAttribute('aria-pressed', 'true');
+          selectedDay = button;
+          selectedTime = '';
+          renderSchedule();
+        });
+      });
+
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') setMenuOpen(false);
+      });
+
+      renderSchedule();
+    });
+  </script>
+</body>
+</html>
