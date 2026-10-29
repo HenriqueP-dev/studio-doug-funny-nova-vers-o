@@ -95,6 +95,7 @@
       color: var(--orange); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase;
     }
     .eyebrow::after { content: ''; width: 2.5rem; height: 1px; background: currentColor; }
+    .course .eyebrow { margin-bottom: var(--s-5); }
 
     /* Títulos: condensada + serifada em itálico */
     .title {
@@ -215,7 +216,7 @@
     }
     .word .ch { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.02em; }
     .word .ch > i { display: inline-block; font-style: normal; }
-    .word-outline { color: transparent; -webkit-text-stroke: 2px rgba(245, 243, 240, 0.55); }
+    .word-outline { color: transparent; -webkit-text-stroke: 2px rgba(245, 243, 240, 0.8); }
     .word-fill, .word-front { background: var(--metal); -webkit-background-clip: text; background-clip: text; color: transparent; }
     .word-fill .ch > i, .word-front .ch > i { background: var(--metal); -webkit-background-clip: text; background-clip: text; color: transparent; }
     .word-outline { z-index: 1; }
@@ -354,14 +355,20 @@
     .course-section .eyebrow { color: var(--ink); }
     .course-section .title em { color: var(--ink); }
     .course { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(2rem, 6vw, 6rem); align-items: end; }
-    .course-figure { position: relative; align-self: stretch; min-height: 520px; }
-    .course-figure img {
-      position: absolute; bottom: calc(-1 * clamp(5rem, 10vw, 8.5rem)); left: 50%; transform: translateX(-50%);
-      height: 112%; width: auto; max-width: none;
-      filter: grayscale(1) contrast(1.25) brightness(0.95); mix-blend-mode: multiply;
+    .course-figure {
+      position: relative; align-self: stretch; min-height: 520px; overflow: hidden;
+      margin-bottom: calc(-1 * clamp(5rem, 10vw, 8.5rem));
     }
+    .course-figure img {
+      position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 112%; height: auto; max-width: none;
+      filter: grayscale(1) contrast(1.15) brightness(1.15); mix-blend-mode: multiply;
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 86%, transparent);
+      mask-image: linear-gradient(90deg, transparent, #000 12%, #000 86%, transparent);
+    }
+    .course > div:not(.course-figure) { position: relative; z-index: 2; }
     .course-figure figcaption {
-      position: absolute; left: 0; top: 0; font-family: var(--serif); font-style: italic; font-size: 1.25rem; line-height: 1.2;
+      position: absolute; z-index: 2; left: 0; top: 0; font-family: var(--serif); font-style: italic; font-size: 1.25rem; line-height: 1.2;
     }
     .course-figure figcaption strong { display: block; font-family: var(--display); font-style: normal; font-weight: 400; font-size: 2rem; text-transform: uppercase; }
     .course-stat { font-family: var(--serif); font-style: italic; font-size: clamp(2rem, 4vw, 3.2rem); line-height: 1; margin: var(--s-5) 0 var(--s-3); }
@@ -408,22 +415,22 @@
     .member { position: relative; }
     .member-stage {
       position: relative; height: clamp(380px, 38vw, 520px); overflow: hidden; border-radius: 12px;
-      background: radial-gradient(60% 55% at 50% 60%, rgba(255, 85, 0, 0.32), transparent 72%), var(--surface);
+      background: radial-gradient(65% 60% at 50% 62%, rgba(255, 85, 0, 0.5), transparent 74%), #1d1b20;
       border: 1px solid var(--line);
     }
     .member-ghost {
       position: absolute; top: var(--s-4); left: 50%; transform: translateX(-50%);
       font-family: var(--display); text-transform: uppercase; font-size: clamp(4rem, 8.5vw, 8rem); line-height: 1;
-      color: transparent; -webkit-text-stroke: 1.5px rgba(245, 243, 240, 0.28); white-space: nowrap;
+      color: transparent; -webkit-text-stroke: 1.5px rgba(245, 243, 240, 0.55); white-space: nowrap;
     }
     .member-stage img {
       position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
       height: 88%; width: auto; max-width: none;
-      filter: grayscale(1) contrast(1.12) brightness(0.98);
+      filter: grayscale(1) contrast(1.05) brightness(1.4) drop-shadow(0 0 22px rgba(255, 85, 0, 0.4));
       transition: transform 0.7s var(--ease-out), filter 0.5s ease;
     }
-    .member:hover .member-stage img { transform: translateX(-50%) scale(1.03); filter: grayscale(0.35) contrast(1.1); }
-    .member-stage::after { content: ''; position: absolute; inset: 70% 0 0; background: linear-gradient(180deg, transparent, rgba(10, 10, 10, 0.9)); }
+    .member:hover .member-stage img { transform: translateX(-50%) scale(1.03); filter: grayscale(0.3) contrast(1.05) brightness(1.4) drop-shadow(0 0 22px rgba(255, 85, 0, 0.4)); }
+    .member-stage::after { content: ''; position: absolute; inset: 82% 0 0; background: linear-gradient(180deg, transparent, rgba(10, 10, 10, 0.7)); pointer-events: none; }
     .member-info { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-3); padding: var(--s-4) var(--s-1) 0; }
     .member-name { font-family: var(--display); font-weight: 400; font-size: 2.2rem; text-transform: uppercase; line-height: 1; }
     .member-role { font-family: var(--serif); font-style: italic; font-size: 1.2rem; color: var(--orange); text-align: right; }
@@ -519,8 +526,8 @@
       .packs { grid-template-columns: 1fr; }
       .combos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .course { grid-template-columns: 1fr; }
-      .course-figure { min-height: 420px; order: 2; }
-      .course-figure img { height: 105%; }
+      .course-figure { min-height: 500px; order: 2; }
+      .course-figure img { width: auto; height: calc(100% - 4.5rem); }
       .contact-grid { grid-template-columns: 1fr 1fr; }
       .team { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .member-name { font-size: 1.8rem; }
