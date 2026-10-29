@@ -427,8 +427,21 @@ button { font: inherit; color: inherit; }
 .g-tile:hover img { transform: scale(1.06); }
 .g-tile figcaption { position: absolute; left: var(--s-5); bottom: var(--s-4); z-index: 1; font-family: var(--serif); font-style: italic; font-size: 1.35rem; }
 .g-tile::after { content: ''; position: absolute; inset: 50% 0 0; background: linear-gradient(180deg, transparent, rgba(10, 10, 10, 0.85)); pointer-events: none; }
-.g-pole { grid-row: 1 / span 2; }
+.g-pole { grid-row: 1 / span 2; container-type: size; }
 .g-pole img { object-position: 50% 40%; }
+/* Poste girando com a rolagem (motion.js): sprite de 24 quadros renderizados (ferramentas/render_poste.py)
+   por cima da foto estática. Mesmo enquadramento da foto (cover, 50% 40%); o quadro muda em passos
+   inteiros de background-position, sem interpolar entre quadros. */
+.pole-sprite {
+  position: absolute; left: 50%; top: 40%;
+  width: max(100cqw, 100cqh * 450 / 650); aspect-ratio: 450 / 650;
+  translate: -50% -40%;
+  background: 0 0 / 2400% 100% no-repeat;
+  opacity: 0; pointer-events: none;
+  transition: scale 0.9s var(--ease-out);
+}
+.pole-sprite.is-ready { opacity: 1; }
+.g-tile:hover .pole-sprite { scale: 1.06; }
 .g-detail { grid-column: 2 / span 2; }
 .g-detail img { object-position: 30% 45%; }
 .g-insta {

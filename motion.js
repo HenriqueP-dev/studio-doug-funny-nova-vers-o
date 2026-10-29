@@ -10,6 +10,7 @@
    1. Rolagem suave (Lenis)
    2. A máquina conduz do hero até Serviços (desktop) / paralaxe leve (celular)
    3. Títulos revelados letra por letra (SplitText)
+   4. Poste de barbeiro girando com a rolagem (sprite de 24 quadros)
    ========================================================================== */
 (() => {
   'use strict';
@@ -34,6 +35,7 @@
     mm.add(DESKTOP, ctx => clipperTravel(app, ctx));
     mm.add(MOBILE, ctx => clipperParallax(app, ctx));
     mm.add(MOTION, ctx => splitTitles(app, ctx));
+    mm.add(MOTION, () => spinPole());
 
     // posições dependem das fontes (títulos mudam de largura quando a Anton carrega)
     fontsReady.then(() => ScrollTrigger.refresh());
@@ -288,6 +290,58 @@
       alive = false;
       titles.forEach(title => title.classList.remove('is-split'));
     };
+  }
+
+  /* ==========================================================================
+     4. POSTE DE BARBEIRO GIRANDO COM A ROLAGEM
+     A foto é estática, então girá-la em CSS ficaria falso: usamos 24 quadros renderizados
+     (meia volta = um ciclo das listras) e avançamos o quadro conforme a rolagem, em passos
+     inteiros. O sprite só é baixado quando a galeria se aproxima; até ficar pronto (e com
+     movimento reduzido, quando nada disto roda) a foto original, que é o quadro 0, aparece.
+     ========================================================================== */
+  const POLE_SPRITE = 'imagens/poste-sprite.webp';
+  const POLE_FRAMES = 24;
+  const POLE_CYCLES = 3;   // ciclos completos das listras enquanto o poste atravessa a tela
+
+  function spinPole() {
+    const tile = document.querySelector('.g-pole');
+    if (!tile) return undefined;
+    const sprite = document.createElement('span');
+    sprite.className = 'pole-sprite';
+    sprite.setAttribute('aria-hidden', 'true');
+    tile.querySelector('img').after(sprite);
+
+    let frame = -1;
+    const show = progress => {
+      const next = Math.floor(progress * POLE_CYCLES * POLE_FRAMES) % POLE_FRAMES;
+      if (next === frame) return;   // só escreve quando o quadro muda
+      frame = next;
+      sprite.style.backgroundPosition = `${(frame * 100 / (POLE_FRAMES - 1)).toFixed(4)}% 0`;
+    };
+
+    // baixa e decodifica o sprite antes de mostrá-lo (sem pisca e sem baixar à toa)
+    const load = ScrollTrigger.create({
+      trigger: tile,
+      start: 'top bottom+=600',
+      once: true,
+      onEnter: () => {
+        const img = new Image();
+        img.src = POLE_SPRITE;
+        (img.decode ? img.decode() : Promise.resolve()).then(() => {
+          sprite.style.backgroundImage = `url("${POLE_SPRITE}")`;
+          show(spin.progress);
+          sprite.classList.add('is-ready');
+        }).catch(() => sprite.remove());   // sem o sprite, a foto estática continua
+      }
+    });
+    const spin = ScrollTrigger.create({
+      trigger: tile,
+      start: 'top bottom',
+      end: 'bottom top',
+      onUpdate: self => show(self.progress)
+    });
+
+    return () => { load.kill(); spin.kill(); sprite.remove(); };
   }
 
   /* Celular: só uma paralaxe leve dentro do hero (sem viagem até Serviços) */

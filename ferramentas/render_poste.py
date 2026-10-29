@@ -1,11 +1,26 @@
 """Poste de barbeiro (render próprio) para a galeria.
 
-Uso: python render_poste.py samples=128 out=poste.png
+Requer o Blender como módulo Python (pip install bpy; o bpy 5.x exige Python 3.11).
+
+Uso:
+  python render_poste.py samples=128 out=poste.png                 # imagem estática (quadro 0), 900x1300
+  python render_poste.py frame=6 frames=24 res=450x650 out=q6.png  # um quadro da rotação
+  python render_poste.py sprite=../imagens/poste-sprite.webp       # sprite com os 24 quadros lado a lado
+
+Rotação: as listras são fract(z*0.32 + ângulo*2/2π). Com o fator 2 no ângulo, o padrão se repete a
+cada MEIA volta; somar frame/frames antes do fract avança 1/frames desse ciclo. Os quadros
+0..frames-1 fecham um laço perfeito, e o quadro 0 é idêntico ao render estático.
+O sprite (padrão: 24 quadros de 450x650, samples=96) precisa do Pillow no mesmo Python:
+pip install pillow.
 """
-import bpy, addon_utils, math, sys
+import bpy, addon_utils, math, os, sys
 from mathutils import Vector
 ARGS = dict(a.split('=', 1) for a in sys.argv[1:] if '=' in a)
-OUT = __import__('os').path.abspath(ARGS.get('out', 'poste.png')); SAMPLES = int(ARGS.get('samples', 128)); PCT = int(ARGS.get('pct', 100))
+SPRITE = os.path.abspath(ARGS['sprite']) if 'sprite' in ARGS else None
+OUT = os.path.abspath(ARGS.get('out', 'poste.png'))
+SAMPLES = int(ARGS.get('samples', 96 if SPRITE else 128)); PCT = int(ARGS.get('pct', 100))
+FRAMES = int(ARGS.get('frames', 24)); FRAME = int(ARGS.get('frame', 0))
+RES = tuple(int(v) for v in ARGS.get('res', '450x650' if SPRITE else '900x1300').split('x'))
 addon_utils.enable("cycles", default_set=True)
 bpy.ops.wm.read_factory_settings(use_empty=True)
 addon_utils.enable("cycles", default_set=True)
@@ -30,7 +45,10 @@ at = n.new('ShaderNodeMath'); at.operation = 'ARCTAN2'; l.new(sep.outputs['Y'], 
 mz = n.new('ShaderNodeMath'); mz.operation = 'MULTIPLY'; mz.inputs[1].default_value = 0.32; l.new(sep.outputs['Z'], mz.inputs[0])
 ma = n.new('ShaderNodeMath'); ma.operation = 'MULTIPLY'; ma.inputs[1].default_value = 2 / (2 * math.pi); l.new(at.outputs[0], ma.inputs[0])
 ad = n.new('ShaderNodeMath'); ad.operation = 'ADD'; l.new(mz.outputs[0], ad.inputs[0]); l.new(ma.outputs[0], ad.inputs[1])
-fr = n.new('ShaderNodeMath'); fr.operation = 'FRACT'; l.new(ad.outputs[0], fr.inputs[0])
+# fase da rotação (0 = render estático original); 1.0 = meia volta = um ciclo completo do padrão
+phase = n.new('ShaderNodeMath'); phase.operation = 'ADD'; phase.inputs[1].default_value = FRAME / FRAMES
+l.new(ad.outputs[0], phase.inputs[0])
+fr = n.new('ShaderNodeMath'); fr.operation = 'FRACT'; l.new(phase.outputs[0], fr.inputs[0])
 ramp = n.new('ShaderNodeValToRGB'); l.new(fr.outputs[0], ramp.inputs['Fac'])
 cr = ramp.color_ramp; cr.interpolation = 'CONSTANT'
 cr.elements[0].position = 0.0; cr.elements[0].color = (1.0, 0.16, 0.0, 1)
@@ -66,9 +84,32 @@ cd = bpy.data.cameras.new('c'); cd.lens = 70
 cam = bpy.data.objects.new('c', cd); bpy.context.collection.objects.link(cam); sc.camera = cam
 cam.location = (2.5, -20, 4.5); cam.rotation_euler = (Vector((0, 0, 0.2)) - cam.location).to_track_quat('-Z', 'Y').to_euler()
 sc.render.engine = 'CYCLES'; sc.cycles.device = 'CPU'; sc.cycles.samples = SAMPLES; sc.cycles.use_denoising = True
-sc.render.resolution_x, sc.render.resolution_y = 900, 1300; sc.render.resolution_percentage = PCT
+sc.render.resolution_x, sc.render.resolution_y = RES; sc.render.resolution_percentage = PCT
+sc.cycles.seed = 0   # mesma semente em todos os quadros: o ruído não "ferve" entre eles
 try:
     sc.view_settings.view_transform = 'AgX'; sc.view_settings.look = 'AgX - Punchy'
 except Exception:
     pass
-sc.render.filepath = OUT; bpy.ops.render.render(write_still=True); print('DONE')
+
+if not SPRITE:
+    sc.render.filepath = OUT; bpy.ops.render.render(write_still=True); print('DONE')
+else:
+    # renderiza os quadros 0..FRAMES-1 e junta lado a lado num único WebP
+    from PIL import Image
+    import tempfile
+    tmp = tempfile.mkdtemp(prefix='poste_')
+    paths = []
+    for f in range(FRAMES):
+        phase.inputs[1].default_value = f / FRAMES
+        sc.render.filepath = os.path.join(tmp, f'q{f:02d}.png')
+        bpy.ops.render.render(write_still=True)
+        paths.append(sc.render.filepath)
+        print(f'quadro {f + 1}/{FRAMES}', flush=True)
+    frames = [Image.open(p).convert('RGB') for p in paths]
+    w, h = frames[0].size
+    sheet = Image.new('RGB', (w * FRAMES, h))
+    for i, im in enumerate(frames):
+        sheet.paste(im, (i * w, 0))
+    os.makedirs(os.path.dirname(SPRITE), exist_ok=True)
+    sheet.save(SPRITE, 'WEBP', quality=82, method=6)
+    print(f'DONE sprite {sheet.size[0]}x{sheet.size[1]} ({FRAMES} quadros de {w}x{h}) -> {SPRITE}')
