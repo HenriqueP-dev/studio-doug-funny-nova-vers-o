@@ -575,8 +575,10 @@ button { font: inherit; color: inherit; }
 @media (max-width: 1240px) {
   .header { background: rgba(10, 10, 10, 0.92); }
   .menu-toggle { display: inline-flex; }
+  /* a <nav> vira o painel, fora do fluxo do cabeçalho (não cria vão entre botão e ações) */
+  .header > nav { position: absolute; top: 100%; left: 0; right: 0; }
   .nav-menu {
-    display: none; position: absolute; top: 100%; left: 0; right: 0;
+    display: none;
     flex-direction: column; gap: 0; padding: var(--s-2) var(--gutter) var(--s-5);
     background: var(--bg); border-bottom: 1px solid var(--line);
   }

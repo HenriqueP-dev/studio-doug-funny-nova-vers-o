@@ -114,6 +114,13 @@
       <span class="brand-main">Doug Funny</span>
     </a>
 
+    <!-- O botão vem antes do menu para que, aberto, o próximo Tab entre nos links (WCAG 2.4.3).
+         No desktop ele fica oculto, então a ordem do Tab lá não muda. -->
+    <button class="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="primary-navigation">
+      <svg class="icon icon-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      <svg class="icon icon-close" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+
     <nav aria-label="Principal">
       <ul class="nav-menu" id="primary-navigation">
         <li><a href="#inicio" class="nav-link" aria-current="true">Início</a></li>
@@ -126,11 +133,6 @@
         <li><a href="#contato" class="nav-link">Contato</a></li>
       </ul>
     </nav>
-
-    <button class="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="primary-navigation">
-      <svg class="icon icon-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-      <svg class="icon icon-close" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
-    </button>
 
     <div class="header-actions">
       <a href="https://instagram.com/studiodougfunny" target="_blank" rel="noopener noreferrer" class="icon-link" aria-label="Instagram do Studio Doug Funny">
