@@ -183,8 +183,20 @@ function initHero(root) {
     root.classList.remove('intro-pending');
     wordFill.style.clipPath = 'none';
     cutline.style.opacity = '0';
+    releaseIntroAnimations();
     updateDepthMask();
     introCallbacks.splice(0).forEach(cb => cb());
+  };
+
+  /* As animações da abertura usam fill: 'both'/'forwards' e, terminadas, continuam "segurando" os
+     valores calculados no carregamento. O mais grave é o ângulo da máquina: ao girar o celular ou
+     redimensionar a janela, ela ficava presa na pose antiga e a máscara de profundidade desalinhava.
+     O estado final de todas elas é igual ao do CSS, então dá para cancelá-las sem mudança visual. */
+  const releaseIntroAnimations = () => {
+    [stage, ...heroCopy].forEach(el => el.getAnimations({ subtree: true }).forEach(animation => {
+      if (animation.playState === 'finished') animation.cancel();
+      else animation.finished.then(() => animation.cancel(), () => {});
+    }));
   };
 
   const runIntro = () => {

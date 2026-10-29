@@ -641,6 +641,12 @@ button { font: inherit; color: inherit; }
   .turmas .turma-price { font-size: 1.9rem; }
 }
 
+/* Telas muito estreitas (320px): a palavra mais longa dos títulos ("DISPONIBILIDADE") precisa caber
+   inteira, senão a divisão em letras do motion.js deixa a linha quebrar no meio da palavra. */
+@media (max-width: 360px) {
+  .title { font-size: 2.75rem; }
+}
+
 /* ==========================================================================
    9. MOVIMENTO REDUZIDO
    ========================================================================== */
