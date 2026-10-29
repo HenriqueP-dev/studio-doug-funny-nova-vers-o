@@ -470,6 +470,7 @@ button { font: inherit; color: inherit; }
   position: absolute; top: var(--s-4); left: 50%; transform: translateX(-50%);
   font-family: var(--display); text-transform: uppercase; font-size: clamp(4rem, 8.5vw, 8rem); line-height: 1;
   color: transparent; -webkit-text-stroke: 1.5px rgba(245, 243, 240, 0.55); white-space: nowrap;
+  translate: 0 var(--ghost-shift, 0%);   /* cortina (motion.js); não interfere no transform */
 }
 /* Retratos recortados por ferramentas/recortar_equipe.py (sem fundo nem halo). P&B por identidade:
    o fundo original é vermelho e brigaria com o laranja. */
@@ -477,6 +478,7 @@ button { font: inherit; color: inherit; }
   --portrait-filter: contrast(1.05) brightness(1.4) drop-shadow(0 0 22px rgba(255, 85, 0, 0.4));
   position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
   height: 88%; width: auto; max-width: none;
+  translate: 0 var(--photo-shift, 0%);   /* cortina (motion.js); o hover continua no transform */
   filter: grayscale(1) var(--portrait-filter);
   transition: transform 0.7s var(--ease-out), filter 0.5s ease;
 }

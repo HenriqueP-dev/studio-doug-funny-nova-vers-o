@@ -11,6 +11,7 @@
    2. A máquina conduz do hero até Serviços (desktop) / paralaxe leve (celular)
    3. Títulos revelados letra por letra (SplitText)
    4. Poste de barbeiro girando com a rolagem (sprite de 24 quadros)
+   5. Retratos da equipe com efeito de cortina
    ========================================================================== */
 (() => {
   'use strict';
@@ -36,6 +37,7 @@
     mm.add(MOBILE, ctx => clipperParallax(app, ctx));
     mm.add(MOTION, ctx => splitTitles(app, ctx));
     mm.add(MOTION, () => spinPole());
+    mm.add(MOTION, () => curtainTeam());
 
     // posições dependem das fontes (títulos mudam de largura quando a Anton carrega)
     fontsReady.then(() => ScrollTrigger.refresh());
@@ -342,6 +344,42 @@
     });
 
     return () => { load.kill(); spin.kill(); sprite.remove(); };
+  }
+
+  /* ==========================================================================
+     5. RETRATOS DA EQUIPE COM EFEITO DE CORTINA
+     Cada .member-stage se revela de baixo para cima (clip-path); a foto sobe de leve e o nome em
+     contorno desliza no sentido oposto. Foto e nome usam a propriedade CSS `translate` (via
+     variáveis), então o transform do hover e o filtro P&B continuam intactos.
+     batch: no desktop os três entram juntos (stagger 0,12s); no celular, um de cada vez.
+     ========================================================================== */
+  function curtainTeam() {
+    const stages = gsap.utils.toArray('.member-stage');
+    if (!stages.length) return undefined;
+    const parts = stage => [stage.querySelector('img'), stage.querySelector('.member-ghost')];
+
+    gsap.set(stages, { clipPath: 'inset(100% 0% 0% 0%)' });
+    stages.forEach(stage => {
+      const [photo, ghost] = parts(stage);
+      if (photo) gsap.set(photo, { '--photo-shift': '8%' });
+      if (ghost) gsap.set(ghost, { '--ghost-shift': '-35%' });
+    });
+
+    const batch = ScrollTrigger.batch(stages, {
+      start: 'top 85%',
+      once: true,
+      onEnter: entered => {
+        const photos = entered.map(s => parts(s)[0]).filter(Boolean);
+        const ghosts = entered.map(s => parts(s)[1]).filter(Boolean);
+        const common = { duration: 0.9, ease: 'power4.out', stagger: 0.12 };
+        gsap.set(photos, { willChange: 'translate' });
+        gsap.to(entered, { ...common, clipPath: 'inset(0% 0% 0% 0%)' });
+        gsap.to(photos, { ...common, '--photo-shift': '0%', onComplete: () => gsap.set(photos, { willChange: 'auto' }) });
+        gsap.to(ghosts, { ...common, '--ghost-shift': '0%' });
+      }
+    });
+
+    return () => batch.forEach(t => t.kill());
   }
 
   /* Celular: só uma paralaxe leve dentro do hero (sem viagem até Serviços) */
