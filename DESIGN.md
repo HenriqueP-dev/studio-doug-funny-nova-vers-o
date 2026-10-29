@@ -2,7 +2,7 @@
 
 > Site de uma barbearia e escola de barbeiros em Barretos-SP (desde 2014). Objetivo: **vender** e transmitir **alto nível**. Público: homens da região (cortes, barba, pacotes) e futuros barbeiros (curso de R$ 1.400 a R$ 2.600).
 
-> Versão: "Redesign cinematográfico" (v3). Extraído do `index.html`. Valores abaixo são os do código.
+> Versão: "Redesign cinematográfico" (v3). Extraído de `index.html`, `styles.css` e `script.js`. Valores abaixo são os do código.
 
 ## 1. Visual Theme
 
@@ -75,7 +75,8 @@ Números sempre `lining-nums`.
 | `.course-section` | Seção inteira laranja, retrato do instrutor em duotom (`multiply`) |
 | `.g-tile` | Galeria: poste (alto), detalhe (largo), lâmina, cartão do Instagram |
 | `.member` | Retrato recortado + nome gigante em contorno atrás + brilho laranja |
-| Agenda | Passos 01/02/03, pílulas; **lógica intacta** |
+| Agenda | Passos 01/02/03, pílulas (estado selecionado por `aria-pressed`). **Demonstração**: só monta uma consulta para o WhatsApp, nunca reserva |
+| `.turmas` | Tabela turma ↔ investimento + nota pedindo consulta das condições pelo WhatsApp |
 | Ícones | Sprite SVG de linha, traço 1,6 |
 
 ---
@@ -105,8 +106,9 @@ Números sempre `lining-nums`.
 - Usar a assinatura em pincel **uma vez só**.
 - Garantir que "BARBEARIA" fique legível: no celular a palavra fica **inteira na frente** da máquina (`--depth-y: -0.3`).
 - Usar laranja para ação, preço e rótulos.
-- Retratos da equipe em preto e branco (os originais têm fundo vermelho que briga com o laranja).
+- Retratos da equipe em preto e branco (os originais têm fundo vermelho que briga com o laranja). O recorte precisa ser limpo, sem halo nem furos. Nunca disfarce um defeito de recorte com CSS: refaça com `ferramentas/recortar_equipe.py`.
 - Conteúdo comercial sempre real (ver §9).
+- Na agenda, falar em **consulta**, nunca em reserva ou confirmação, enquanto ela não estiver ligada a uma disponibilidade real.
 
 ### Don't
 - Não usar fotos de banco como se fossem trabalhos do Studio. A galeria usa renders 3D e diz isso.
@@ -133,12 +135,17 @@ Verificado sem rolagem horizontal em 320, 375, 390, 768, 1024, 1280, 1440 e 1920
 ## 9. Agent Prompt Guide
 
 **Invariantes:**
-1. **Agenda:** seletores usados pelo JS — `.barber-tab-btn[data-barber]`, `.days-horizontal-strip`, `.day-card-btn` (`data-day`, `data-day-code`), `#morning-slots`, `#afternoon-slots`, `#summary-barber`, `#summary-day`, `#summary-time`, `#agenda-whatsapp-link`, `.time-slot-btn`, `.menu-toggle`, `#primary-navigation`.
+1. **Agenda:** seletores usados pelo JS: `#agenda-notice`, `.barber-tab[data-barber]`, `.day-strip`, `.day-card` (`data-date`), `#slots-morning`, `#slots-afternoon`, `.slot`, `#summary-barber`, `#summary-day`, `#summary-time`, `#agenda-whatsapp-link`. Menu: `.menu-toggle`, `#primary-navigation`, `.nav-link` (o link ativo recebe `aria-current`).
+   - Os dados de exemplo ficam em `script.js` → `DEMO_SCHEDULE` (profissional → dia da semana → horários). Os turnos vêm de `OPENING_HOURS`.
+   - Horários que já passaram não aparecem no dia de hoje. Se o Studio já fechou, hoje sai da faixa de dias.
+   - Para usar dados reais: substitua `DEMO_SCHEDULE` e ponha `AGENDA_IS_DEMO = false`. Com isso o aviso some e os textos deixam de dizer "exemplo".
 2. **Hero:** `.stage`, `[data-word]` (3 cópias, nesta ordem), `.clipper-pos > .clipper-mover > .clipper-buzz > .clipper`, `.cutline`, `.script`. Pose final por variáveis CSS em `.stage`: `--cx`, `--cy`, `--ch`, `--rot`, `--depth-y`, `--word-top`.
-3. **WhatsApp** `5517991052256`; mensagens pré-preenchidas mantidas.
-4. **Conteúdo real:** Funny (Barbeiro & Instrutor), Miguel, Thaylor; preços, combos, turmas; endereço Rua Doutor Riolando Prado, 62, Nogueira, Barretos-SP, CEP 14783-254; horários ter–sex 08:00–12:30 e 14:00–19:00, sáb 08:00–13:30 e 15:00–18:30, dom e seg fechado; e-mail e Instagram.
-5. Um único `index.html`, sem build; dependência externa só Google Fonts.
+3. **WhatsApp** `5517991052256` (em `script.js` → `WHATSAPP_NUMBER` e nos links do HTML); mensagens pré-preenchidas mantidas.
+4. **Conteúdo real:** Funny (Barbeiro & Instrutor), Miguel, Thaylor; preços, combos, turmas; endereço Rua Doutor Riolando Prado, 62, Nogueira, Barretos-SP, CEP 14783-254; horários ter–sex 08:00–12:30 e 14:00–19:00, sáb 08:00–13:30 e 15:00–18:30, dom e seg fechado; e-mail e Instagram. O horário aparece em **três lugares**, que precisam ficar iguais: seção Contato, `OPENING_HOURS` (script.js) e o JSON-LD no `<head>`.
+5. Site estático sem build: `index.html` + `styles.css` + `script.js` (`defer`); dependência externa só Google Fonts. O único script inline é o de pré-pintura (`intro-pending`) e o JSON-LD.
 6. O estado inicial da abertura só existe com JS (`html.intro-pending`); há um tempo de segurança de 4s que mostra tudo se algo falhar.
+7. **Busca e compartilhamento:** Open Graph, ícones e JSON-LD `BarberShop` no `<head>`. Quando houver domínio, troque a `og:image` por um endereço absoluto e ative `canonical`/`og:url` (há um comentário no HTML).
+8. **Pendências comerciais:** duração, datas, diferenças entre turmas e formas de pagamento do curso (comentário `CONFIRMAR COM O STUDIO` no HTML).
 
 **Imagens (todas próprias):**
 | Arquivo | Origem |
@@ -148,8 +155,9 @@ Verificado sem rolagem horizontal em 320, 375, 390, 768, 1024, 1280, 1440 e 1920
 | `imagens/maquina-lamina.webp` | recorte do render do hero |
 | `imagens/poste-barbeiro.webp` | `ferramentas/render_poste.py` |
 | `imagens/equipe-*.webp` | `ferramentas/recortar_equipe.py` sobre `funny.png`, `miguel.png`, `thaylor.png` |
+| `favicon.ico`, `imagens/icone-*.png`, `imagens/compartilhamento.jpg` | `ferramentas/gerar_icones.py` |
 
-Para renderizar: `pip install bpy` (Blender 5.x como módulo Python) e rodar os scripts; converter PNG → WebP (qualidade ~84).
+Passo a passo para gerar de novo cada arquivo: **`ferramentas/README.md`**. Renders 3D: `pip install bpy` (Blender 5.x como módulo Python); converter PNG → WebP (qualidade ~84).
 
 ---
 
