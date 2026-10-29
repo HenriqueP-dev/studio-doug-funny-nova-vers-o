@@ -67,6 +67,16 @@ html {
 
 body { line-height: 1.6; -webkit-font-smoothing: antialiased; background: var(--bg); overflow-x: hidden; }
 
+/* Lenis (motion.js): a rolagem suave da Lenis e o scroll-behavior nativo brigam, então o nativo sai.
+   Regras recomendadas pela própria Lenis (dist/lenis.css). */
+html.lenis { scroll-behavior: auto; }
+html.lenis, html.lenis body { height: auto; }
+.lenis:not(.lenis-autoToggle).lenis-stopped { overflow: clip; }
+.lenis [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-smooth iframe { pointer-events: none; }
+/* seção que recebe o foco depois de um link âncora: sem contorno em volta da seção inteira */
+main section[tabindex="-1"]:focus { outline: none; }
+
 img { max-width: 100%; height: auto; display: block; }
 a { color: inherit; text-decoration: none; }
 ul { list-style: none; }

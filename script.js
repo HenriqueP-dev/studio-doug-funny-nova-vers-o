@@ -82,9 +82,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initMenu();
   const hero = initHero(root);
-  initScroll(root, reduceMotion, hero);
-  initReveals();
+  const scroll = initScroll(root, reduceMotion, hero);
+  const reveals = initReveals();
   initAgenda();
+
+  /* Ponte para motion.js (GSAP + Lenis), que roda depois deste arquivo e pode assumir partes do
+     movimento. Sem motion.js, nada aqui muda: a página funciona só com este arquivo. */
+  window.StudioDF = { hero, scroll, reveals };
 });
 
 /* ==========================================================================
@@ -136,8 +140,11 @@ function initHero(root) {
   const heroCopy = $$('.hero-copy, .hero-since');
 
   const stageVar = name => parseFloat(getComputedStyle(stage).getPropertyValue(name));
-  const rotation = () => stageVar('--rot') || -32;
+  let extraRotation = 0;  // giro aplicado por cima da pose (rolagem); entra no cálculo da máscara
+  const rotation = () => (stageVar('--rot') || -32) + extraRotation;
   const introPending = () => root.classList.contains('intro-pending');
+  const introCallbacks = [];
+  const onIntroDone = cb => (introPending() ? introCallbacks.push(cb) : cb());
 
   /* Parte do título que fica NA FRENTE da cauda da máquina: semiplano perpendicular ao eixo
      da máquina, a partir do ponto em que o eixo cruza a altura --depth-y (fração da palavra). */
@@ -172,6 +179,7 @@ function initHero(root) {
     wordFill.style.clipPath = 'none';
     cutline.style.opacity = '0';
     updateDepthMask();
+    introCallbacks.splice(0).forEach(cb => cb());
   };
 
   const runIntro = () => {
@@ -248,7 +256,10 @@ function initHero(root) {
   // tempo de segurança: se algo falhar, mostra tudo no estado final
   setTimeout(() => { if (introPending() && !wordFill.getAnimations().length) finishIntro(); }, 4000);
 
-  return { el: $('.hero'), clipperPos, updateDepthMask, introPending };
+  return {
+    el: $('.hero'), stage, clipperPos, clipperImg, wordFront, updateDepthMask, introPending, onIntroDone,
+    setExtraRotation: deg => { extraRotation = deg; }
+  };
 }
 
 /* ==========================================================================
@@ -256,12 +267,12 @@ function initHero(root) {
    ========================================================================== */
 function initScroll(root, reduceMotion, hero) {
   const header = $('.header');
-  let heroVisible = true, ticking = false;
+  let heroVisible = true, ticking = false, parallax = true;
   new IntersectionObserver(([entry]) => { heroVisible = entry.isIntersecting; }).observe(hero.el);
 
   const onScroll = () => {
     header.classList.toggle('is-solid', window.scrollY > 40);
-    if (reduceMotion || !heroVisible || ticking) return;
+    if (reduceMotion || !parallax || !heroVisible || ticking) return;
     ticking = true;
     requestAnimationFrame(() => {
       const y = Math.min(window.scrollY, hero.el.offsetHeight);
@@ -276,6 +287,16 @@ function initScroll(root, reduceMotion, hero) {
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', hero.updateDepthMask);
   onScroll();
+
+  return {
+    header,
+    /* motion.js assume a paralaxe: desliga a daqui e zera o que ela deixou aplicado */
+    disableParallax() {
+      parallax = false;
+      ['--px', '--py', '--pr'].forEach(v => hero.clipperPos.style.removeProperty(v));
+      hero.el.style.removeProperty('--wy');
+    }
+  };
 }
 
 /* ==========================================================================
@@ -286,6 +307,8 @@ function initReveals() {
     if (entry.isIntersecting) { entry.target.classList.add('is-in'); io.unobserve(entry.target); }
   }), { threshold: 0.35 });
   $$('.reveal, .cut-divider').forEach(el => io.observe(el));
+  /* motion.js pode assumir um elemento (ex.: título dividido em letras): para de observá-lo aqui */
+  return { release: el => io.unobserve(el) };
 }
 
 /* ==========================================================================
