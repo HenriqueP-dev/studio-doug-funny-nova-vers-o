@@ -195,8 +195,12 @@ button { font: inherit; color: inherit; }
   --wy: 0px;
 }
 
+/* Viagem da máquina até Serviços (motion.js, desktop): o hero deixa a máquina sair. O recorte da luz
+   de cinema fica no próprio .hero-bg, então o feixe e a vinheta continuam contidos. */
+.hero.is-traveling { overflow: visible; }
+
 /* Luz de cinema: brilho laranja, feixe e granulação */
-.hero-bg { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.hero-bg { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
 .hero-bg::before {
   content: ''; position: absolute; inset: 0;
   background:
@@ -241,7 +245,7 @@ button { font: inherit; color: inherit; }
 
 .clipper-pos {
   position: absolute; z-index: 3; left: var(--cx); top: var(--cy); height: var(--ch);
-  transform: translate(-50%, -50%) translate3d(var(--px, 0px), var(--py, 0px), 0) rotate(var(--pr, 0deg));
+  transform: translate(-50%, -50%) translate3d(var(--px, 0px), var(--py, 0px), 0) rotate(var(--pr, 0deg)) scale(var(--ps, 1));
 }
 .clipper-mover { height: 100%; transform: rotate(var(--rot)); transform-origin: 50% 50%; }
 .clipper-buzz { position: relative; height: 100%; }
@@ -306,6 +310,7 @@ button { font: inherit; color: inherit; }
 /* Linha de corte que liga o hero à seção seguinte */
 .cut-divider { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--orange); transform-origin: 0 50%; box-shadow: 0 0 18px rgba(255, 85, 0, 0.7); transition: transform 1.2s var(--ease-io); }
 .js .cut-divider:not(.is-in) { transform: scaleX(0); }
+.cut-divider.is-driven { transition: none; }   /* desenhada pela rolagem (motion.js), sem transição CSS */
 
 /* ---------- 6.1 Serviços ---------- */
 .services-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(2rem, 6vw, 6rem); border-top: 1px solid var(--line); }

@@ -8,6 +8,7 @@
    - cada parte verifica a própria dependência, então a falta de uma não derruba as outras.
 
    1. Rolagem suave (Lenis)
+   2. A máquina conduz do hero até Serviços (desktop) / paralaxe leve (celular)
    ========================================================================== */
 (() => {
   'use strict';
@@ -16,6 +17,9 @@
   if (!gsap || !ScrollTrigger) return;
 
   const MOTION = '(prefers-reduced-motion: no-preference)';
+  const DESKTOP = `${MOTION} and (min-width: 761px)`;
+  const MOBILE = `${MOTION} and (max-width: 760px)`;
+  const clamp = (min, max, v) => Math.min(max, Math.max(min, v));
 
   document.addEventListener('DOMContentLoaded', () => {
     const app = window.StudioDF;
@@ -25,7 +29,20 @@
     const mm = gsap.matchMedia();
 
     mm.add(MOTION, () => smoothScroll(app));
+    mm.add(DESKTOP, ctx => clipperTravel(app, ctx));
+    mm.add(MOBILE, ctx => clipperParallax(app, ctx));
+
+    // posições dependem das fontes (títulos mudam de largura quando a Anton carrega)
+    if (document.fonts) document.fonts.ready.then(() => ScrollTrigger.refresh());
   });
+
+  /* Espera a abertura do hero terminar (classe intro-pending sair) antes de criar algo no hero.
+     ctx.add() registra o que for criado no contexto do matchMedia, para ser desfeito junto. */
+  function afterIntro(app, ctx, build) {
+    let alive = true;
+    app.hero.onIntroDone(() => { if (alive) ctx.add(build); });
+    return () => { alive = false; };
+  }
 
   /* ==========================================================================
      1. ROLAGEM SUAVE (Lenis)
@@ -76,6 +93,171 @@
       gsap.ticker.remove(raf);
       gsap.ticker.lagSmoothing(500, 33);
       lenis.destroy();
+    };
+  }
+
+  /* ==========================================================================
+     2. A MÁQUINA CONDUZ DO HERO ATÉ SERVIÇOS
+
+     Técnica: a máquina continua sendo o MESMO elemento dentro do palco do hero. Durante a
+     viagem o hero fica com overflow visível (.is-traveling) e o recorte da luz de cinema passa
+     para o .hero-bg. Assim não há clone nem troca de elemento no meio do caminho, e a máscara
+     de profundidade (updateDepthMask) e a ordem das camadas (palavra-fundo → máquina →
+     palavra-frente) continuam funcionando sem nenhuma passagem de bastão.
+     O movimento é aplicado pelas variáveis --px/--py/--pr/--ps de .clipper-pos (as mesmas
+     da paralaxe antiga) e por opacity, ou seja, só transform e opacity.
+     ========================================================================== */
+  const EXTRA_ROTATION = -16;   // "gira um pouco" ao descer (graus, somados à pose)
+  const MAX_SCALE = 0.35;       // tamanho máximo ao pousar
+  const MIN_SCALE = 0.16;
+
+  /* Onde a máquina pousa: no espaço livre à direita do texto do título "Serviços & procedimentos",
+     acima da nota lateral (desktop) ou ao lado do título (quando a nota vai para baixo dele).
+     Tudo em coordenadas do documento. Lido só ao criar e a cada refresh do ScrollTrigger. */
+  function measureLanding(app, els) {
+    const { hero } = app;
+    const sy = window.scrollY;
+    const cs = getComputedStyle(hero.stage);
+    const heroBox = hero.el.getBoundingClientRect();
+    const baseX = heroBox.left + heroBox.width * (parseFloat(cs.getPropertyValue('--cx')) / 100);
+    const baseY = heroBox.top + sy + heroBox.height * (parseFloat(cs.getPropertyValue('--cy')) / 100);
+
+    const h = hero.clipperPos.offsetHeight;
+    const w = hero.clipperImg.offsetWidth || h * 513 / 1635;
+    const r = ((parseFloat(cs.getPropertyValue('--rot')) || -32) + EXTRA_ROTATION) * Math.PI / 180;
+    const boxW = w * Math.abs(Math.cos(r)) + h * Math.abs(Math.sin(r));
+    const boxH = w * Math.abs(Math.sin(r)) + h * Math.abs(Math.cos(r));
+
+    // largura real do texto (as linhas são blocos de largura total)
+    let textRight = 0;
+    els.title.querySelectorAll('.line > span').forEach(span => {
+      const range = document.createRange();
+      range.selectNodeContents(span);
+      textRight = Math.max(textRight, range.getBoundingClientRect().right);
+    });
+    const head = els.head.getBoundingClientRect();
+    const titleBox = els.title.getBoundingClientRect();
+    const wrap = els.head.parentElement.getBoundingClientRect();
+    const note = els.note && els.note.getBoundingClientRect();
+    const gap = 32;
+
+    const left = textRight + gap;
+    const right = wrap.right;
+    const top = head.top;
+    const noteBeside = note && note.left > textRight;
+    const bottom = noteBeside ? note.top - gap / 2 : titleBox.bottom;
+
+    const scale = clamp(MIN_SCALE, MAX_SCALE, Math.min((right - left) / boxW, (bottom - top) / boxH) * 0.92);
+    return {
+      dx: (left + right) / 2 - baseX,
+      dy: (top + bottom) / 2 + sy - baseY,
+      scale,
+      rot: EXTRA_ROTATION
+    };
+  }
+
+  function clipperTravel(app, ctx) {
+    const { hero } = app;
+    const title = document.getElementById('servicos-title');
+    const head = title && title.closest('.section-head');
+    if (!head) return undefined;
+    const els = { title, head, note: head.querySelector('.section-note') };
+    const divider = document.querySelector('#servicos .cut-divider');
+
+    app.scroll.disableParallax();
+    if (divider) {
+      app.reveals.release(divider);
+      divider.classList.add('is-driven');
+      gsap.set(divider, { scaleX: 0 });
+    }
+
+    const stopWaiting = afterIntro(app, ctx, () => {
+      hero.el.classList.add('is-traveling');
+      const heroBottom = () => hero.el.offsetTop + hero.el.offsetHeight;
+      let landing = measureLanding(app, els);
+      let maskLimit = heroBottom();
+      const state = { travel: 0, fade: 0 };
+
+      const apply = () => {
+        const t = state.travel;
+        const pos = hero.clipperPos.style;
+        pos.setProperty('--px', `${(landing.dx * t).toFixed(1)}px`);
+        pos.setProperty('--py', `${(landing.dy * t).toFixed(1)}px`);
+        pos.setProperty('--pr', `${(landing.rot * t).toFixed(2)}deg`);
+        pos.setProperty('--ps', (1 + (landing.scale - 1) * t).toFixed(4));
+        pos.opacity = String(1 - state.fade);
+        hero.setExtraRotation(landing.rot * t);
+        // a máscara só importa enquanto a palavra está na tela
+        if (window.scrollY < maskLimit) hero.updateDepthMask();
+      };
+
+      const tl = gsap.timeline({
+        defaults: { ease: 'power2.inOut' },
+        onUpdate: apply,
+        scrollTrigger: {
+          trigger: hero.el,
+          start: 'top top',
+          endTrigger: title,
+          end: 'center 40%',
+          scrub: 0.6,
+          onRefresh: () => { landing = measureLanding(app, els); maskLimit = heroBottom(); apply(); },
+          onToggle: self => { hero.clipperPos.style.willChange = self.isActive ? 'transform, opacity' : ''; }
+        }
+      });
+      tl.to(state, { travel: 1, duration: 0.8 }, 0)             // desce na diagonal, gira e diminui
+        .to(state, { fade: 1, duration: 0.2, ease: 'power1.in' }, 0.8);  // pousa e some
+      if (divider) tl.to(divider, { scaleX: 1, duration: 0.35 }, 0.45);  // a linha termina quando ela chega
+
+      // "BARBEARIA" sobe mais devagar que a página (paralaxe)
+      gsap.fromTo(hero.el, { '--wy': '0px' }, {
+        '--wy': () => `${hero.el.offsetHeight * 0.22}px`,
+        ease: 'none',
+        scrollTrigger: { trigger: hero.el, start: 'top top', end: 'bottom top', scrub: true, invalidateOnRefresh: true }
+      });
+      apply();
+    });
+
+    return () => {
+      stopWaiting();
+      hero.el.classList.remove('is-traveling');
+      ['--px', '--py', '--pr', '--ps', 'will-change'].forEach(p => hero.clipperPos.style.removeProperty(p));
+      hero.clipperPos.style.opacity = '1';
+      hero.el.style.removeProperty('--wy');
+      hero.setExtraRotation(0);
+      if (divider) { divider.classList.remove('is-driven'); divider.classList.add('is-in'); }
+      hero.updateDepthMask();
+    };
+  }
+
+  /* Celular: só uma paralaxe leve dentro do hero (sem viagem até Serviços) */
+  function clipperParallax(app, ctx) {
+    const { hero } = app;
+    app.scroll.disableParallax();
+
+    const stopWaiting = afterIntro(app, ctx, () => {
+      const state = { t: 0 };
+      let h = hero.el.offsetHeight;   // relido só no refresh, não a cada quadro
+      gsap.to(state, {
+        t: 1,
+        ease: 'none',
+        onUpdate: () => {
+          const pos = hero.clipperPos.style;
+          pos.setProperty('--py', `${(h * 0.28 * state.t).toFixed(1)}px`);
+          pos.setProperty('--pr', `${(8 * state.t).toFixed(2)}deg`);
+          hero.el.style.setProperty('--wy', `${(h * 0.12 * state.t).toFixed(1)}px`);
+          hero.setExtraRotation(8 * state.t);
+          hero.updateDepthMask();
+        },
+        scrollTrigger: { trigger: hero.el, start: 'top top', end: 'bottom top', scrub: true, onRefresh: () => { h = hero.el.offsetHeight; } }
+      });
+    });
+
+    return () => {
+      stopWaiting();
+      ['--py', '--pr'].forEach(p => hero.clipperPos.style.removeProperty(p));
+      hero.el.style.removeProperty('--wy');
+      hero.setExtraRotation(0);
+      hero.updateDepthMask();
     };
   }
 })();

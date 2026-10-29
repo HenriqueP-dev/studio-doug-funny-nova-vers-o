@@ -140,8 +140,13 @@ function initHero(root) {
   const heroCopy = $$('.hero-copy, .hero-since');
 
   const stageVar = name => parseFloat(getComputedStyle(stage).getPropertyValue(name));
+  // Pose do palco (variáveis CSS): lida uma vez e relida só quando a janela muda de tamanho,
+  // porque a máscara é recalculada a cada quadro enquanto a máquina se move.
+  let pose = null;
+  const readPose = () => pose || (pose = { rot: stageVar('--rot') || -32, depthY: stageVar('--depth-y') });
+  window.addEventListener('resize', () => { pose = null; });
   let extraRotation = 0;  // giro aplicado por cima da pose (rolagem); entra no cálculo da máscara
-  const rotation = () => (stageVar('--rot') || -32) + extraRotation;
+  const rotation = () => readPose().rot + extraRotation;
   const introPending = () => root.classList.contains('intro-pending');
   const introCallbacks = [];
   const onIntroDone = cb => (introPending() ? introCallbacks.push(cb) : cb());
@@ -156,7 +161,7 @@ function initHero(root) {
     const tail = { x: -Math.sin(r), y: Math.cos(r) };
     const head = { x: -tail.x, y: -tail.y };
     const c = { x: cr.left + cr.width / 2 - wr.left, y: cr.top + cr.height / 2 - wr.top };
-    const fy = stageVar('--depth-y');
+    const fy = readPose().depthY;
     const ty = wr.height * (Number.isFinite(fy) ? fy : 0.36);
     const p = { x: c.x + head.x * ((ty - c.y) / head.y), y: ty };
     const rect = [[0, 0], [wr.width, 0], [wr.width, wr.height], [0, wr.height]];
