@@ -124,6 +124,12 @@ button { font: inherit; color: inherit; }
 .reveal .line:nth-child(2) > span { transition-delay: 0.08s; }
 .reveal .line:nth-child(3) > span { transition-delay: 0.16s; }
 
+/* Títulos divididos em letras (motion.js + SplitText): a máscara por linha sai de cena e cada letra
+   sobe de dentro da própria máscara. A folga (compensada por margem negativa) evita cortar
+   acentos (Ã, Ç, Á) e a inclinação do itálico. */
+.reveal.is-split .line > span { transition: none; }
+.title-char-mask { padding: 0.24em 0.1em 0.16em; margin: -0.24em -0.1em -0.16em; }
+
 /* Botões */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);

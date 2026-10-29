@@ -9,6 +9,7 @@
 
    1. Rolagem suave (Lenis)
    2. A máquina conduz do hero até Serviços (desktop) / paralaxe leve (celular)
+   3. Títulos revelados letra por letra (SplitText)
    ========================================================================== */
 (() => {
   'use strict';
@@ -26,15 +27,23 @@
     if (!app) return;
 
     gsap.registerPlugin(ScrollTrigger);
+    if (window.SplitText) gsap.registerPlugin(window.SplitText);
     const mm = gsap.matchMedia();
 
     mm.add(MOTION, () => smoothScroll(app));
     mm.add(DESKTOP, ctx => clipperTravel(app, ctx));
     mm.add(MOBILE, ctx => clipperParallax(app, ctx));
+    mm.add(MOTION, ctx => splitTitles(app, ctx));
 
     // posições dependem das fontes (títulos mudam de largura quando a Anton carrega)
-    if (document.fonts) document.fonts.ready.then(() => ScrollTrigger.refresh());
+    fontsReady.then(() => ScrollTrigger.refresh());
   });
+
+  // fontes carregadas (com limite de tempo, para nunca travar o site se o Google Fonts falhar)
+  const fontsReady = Promise.race([
+    document.fonts ? document.fonts.ready : Promise.resolve(),
+    new Promise(resolve => setTimeout(resolve, 2500))
+  ]);
 
   /* Espera a abertura do hero terminar (classe intro-pending sair) antes de criar algo no hero.
      ctx.add() registra o que for criado no contexto do matchMedia, para ser desfeito junto. */
@@ -226,6 +235,58 @@
       hero.setExtraRotation(0);
       if (divider) { divider.classList.remove('is-driven'); divider.classList.add('is-in'); }
       hero.updateDepthMask();
+    };
+  }
+
+  /* ==========================================================================
+     3. TÍTULOS REVELADOS LETRA POR LETRA (SplitText)
+     Substitui a revelação por máscara de linha do script.js (não soma as duas).
+     Acessibilidade: o <h2> recebe aria-label com o texto completo e as letras ficam aria-hidden
+     (aria: 'hidden' do SplitText), então o leitor de tela lê o título inteiro, uma vez.
+     Só se divide depois das fontes; autoSplit refaz a divisão se a fonte trocar, e as quebras
+     de linha continuam nativas (as palavras quebram normalmente no resize).
+     ========================================================================== */
+  function splitTitles(app, ctx) {
+    const { SplitText } = window;
+    if (!SplitText) return undefined;
+    const titles = gsap.utils.toArray('.title.reveal');
+    let alive = true;
+
+    titles.forEach(title => {
+      app.reveals.release(title);   // continua escondido pela máscara de linha até ser dividido
+      if (!title.hasAttribute('aria-label')) title.setAttribute('aria-label', title.textContent.replace(/\s+/g, ' ').trim());
+    });
+
+    fontsReady.then(() => {
+      if (!alive) return;
+      ctx.add(() => {
+        titles.forEach(title => {
+          SplitText.create(title.querySelectorAll('.line > span'), {
+            type: 'words,chars',
+            mask: 'chars',
+            charsClass: 'title-char',
+            aria: 'hidden',
+            autoSplit: true,
+            onSplit(self) {
+              const tl = gsap.timeline({ scrollTrigger: { trigger: title, start: 'top 82%', once: true } });
+              // linha 1 primeiro; a linha em itálico/contorno entra 0,1s depois
+              title.querySelectorAll('.line').forEach((line, i) => {
+                const chars = self.chars.filter(c => line.contains(c));
+                if (chars.length) tl.from(chars, { yPercent: 110, duration: 0.7, stagger: 0.02, ease: 'expo.out' }, i * 0.1);
+              });
+              // letras já posicionadas embaixo da máscara: agora a máscara de linha pode sair
+              title.classList.add('is-split', 'is-in');
+              return tl;
+            }
+          });
+        });
+        ScrollTrigger.refresh();   // a divisão muda um pouco a largura do texto (pouso da máquina)
+      });
+    });
+
+    return () => {
+      alive = false;
+      titles.forEach(title => title.classList.remove('is-split'));
     };
   }
 
