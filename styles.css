@@ -148,6 +148,14 @@ button { font: inherit; color: inherit; }
 .btn-outline-orange { border-color: var(--orange); color: var(--orange); }
 .btn-outline-orange:hover { background: var(--orange); color: var(--ink); }
 
+/* Toque/clique: todos os botões afundam de leve. O magnetismo (motion.js) usa a propriedade
+   `translate`, separada do transform, então os dois se somam sem brigar. */
+.btn:active, .barber-tab:active, .day-card:active, .slot:active,
+.menu-toggle:active, .icon-link:active, .footer-social a:active {
+  transform: scale(0.97);
+  transition: transform 120ms ease;
+}
+
 /* Lista com ícone de check (pacotes) */
 .checks li { display: flex; align-items: center; gap: var(--s-3); padding: 0.55rem 0; font-size: 1rem; font-weight: 500; }
 .checks .icon { font-size: 1.1rem; flex: none; }

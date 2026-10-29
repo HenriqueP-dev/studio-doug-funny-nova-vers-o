@@ -12,6 +12,7 @@
    3. Títulos revelados letra por letra (SplitText)
    4. Poste de barbeiro girando com a rolagem (sprite de 24 quadros)
    5. Retratos da equipe com efeito de cortina
+   6. Botões magnéticos (só com mouse)
    ========================================================================== */
 (() => {
   'use strict';
@@ -38,6 +39,7 @@
     mm.add(MOTION, ctx => splitTitles(app, ctx));
     mm.add(MOTION, () => spinPole());
     mm.add(MOTION, () => curtainTeam());
+    mm.add(`${MOTION} and (hover: hover) and (pointer: fine)`, () => magneticButtons());
 
     // posições dependem das fontes (títulos mudam de largura quando a Anton carrega)
     fontsReady.then(() => ScrollTrigger.refresh());
@@ -380,6 +382,62 @@
     });
 
     return () => batch.forEach(t => t.kill());
+  }
+
+  /* ==========================================================================
+     6. BOTÕES MAGNÉTICOS
+     Só com mouse (hover + ponteiro fino). Ficam de fora os botões da agenda (dia, horário,
+     profissional), usados muitas vezes seguidas. Até 8px na direção do cursor, via quickTo.
+     O deslocamento vai na propriedade CSS `translate`; o :active (scale) e o hover
+     (translateY) continuam no `transform`, sem conflito.
+     ========================================================================== */
+  const MAGNET_MAX = 8;
+
+  function magneticButtons() {
+    const buttons = gsap.utils.toArray('.btn-solid, .btn-outline-orange, .btn-ink, .footer-social a');
+    let hovered = null;   // só o botão sob o cursor guarda medida
+    const offs = buttons.map(button => {
+      const offset = { x: 0, y: 0 };
+      const render = () => { button.style.translate = `${offset.x.toFixed(2)}px ${offset.y.toFixed(2)}px`; };
+      const xTo = gsap.quickTo(offset, 'x', { duration: 0.35, ease: 'power3.out', onUpdate: render });
+      const yTo = gsap.quickTo(offset, 'y', { duration: 0.35, ease: 'power3.out', onUpdate: render });
+
+      // centro do botão sem o próprio deslocamento magnético; lido ao entrar, não a cada movimento
+      let box = null;
+      const measure = () => {
+        const r = button.getBoundingClientRect();
+        return { cx: r.left + r.width / 2 - offset.x, cy: r.top + r.height / 2 - offset.y, hw: r.width / 2, hh: r.height / 2 };
+      };
+      const self = { forget: () => { box = null; } };
+
+      const enter = () => { box = measure(); hovered = self; };
+      const move = event => {
+        if (!box) box = measure();   // depois de uma rolagem com o cursor parado em cima
+        let dx = (event.clientX - box.cx) / box.hw;
+        let dy = (event.clientY - box.cy) / box.hh;
+        const length = Math.hypot(dx, dy);
+        if (length > 1) { dx /= length; dy /= length; }
+        xTo(dx * MAGNET_MAX);
+        yTo(dy * MAGNET_MAX);
+      };
+      const leave = () => { box = null; if (hovered === self) hovered = null; xTo(0); yTo(0); };
+
+      button.addEventListener('pointerenter', enter);
+      button.addEventListener('pointermove', move);
+      button.addEventListener('pointerleave', leave);
+      return () => {
+        button.removeEventListener('pointerenter', enter);
+        button.removeEventListener('pointermove', move);
+        button.removeEventListener('pointerleave', leave);
+        gsap.killTweensOf(offset);
+        button.style.removeProperty('translate');
+      };
+    });
+    // se a página rolar com o cursor parado em cima, a medida antiga não vale mais
+    const forget = () => { if (hovered) hovered.forget(); };
+    window.addEventListener('scroll', forget, { passive: true });
+
+    return () => { window.removeEventListener('scroll', forget); offs.forEach(off => off()); };
   }
 
   /* Celular: só uma paralaxe leve dentro do hero (sem viagem até Serviços) */
