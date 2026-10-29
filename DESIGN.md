@@ -114,7 +114,8 @@ Números sempre `lining-nums`.
 - Não usar fotos de banco como se fossem trabalhos do Studio. A galeria usa renders 3D e diz isso.
 - Não usar texto branco sobre o laranja em tamanho pequeno.
 - Não animar todas as seções; não adicionar animação em loop infinito.
-- Não adicionar bibliotecas (GSAP, Three.js etc.). Tudo é CSS + Web Animations API.
+- Não adicionar bibliotecas além das que já estão em `vendor/` (GSAP, ScrollTrigger, SplitText e Lenis, servidas localmente). Nada por CDN. A abertura do hero continua em Web Animations API.
+- Não criar animação que só funcione com as bibliotecas: sem `vendor/`, o site precisa ficar igual ao que era antes delas.
 - Não usar a foto comercial de máquina enviada como referência: licença desconhecida.
 
 ---
@@ -123,7 +124,7 @@ Números sempre `lining-nums`.
 
 | Largura | Mudança |
 |---------|---------|
-| ≤ 1240px | Menu vira botão (painel opaco, fecha com Esc) |
+| ≤ 1240px | Menu vira botão (painel opaco, fecha com Esc). O botão vem antes do `<nav>` no HTML, então o Tab entra nos links abertos |
 | ≤ 1024px | Pacotes e formação em 1 coluna |
 | ≤ 760px | **Hero vertical**: palco no alto, texto em fluxo; máquina menor (54svh), atrás da palavra; serviços e combos em 1 coluna; galeria 2 colunas; equipe 1 coluna |
 | ≤ 480px | Some o botão do cabeçalho (o hero tem o CTA); galeria em 1 coluna |
@@ -142,10 +143,32 @@ Verificado sem rolagem horizontal em 320, 375, 390, 768, 1024, 1280, 1440 e 1920
 2. **Hero:** `.stage`, `[data-word]` (3 cópias, nesta ordem), `.clipper-pos > .clipper-mover > .clipper-buzz > .clipper`, `.cutline`, `.script`. Pose final por variáveis CSS em `.stage`: `--cx`, `--cy`, `--ch`, `--rot`, `--depth-y`, `--word-top`.
 3. **WhatsApp** `5517991052256` (em `script.js` → `WHATSAPP_NUMBER` e nos links do HTML); mensagens pré-preenchidas mantidas.
 4. **Conteúdo real:** Funny (Barbeiro & Instrutor), Miguel, Thaylor; preços, combos, turmas; endereço Rua Doutor Riolando Prado, 62, Nogueira, Barretos-SP, CEP 14783-254; horários ter–sex 08:00–12:30 e 14:00–19:00, sáb 08:00–13:30 e 15:00–18:30, dom e seg fechado; e-mail e Instagram. O horário aparece em **três lugares**, que precisam ficar iguais: seção Contato, `OPENING_HOURS` (script.js) e o JSON-LD no `<head>`.
-5. Site estático sem build: `index.html` + `styles.css` + `script.js` (`defer`); dependência externa só Google Fonts. O único script inline é o de pré-pintura (`intro-pending`) e o JSON-LD.
-6. O estado inicial da abertura só existe com JS (`html.intro-pending`); há um tempo de segurança de 4s que mostra tudo se algo falhar.
-7. **Busca e compartilhamento:** Open Graph, ícones e JSON-LD `BarberShop` no `<head>`. Quando houver domínio, troque a `og:image` por um endereço absoluto e ative `canonical`/`og:url` (há um comentário no HTML).
-8. **Pendências comerciais:** duração, datas, diferenças entre turmas e formas de pagamento do curso (comentário `CONFIRMAR COM O STUDIO` no HTML).
+5. Site estático sem build. A ordem de carregamento, toda com `defer`, é:
+   1. `index.html` + `styles.css`;
+   2. `vendor/gsap.min.js`, `vendor/ScrollTrigger.min.js`, `vendor/SplitText.min.js`, `vendor/lenis.min.js`;
+   3. `script.js`;
+   4. `motion.js`.
+
+   Dependência externa, só o Google Fonts. Os únicos scripts inline são o de pré-pintura (`intro-pending`) e o JSON-LD.
+   - **`script.js`** é a base: abertura, menu, paralaxe simples, revelação por máscara de linha e agenda. Funciona sozinho.
+   - **`motion.js`** é opcional e substitui partes da base pela ponte `window.StudioDF`:
+     - `hero.onIntroDone(cb)`: espera a abertura terminar;
+     - `hero.setExtraRotation(deg)`: rotação extra, que entra na máscara de profundidade;
+     - `hero.updateDepthMask()`;
+     - `scroll.disableParallax()`;
+     - `scroll.header`;
+     - `reveals.release(el)`: o `script.js` para de observar aquele elemento.
+   - Sem GSAP ou Lenis, ou com movimento reduzido, o `motion.js` não cria nada.
+   - Versões e licenças das bibliotecas: `vendor/LICENSES.md`. A GSAP 3.15.0 tem licença Standard "no charge", gratuita também para uso comercial; a Lenis 1.3.27 é MIT.
+6. O estado inicial da abertura só existe com JS (`html.intro-pending`); há um tempo de segurança de 4s que mostra tudo se algo falhar. **Nenhuma animação nova do hero começa antes de `intro-pending` sair** (`hero.onIntroDone`).
+7. **Seletores usados pelo `motion.js`:**
+   - títulos: `.title.reveal` (com `.line > span`) e `#servicos-title` (com `.section-head` e `.section-note`), que definem onde a máquina pousa;
+   - Serviços: `#servicos .cut-divider`;
+   - poste: `.g-pole` (com `img`);
+   - equipe: `.member-stage` (com `img` e `.member-ghost`);
+   - botões magnéticos: `.btn-solid`, `.btn-outline-orange`, `.btn-ink`, `.footer-social a`.
+8. **Busca e compartilhamento:** Open Graph, ícones e JSON-LD `BarberShop` no `<head>`. Quando houver domínio, troque a `og:image` por um endereço absoluto e ative `canonical`/`og:url` (há um comentário no HTML).
+9. **Pendências comerciais:** duração, datas, diferenças entre turmas e formas de pagamento do curso (comentário `CONFIRMAR COM O STUDIO` no HTML).
 
 **Imagens (todas próprias):**
 | Arquivo | Origem |
@@ -153,11 +176,29 @@ Verificado sem rolagem horizontal em 320, 375, 390, 768, 1024, 1280, 1440 e 1920
 | `imagens/maquina-doug-funny(-sm).webp` | `ferramentas/render_maquina.py view=hero` |
 | `imagens/maquina-detalhe.webp` | `render_maquina.py view=macro` |
 | `imagens/maquina-lamina.webp` | recorte do render do hero |
-| `imagens/poste-barbeiro.webp` | `ferramentas/render_poste.py` |
+| `imagens/poste-barbeiro.webp` | `ferramentas/render_poste.py` (quadro 0, 900×1300) |
+| `imagens/poste-sprite.webp` | `ferramentas/render_poste.py sprite=../imagens/poste-sprite.webp` (24 quadros de 450×650 lado a lado, 10800×650) |
 | `imagens/equipe-*.webp` | `ferramentas/recortar_equipe.py` sobre `funny.png`, `miguel.png`, `thaylor.png` |
 | `favicon.ico`, `imagens/icone-*.png`, `imagens/compartilhamento.jpg` | `ferramentas/gerar_icones.py` |
 
 Passo a passo para gerar de novo cada arquivo: **`ferramentas/README.md`**. Renders 3D: `pip install bpy` (Blender 5.x como módulo Python); converter PNG → WebP (qualidade ~84).
+
+**Regenerar o sprite do poste:**
+- O `bpy` 5.x só existe para **Python 3.11**. Se o Python do sistema for outro, crie um ambiente com `uv`:
+  ```bash
+  pip install uv
+  python -m uv venv --python 3.11 .bpyenv
+  python -m uv pip install --python .bpyenv/Scripts/python.exe bpy pillow
+  cd ferramentas
+  ../.bpyenv/Scripts/python.exe render_poste.py sprite=../imagens/poste-sprite.webp
+  ```
+- O render leva cerca de 5 min na CPU.
+- Opções:
+  - `frames=24`: número de quadros;
+  - `res=450x650`: tamanho de cada quadro;
+  - `samples=96`: amostras do render;
+  - `frame=N out=x.png`: renderiza um quadro só.
+- Se mudar `frames` ou `res`, atualize `POLE_FRAMES` em `motion.js` e `aspect-ratio` e `background-size` em `.pole-sprite` (`styles.css`).
 
 ---
 
@@ -173,9 +214,26 @@ Passo a passo para gerar de novo cada arquivo: **`ferramentas/README.md`**. Rend
 
 **Profundidade:** a cópia da palavra "na frente" é recortada por um semiplano perpendicular ao eixo da máquina, calculado em JS (`updateDepthMask`) a partir da altura `--depth-y`. Acima dela a máquina fica na frente; abaixo, atrás.
 
-**Rolagem:** só enquanto o hero está visível (IntersectionObserver): máquina desce 0,42× e gira levemente; palavra sobe 0,14×. Ao entrar em Serviços, uma linha laranja "corta" o topo da seção. Títulos de seção sobem de uma máscara (uma vez).
+**Base sem bibliotecas (`script.js`):** só enquanto o hero está visível (IntersectionObserver): a máquina desce 0,42× e gira levemente, e a palavra sobe 0,14×. Ao entrar em Serviços, uma linha laranja "corta" o topo da seção. Os títulos sobem de uma máscara por linha, uma vez. É o que roda quando `vendor/` não carrega.
 
-**Movimento reduzido:** nada anima; tudo aparece no estado final. Apenas `transform`, `opacity` e `clip-path` são animados.
+**Camada de movimento (`motion.js`, GSAP + ScrollTrigger + SplitText + Lenis).** Tudo é criado com `gsap.matchMedia()`: ao trocar de largura ou de preferência de movimento, o que existia é desfeito.
+
+| # | Animação | Como | Valores |
+|---|----------|------|---------|
+| 1 | **Rolagem suave** | Lenis no ticker da GSAP (`lenis.raf(t*1000)`, `lagSmoothing(0)`), `lenis.on('scroll', ScrollTrigger.update)` | Só a roda do mouse fica suave; toque e teclado são nativos. Links `#…` usam `lenis.scrollTo` e param logo abaixo do cabeçalho; o foco vai para a seção. "Pular para o conteúdo" é nativo. `html.lenis` desliga o `scroll-behavior` |
+| 2 | **Máquina conduz até Serviços** (desktop > 760px) | ScrollTrigger `scrub: 0.6`, do topo do hero até o centro de `#servicos-title` a 40% da tela; altera `--px/--py/--pr/--ps` e `opacity` de `.clipper-pos` | 0–80% do trajeto: desce na diagonal, gira −16° e diminui (`power2.inOut`). 80–100%: some (`power1.in`). A linha `.cut-divider` é desenhada de 45% a 80%, chegando junto com a máquina. "BARBEARIA" fica para trás 0,22× (paralaxe). O pouso é calculado no espaço livre à direita do texto do título, acima da nota; a escala fica entre 0,16 e 0,35, ajustada para caber, e é recalculada a cada refresh, não a cada quadro |
+| 2b | **Paralaxe leve** (celular ≤ 760px) | ScrollTrigger `scrub`, dentro do hero recortado | A máquina desce 0,28× a altura do hero e gira 8°; a palavra fica para trás 0,12× |
+| 3 | **Títulos letra por letra** | SplitText `words,chars`, `mask: 'chars'`, `aria: 'hidden'` e `aria-label` no `<h2>`; divide depois de `document.fonts.ready` (até 2,5s); `autoSplit` | `yPercent 110 → 0`, 0,7s, stagger 0,02s, `expo.out`; a 2ª linha (itálico/contorno) entra 0,1s depois; uma vez (`once`, `top 82%`). A máscara tem folga (`.title-char-mask`) para não cortar Ç/Ã/Á nem o itálico. Substitui a máscara por linha (`.is-split`) |
+| 4 | **Poste gira com a rolagem** | `.pole-sprite` por cima da foto, mesmo enquadramento (cover 50% 40%, unidades `cq`); sprite de 24 quadros | Três ciclos de listras enquanto o quadro atravessa a tela; `background-position` em passos inteiros, escrito só quando o quadro muda. O sprite é baixado 600px antes de aparecer e mostrado depois de decodificado |
+| 5 | **Cortina na equipe** | `ScrollTrigger.batch(.member-stage)`, uma vez | `clip-path inset(100% 0 0 0) → inset(0)`, 0,9s, `power4.out`, stagger 0,12s. A foto vai de `--photo-shift` 8% a 0 e o nome em contorno de `--ghost-shift` −35% a 0, ambos pela propriedade CSS `translate`; o `transform` do hover não é tocado |
+| 6 | **Botões magnéticos** (só `(hover: hover) and (pointer: fine)`) | `gsap.quickTo` num objeto, que escreve a propriedade CSS `translate` | Até 8px na direção do cursor, 0,35s, `power3.out`; volta a 0 ao sair. Vale para `.btn-solid`, `.btn-outline-orange`, `.btn-ink` e os ícones sociais do rodapé, não para a agenda. `:active` de todos os botões: `transform: scale(.97)`, 120ms `ease`. São propriedades separadas, então não brigam |
+
+**Desempenho:**
+- As animações usam só `transform`/`translate`, `opacity` e `clip-path`. A exceção é o quadro do poste (`background-position`, pedido assim, repinta só aquele quadro).
+- O `will-change` da máquina só existe enquanto a viagem está ativa.
+- A máscara de profundidade lê dois retângulos por quadro, e só enquanto o hero está na tela; os valores de pose (`--rot`, `--depth-y`) ficam em cache até o próximo resize.
+
+**Movimento reduzido:** nada anima e tudo aparece no estado final. O `motion.js` não cria nada (nem Lenis, nem divisão de títulos, nem cortina, nem magnetismo), e o poste mostra a foto parada, que é o quadro 0 do sprite.
 
 ---
 

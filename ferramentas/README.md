@@ -57,3 +57,25 @@ Gera `favicon.ico`, `imagens/icone-32.png`, `imagens/icone-180.png` (iPhone), `i
 
 Precisam do Blender como módulo Python (`pip install bpy`). As instruções estão no topo de cada script.
 Converta o PNG para WebP (qualidade ~84) com o mesmo nome usado em `index.html`.
+
+O `bpy` 5.x só é publicado para **Python 3.11**. Se o Python do sistema for outro, crie um ambiente à
+parte (a pasta `.bpyenv/` está no `.gitignore`):
+
+```bash
+pip install uv
+python -m uv venv --python 3.11 .bpyenv
+python -m uv pip install --python .bpyenv/Scripts/python.exe bpy pillow
+```
+
+### Sprite do poste (animação da galeria)
+
+```bash
+cd ferramentas
+../.bpyenv/Scripts/python.exe render_poste.py sprite=../imagens/poste-sprite.webp   # ~5 min na CPU
+../.bpyenv/Scripts/python.exe render_poste.py frame=6 out=teste.png                 # um quadro, para conferir
+```
+
+O comando gera 24 quadros de 450×650, juntos lado a lado em `imagens/poste-sprite.webp` (10800×650).
+Cada quadro desloca a fase das listras em 1/24 de meia volta, então a sequência fecha um laço, e o
+quadro 0 é igual a `poste-barbeiro.webp`. Se mudar `frames` ou `res`, ajuste `POLE_FRAMES` em
+`motion.js` e `.pole-sprite` em `styles.css`.
