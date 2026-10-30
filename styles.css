@@ -788,3 +788,76 @@ button { font: inherit; color: inherit; }
   .js .reveal:not(.is-in) .line > span { transform: none; }
   .js .cut-divider:not(.is-in) { transform: none; }
 }
+
+/* ==========================================================================
+   10. LIGHT THEME PREVIEW (branch experimento/tema-claro)
+   This section changes colors and surfaces only; existing motion code is unchanged.
+   The hero keeps its original cinematic dark backdrop.
+   ========================================================================== */
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #F5F1EB;
+  --bg-2: #EAE4DC;
+  --surface: #FFFCF8;
+  --line: #D2C9BE;
+  --orange: #A93806;
+  --orange-hi: #8F3104;
+  --orange-fill: #FF5500;
+  --orange-fill-hover: #FF7433;
+  --ink: #211811;
+  --text: #211B17;
+  --muted: #62574E;
+}
+
+[data-theme="light"] .hero {
+  --text: #F5F3F0;
+  --muted: #C7BEB4;
+  color: var(--text);
+}
+[data-theme="light"] .header:not(.is-solid) { color: #F5F3F0; }
+[data-theme="light"] .header:not(.is-solid) .brand-sub,
+[data-theme="light"] .header:not(.is-solid) .nav-link,
+[data-theme="light"] .header:not(.is-solid) .icon-link { color: rgba(245, 243, 240, 0.88); }
+[data-theme="light"] .header:not(.is-solid) .menu-toggle { color: #F5F3F0; border-color: rgba(245, 243, 240, 0.5); background: rgba(10, 10, 10, 0.6); }
+[data-theme="light"] .header.is-solid { color: var(--text); background: rgba(255, 252, 248, 0.94); }
+[data-theme="light"] .header.is-solid .brand-sub,
+[data-theme="light"] .header.is-solid .nav-link,
+[data-theme="light"] .header.is-solid .icon-link { color: var(--muted); }
+[data-theme="light"] .header.is-solid .nav-link:hover,
+[data-theme="light"] .header.is-solid .nav-link[aria-current="true"],
+[data-theme="light"] .header.is-solid .icon-link:hover { color: var(--orange); }
+[data-theme="light"] .header.is-solid .menu-toggle { color: var(--text); background: var(--surface); }
+[data-theme="light"] .nav-menu.is-open .nav-link { color: var(--text); }
+[data-theme="light"] .nav-menu.is-open .nav-link:hover,
+[data-theme="light"] .nav-menu.is-open .nav-link[aria-current="true"] { color: var(--orange); }
+[data-theme="light"] .nav-link { color: var(--text); }
+[data-theme="light"] .btn-line { border-color: rgba(33, 27, 23, 0.45); color: var(--text); }
+[data-theme="light"] .btn-line:hover { border-color: var(--orange); color: var(--orange); }
+[data-theme="light"] .btn-solid,
+[data-theme="light"] .btn-outline-orange:hover { background: var(--orange-fill); border-color: var(--orange-fill); color: var(--ink); }
+[data-theme="light"] .btn-solid:hover,
+[data-theme="light"] .btn-outline-orange:hover { background: var(--orange-fill-hover); border-color: var(--orange-fill-hover); }
+[data-theme="light"] .btn-ink:hover { background: #342920; }
+[data-theme="light"] .hero-since { color: #C7BEB4; }
+[data-theme="light"] .hero-since strong { color: #F5F3F0; }
+[data-theme="light"] .team-section { background: radial-gradient(70% 60% at 50% 100%, rgba(200, 70, 10, 0.10), transparent 70%), var(--bg); }
+[data-theme="light"] .member-stage { background: radial-gradient(65% 60% at 50% 62%, rgba(200, 70, 10, 0.22), transparent 74%), #E5DDD3; }
+[data-theme="light"] .member-stage::after { background: linear-gradient(180deg, transparent, rgba(33, 27, 23, 0.18)); }
+[data-theme="light"] .member-ghost { -webkit-text-stroke-color: rgba(33, 27, 23, 0.35); }
+[data-theme="light"] .agenda-notice { background: rgba(200, 70, 10, 0.07); }
+[data-theme="light"] .agenda-summary { background: radial-gradient(120% 80% at 100% 0%, rgba(200, 70, 10, 0.10), transparent 60%), var(--surface); }
+[data-theme="light"] .pass,
+[data-theme="light"] .course-section { background: var(--orange-fill); }
+[data-theme="light"] .barber-tab[aria-pressed="true"],
+[data-theme="light"] .day-card[aria-pressed="true"],
+[data-theme="light"] .slot[aria-pressed="true"] { background: var(--orange-fill); border-color: var(--orange-fill); color: var(--ink); }
+[data-theme="light"] .g-insta { background: var(--orange-fill); border-color: var(--orange-fill); }
+[data-theme="light"] .g-insta:hover { background: var(--orange-fill-hover); border-color: var(--orange-fill-hover); }
+[data-theme="light"] .g-tile { background: #D9D0C5; }
+[data-theme="light"] .g-tag { border-color: rgba(255, 252, 248, 0.4); background: rgba(33, 27, 23, 0.76); color: #FFFCF8; }
+[data-theme="light"] .g-caption { color: #FFFCF8; }
+[data-theme="light"] .barber-avatar { background: #D8CFC5; }
+
+@media (max-width: 1240px) {
+  [data-theme="light"] .header:not(.is-solid) { background: rgba(10, 10, 10, 0.82); }
+}
