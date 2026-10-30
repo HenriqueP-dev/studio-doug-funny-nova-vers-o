@@ -12,7 +12,11 @@
        Fica inline de propósito: em arquivo externo a página piscaria no estado final. -->
   <script>
     document.documentElement.classList.add('js');
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('intro-pending');
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.documentElement.classList.add('intro-pending');
+      // segurança: se script.js não chegar a rodar (arquivo bloqueado ou rede caída), o hero não fica vazio
+      setTimeout(function () { if (!window.StudioDFHero) document.documentElement.classList.remove('intro-pending'); }, 5000);
+    }
   </script>
 
   <!-- Ícones (gerados por ferramentas/gerar_icones.py) -->
@@ -152,6 +156,8 @@
         <span class="hero-beam"></span>
         <span class="hero-grain"></span>
       </div>
+      <!-- cortina preta da abertura: some e "acende" a luz sem redesenhar o fundo (ver styles.css) -->
+      <span class="hero-dark" aria-hidden="true"></span>
 
       <h1 id="hero-title" class="sr-only">Studio Doug Funny: Barbearia &amp; Formação Profissional em Barretos-SP</h1>
 

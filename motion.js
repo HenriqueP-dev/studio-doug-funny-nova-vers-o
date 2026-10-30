@@ -13,6 +13,9 @@
    4. Poste de barbeiro girando com a rolagem (sprite de 24 quadros)
    5. Retratos da equipe com efeito de cortina
    6. Botões magnéticos (só com mouse)
+   7. Profundidade pelo ponteiro no hero (só com mouse, desktop)
+   8. Entradas das seções (papéis por tipo de conteúdo)
+   9. Agenda: retorno visual ao trocar de profissional, dia e horário
    ========================================================================== */
 (() => {
   'use strict';
@@ -40,6 +43,10 @@
     mm.add(MOTION, () => spinPole());
     mm.add(MOTION, () => curtainTeam());
     mm.add(`${MOTION} and (hover: hover) and (pointer: fine)`, () => magneticButtons());
+    mm.add(`${DESKTOP} and (hover: hover) and (pointer: fine)`, ctx => pointerDepth(app, ctx));
+    mm.add(DESKTOP, () => sectionEntrances(false));
+    mm.add(MOBILE, () => sectionEntrances(true));
+    mm.add(MOTION, () => agendaFeedback());
 
     // posições dependem das fontes (títulos mudam de largura quando a Anton carrega)
     fontsReady.then(() => ScrollTrigger.refresh());
@@ -153,7 +160,12 @@
     const head = els.head.getBoundingClientRect();
     const titleBox = els.title.getBoundingClientRect();
     const wrap = els.head.parentElement.getBoundingClientRect();
-    const note = els.note && els.note.getBoundingClientRect();
+    // a nota pode estar no meio (ou antes) da própria entrada (seção 8): mede a posição de repouso
+    const noteBox = els.note && els.note.getBoundingClientRect();
+    const note = noteBox && {
+      left: noteBox.left - (parseFloat(gsap.getProperty(els.note, 'x')) || 0),
+      top: noteBox.top - (parseFloat(gsap.getProperty(els.note, 'y')) || 0)
+    };
     const gap = 32;
 
     const left = textRight + gap;
@@ -229,11 +241,18 @@
         ease: 'none',
         scrollTrigger: { trigger: hero.el, start: 'top top', end: 'bottom top', scrub: true, invalidateOnRefresh: true }
       });
+      // saída em camadas: o texto e os botões sobem mais rápido que a página e perdem força,
+      // enquanto a palavra fica para trás e a máquina segue para Serviços
+      gsap.to(['.hero-copy', '.hero-since'], {
+        y: -90, opacity: 0.3, ease: 'none',
+        scrollTrigger: { trigger: hero.el, start: 'top top', end: 'bottom top', scrub: true }
+      });
       apply();
     });
 
     return () => {
       stopWaiting();
+      gsap.set(['.hero-copy', '.hero-since'], { clearProps: 'transform,opacity' });
       hero.el.classList.remove('is-traveling');
       ['--px', '--py', '--pr', '--ps', 'will-change'].forEach(p => hero.clipperPos.style.removeProperty(p));
       hero.clipperPos.style.opacity = '1';
@@ -375,7 +394,7 @@
         const ghosts = entered.map(s => parts(s)[1]).filter(Boolean);
         const common = { duration: 0.9, ease: 'power4.out', stagger: 0.12 };
         gsap.set(photos, { willChange: 'translate' });
-        gsap.to(entered, { ...common, clipPath: 'inset(0% 0% 0% 0%)' });
+        gsap.to(entered, { ...common, clipPath: 'inset(0% 0% 0% 0%)', clearProps: 'clipPath' });
         gsap.to(photos, { ...common, '--photo-shift': '0%', onComplete: () => gsap.set(photos, { willChange: 'auto' }) });
         gsap.to(ghosts, { ...common, '--ghost-shift': '0%' });
       }
@@ -438,6 +457,231 @@
     window.addEventListener('scroll', forget, { passive: true });
 
     return () => { window.removeEventListener('scroll', forget); offs.forEach(off => off()); };
+  }
+
+  /* ==========================================================================
+     7. PROFUNDIDADE PELO PONTEIRO NO HERO (só mouse, desktop)
+     Depois da abertura, as camadas do palco respondem ao ponteiro em velocidades diferentes:
+     contorno da palavra para trás, palavra sólida, assinatura e máquina para a frente. Só escreve
+     duas variáveis (--mx/--my, de -1 a 1) no .hero; cada camada as converte em `translate` no CSS,
+     e .has-depth as promove a camadas próprias (só recompor, sem redesenhar). Máquina e palavra
+     andam no máximo 6px uma em relação à outra, então a máscara de profundidade não precisa ser
+     refeita a cada quadro (seria redesenhar a palavra gigante). Ao rolar para fora, tudo volta ao centro.
+     ========================================================================== */
+  function pointerDepth(app, ctx) {
+    const { hero } = app;
+    const state = { x: 0, y: 0 };
+    let xTo = null, yTo = null, active = false;
+    const center = () => { if (xTo) { xTo(0); yTo(0); } };
+    const move = event => {
+      if (!active || !xTo) return;
+      if (window.scrollY > hero.el.offsetHeight * 0.15) { center(); return; }
+      xTo(clamp(-1, 1, (event.clientX / window.innerWidth) * 2 - 1));
+      yTo(clamp(-1, 1, (event.clientY / window.innerHeight) * 2 - 1));
+    };
+    const stopWaiting = afterIntro(app, ctx, () => {
+      hero.el.classList.add('has-depth');
+      const apply = () => {
+        hero.el.style.setProperty('--mx', state.x.toFixed(3));
+        hero.el.style.setProperty('--my', state.y.toFixed(3));
+      };
+      xTo = gsap.quickTo(state, 'x', { duration: 1.2, ease: 'power3.out', onUpdate: apply });
+      yTo = gsap.quickTo(state, 'y', { duration: 1.2, ease: 'power3.out', onUpdate: apply });
+      ScrollTrigger.create({
+        trigger: hero.el, start: 'top top', end: '15% top',
+        onToggle: self => { active = self.isActive; if (!active) center(); }
+      });
+      active = window.scrollY <= hero.el.offsetHeight * 0.15;
+    });
+    window.addEventListener('pointermove', move, { passive: true });
+    document.documentElement.addEventListener('pointerleave', center);
+
+    return () => {
+      stopWaiting();
+      window.removeEventListener('pointermove', move);
+      document.documentElement.removeEventListener('pointerleave', center);
+      gsap.killTweensOf(state);
+      hero.el.classList.remove('has-depth');
+      hero.el.style.removeProperty('--mx');
+      hero.el.style.removeProperty('--my');
+      hero.updateDepthMask();
+    };
+  }
+
+  /* ==========================================================================
+     8. ENTRADAS DAS SEÇÕES
+     Uma linguagem só, com papéis por tipo de conteúdo (DESIGN.md §10):
+     - rótulo: a linha laranja se desenha e o texto chega da esquerda
+     - texto: sobe e aparece (expo.out)
+     - linhas de lista (serviços, combos, horário): "corte" horizontal da esquerda para a direita,
+       o mesmo gesto da máquina no hero
+     - imagens: cortina de baixo para cima com um zoom que assenta (como a cortina da equipe)
+     - momentos próprios: o ingresso do pacote destaque recebe o carimbo; o "Doug Funny" do rodapé
+       sobe junto com o fim da página
+     Tudo acontece uma vez (once) e termina limpando os estilos em linha (clearProps), então o
+     hover e as transições do CSS voltam intactos. Sem GSAP ou com movimento reduzido, nada disto
+     existe e o conteúdo fica sempre visível.
+     ========================================================================== */
+  const CLEAR = 'opacity,transform,transition';
+
+  /* Elementos ainda escondidos, com o estado final de cada um. Serve ao teclado: o Tab rola a página só
+     até o elemento encostar na borda de baixo, antes do ponto em que a entrada dispara, e o foco cairia
+     num botão invisível (WCAG 2.4.7). Se o foco entra num elemento pendente, ele aparece na hora. */
+  const pending = new Map();
+  const hold = (el, to, clear) => pending.set(el, { to, clear });
+  const revealFocused = event => {
+    for (let el = event.target; el && el !== document.body; el = el.parentElement) {
+      const entry = pending.get(el);
+      if (!entry) continue;
+      pending.delete(el);
+      gsap.to(el, { ...entry.to, duration: 0.35, ease: 'power2.out', overwrite: 'auto', clearProps: entry.clear });
+    }
+  };
+
+  /* Esconde os alvos e os revela em grupos quando entram na tela (ScrollTrigger.batch). */
+  function enter(targets, from, to, opts = {}) {
+    const els = gsap.utils.toArray(targets);
+    if (!els.length) return [];
+    gsap.set(els, from);
+    els.forEach(el => hold(el, to, opts.clear || CLEAR));
+    return ScrollTrigger.batch(els, {
+      start: opts.start || 'top 88%',
+      once: true,
+      interval: 0.1,
+      onEnter: batch => {
+        batch.forEach(el => pending.delete(el));
+        gsap.to(batch, {
+          ...to,
+          duration: opts.duration || 0.9,
+          ease: opts.ease || 'expo.out',
+          stagger: opts.stagger === undefined ? 0.08 : opts.stagger,
+          delay: opts.delay || 0,
+          overwrite: 'auto',
+          clearProps: opts.clear || CLEAR
+        });
+      }
+    });
+  }
+
+  function sectionEntrances(mobile) {
+    const d = mobile ? 24 : 40;
+    const rise = { opacity: 0, y: d, transition: 'none' };
+    const risen = { opacity: 1, y: 0 };
+    const triggers = [];
+    const add = list => triggers.push(...list);
+
+    // rótulos (eyebrow): texto da esquerda, linha laranja desenhada (variável --line no CSS)
+    add(enter('.section .eyebrow', { opacity: 0, x: -14, '--line': 0 }, { opacity: 1, x: 0, '--line': 1 },
+      { duration: 1.1, clear: 'opacity,transform,--line' }));
+
+    // texto corrido e blocos de apoio
+    add(enter('.section-note, .gallery-note, .combos-head h3, .cta-band > p, .cta-band > .btn, .contact-col > h3', rise, risen));
+
+    // linhas de lista: corte horizontal (a folga vertical não corta acentos nem o itálico)
+    add(enter('.service, .combo, .hours-row',
+      { clipPath: 'inset(-20% 100% -20% 0%)' }, { clipPath: 'inset(-20% 0% -20% 0%)' },
+      { duration: 1.1, stagger: 0.05, delay: 0.15, clear: 'clipPath' }));   // o título da coluna chega antes
+
+    // pacotes: o ingresso chega e recebe o carimbo; os cartões laterais vêm logo depois
+    const pass = document.querySelector('.pass');
+    if (pass) {
+      const stamp = pass.querySelector('.stamp');
+      gsap.set(pass, { opacity: 0, y: d * 1.6, rotation: mobile ? 0 : 1.2, transformOrigin: '0% 100%' });
+      if (stamp) gsap.set(stamp, { opacity: 0, scale: 1.9, rotation: -40 });
+      hold(pass, { opacity: 1, y: 0, rotation: 0 }, 'opacity,transform,transformOrigin');
+      if (stamp) hold(stamp, { opacity: 1, scale: 1, rotation: -12 }, 'opacity,transform');
+      triggers.push(ScrollTrigger.create({
+        trigger: pass, start: 'top 85%', once: true,
+        onEnter: () => {
+          pending.delete(pass); pending.delete(stamp);
+          gsap.to(pass, { opacity: 1, y: 0, rotation: 0, duration: 1.1, ease: 'expo.out', clearProps: 'opacity,transform,transformOrigin' });
+          if (stamp) gsap.to(stamp, { opacity: 1, scale: 1, rotation: -12, duration: 0.45, delay: 0.55, ease: 'back.out(2.2)', clearProps: 'opacity,transform' });
+        }
+      }));
+    }
+    add(enter('.packs-side .pack', rise, risen, { delay: mobile ? 0 : 0.2, stagger: 0.12, duration: 1 }));
+
+    // formação: texto em sequência, pílulas e linhas da tabela
+    add(enter('.course-stat, .course-name, .course-text, .turmas-note, .course .btn-ink', rise, risen));
+    add(enter('.topics li, .perks li', { opacity: 0, y: 14 }, { opacity: 1, y: 0 },
+      { stagger: 0.04, duration: 0.7, ease: 'power3.out' }));
+    add(enter('.turmas caption, .turmas tr', { opacity: 0, y: 16 }, risen, { stagger: 0.07 }));
+
+    // imagens: cortina de baixo para cima; a foto assenta de um zoom (variável --zoom no CSS)
+    const media = gsap.utils.toArray('.g-pole, .g-detail, .g-blade, .course-figure');
+    const zoomed = el => !el.classList.contains('g-pole');   // o poste tem o sprite por cima, sem zoom
+    const restZoom = el => (!mobile && (el.classList.contains('g-detail') || el.classList.contains('g-blade')) ? 1.12 : 1);
+    if (media.length) {
+      gsap.set(media, { clipPath: 'inset(100% 0% 0% 0%)' });
+      media.filter(zoomed).forEach(el => gsap.set(el, { '--zoom': restZoom(el) + 0.2 }));
+      media.forEach(el => hold(el, { clipPath: 'inset(0% 0% 0% 0%)', '--zoom': restZoom(el) }, 'clipPath'));
+      triggers.push(...ScrollTrigger.batch(media, {
+        start: 'top 85%', once: true, interval: 0.1,
+        onEnter: batch => {
+          batch.forEach(el => pending.delete(el));
+          gsap.to(batch, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.3, ease: 'expo.out', stagger: 0.12, clearProps: 'clipPath' });
+          batch.filter(zoomed).forEach((el, i) => gsap.to(el, { '--zoom': restZoom(el), duration: 1.8, delay: i * 0.12, ease: 'expo.out' }));
+        }
+      }));
+    }
+    add(enter('.course-figure figcaption, .g-insta', rise, risen, { delay: 0.25 }));
+
+    // desktop: dentro das molduras, as fotos andam mais devagar que a página (profundidade)
+    if (!mobile) {
+      gsap.utils.toArray('.g-detail, .g-blade').forEach(tile => {
+        gsap.fromTo(tile, { '--drift': '-5%' }, {
+          '--drift': '5%', ease: 'none',
+          scrollTrigger: { trigger: tile, start: 'top bottom', end: 'bottom top', scrub: true }
+        });
+      });
+    }
+
+    // equipe: nome e função depois da cortina do retrato
+    add(enter('.member-info', rise, risen, { delay: 0.35, stagger: 0.12, start: 'top 95%' }));
+
+    // agenda: aviso, passos, horários e resumo, em ordem de leitura
+    add(enter('.agenda-notice, .agenda-controls > div, #agenda-step-time, .agenda-periods, .agenda-summary', rise, risen, { stagger: 0.1 }));
+
+    // contato e rodapé
+    add(enter('.info-item', rise, risen, { stagger: 0.06 }));
+    add(enter('.footer-top > *, .footer-copy', { opacity: 0, y: 20, transition: 'none' }, risen, { stagger: 0.08, start: 'top 98%' }));
+    const mark = document.querySelector('.footer-mark');
+    if (mark) {
+      gsap.fromTo(mark, { yPercent: 45, opacity: 0.25 }, {
+        yPercent: 0, opacity: 1, ease: 'none',
+        scrollTrigger: { trigger: '.footer', start: 'top bottom', end: 'bottom bottom', scrub: true }
+      });
+    }
+
+    document.addEventListener('focusin', revealFocused);
+    return () => {
+      document.removeEventListener('focusin', revealFocused);
+      pending.clear();
+      triggers.forEach(t => t.kill());
+    };
+  }
+
+  /* ==========================================================================
+     9. AGENDA: RETORNO VISUAL
+     Ao trocar de profissional ou de dia, os novos horários entram em sequência curta (continuidade:
+     dá para ver que a lista mudou). Ao escolher um horário, o resumo pisca em laranja no valor que
+     mudou. A seleção em si (pulso da pílula) é CSS, então também funciona sem GSAP.
+     script.js só refaz a lista quando o conteúdo muda, então nada pisca na atualização de minuto.
+     ========================================================================== */
+  function agendaFeedback() {
+    const lists = ['#slots-morning', '#slots-afternoon'].map(s => document.querySelector(s)).filter(Boolean);
+    const summary = ['#summary-barber', '#summary-day', '#summary-time'].map(s => document.querySelector(s)).filter(Boolean);
+    const slotsObserver = new MutationObserver(records => {
+      const added = records.flatMap(r => [...r.addedNodes]).filter(n => n.nodeType === 1);
+      if (added.length) gsap.fromTo(added, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: 'power3.out', stagger: 0.025, clearProps: 'opacity,transform' });
+    });
+    lists.forEach(list => slotsObserver.observe(list, { childList: true }));
+    const summaryObserver = new MutationObserver(records => {
+      const changed = [...new Set(records.map(r => (r.target.nodeType === 1 ? r.target : r.target.parentElement)))];
+      changed.forEach(el => gsap.fromTo(el, { color: '#FF7433' }, { color: '#F5F3F0', duration: 0.9, ease: 'power2.out', clearProps: 'color' }));
+    });
+    summary.forEach(el => summaryObserver.observe(el, { childList: true, characterData: true, subtree: true }));
+    return () => { slotsObserver.disconnect(); summaryObserver.disconnect(); };
   }
 
   /* Celular: só uma paralaxe leve dentro do hero (sem viagem até Serviços) */

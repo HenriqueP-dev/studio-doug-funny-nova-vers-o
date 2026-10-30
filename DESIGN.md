@@ -113,7 +113,7 @@ Números sempre `lining-nums`.
 ### Don't
 - Não usar fotos de banco como se fossem trabalhos do Studio. A galeria usa renders 3D e diz isso.
 - Não usar texto branco sobre o laranja em tamanho pequeno.
-- Não animar todas as seções; não adicionar animação em loop infinito.
+- Não inventar um efeito novo por seção: toda entrada usa um dos papéis da §10 (rótulo, texto, linha de lista, imagem) ou um momento próprio já documentado. Nada de animação em loop infinito, nada que suma ao rolar de volta.
 - Não adicionar bibliotecas além das que já estão em `vendor/` (GSAP, ScrollTrigger, SplitText e Lenis, servidas localmente). Nada por CDN. A abertura do hero continua em Web Animations API.
 - Não criar animação que só funcione com as bibliotecas: sem `vendor/`, o site precisa ficar igual ao que era antes delas.
 - Não usar a foto comercial de máquina enviada como referência: licença desconhecida.
@@ -204,13 +204,27 @@ Passo a passo para gerar de novo cada arquivo: **`ferramentas/README.md`**. Rend
 
 ## 10. Motion
 
-**A abertura (≈2,4s):**
-1. 0,08s — letras de "BARBEARIA" em **contorno** sobem da máscara (700ms, escalonadas 45ms).
-2. 0,45s — a máquina entra pela direita, **deitada (-86°)**, atravessa a palavra e se endireita na diagonal (-32°): 1500ms, `cubic-bezier(.22,.8,.2,1)`.
-3. Por onde a máquina passa, a palavra fica **sólida** (recorte acompanhado quadro a quadro) e uma linha laranja marca a borda do corte.
-4. A 80% do trajeto, a linha de corte termina de atravessar a palavra (480ms).
-5. Ao pousar: vibração curta (320ms) e brilho, como se a máquina fosse ligada.
-6. 1,05s — texto e CTAs aparecem; 1,5s — "Doug Funny" é pintado (650ms).
+**Linguagem de movimento.** Um gesto central, o **corte**: algo atravessa da esquerda para a direita (ou é atravessado pela lâmina) e deixa o conteúdo para trás. Ele aparece na abertura, na linha que liga o hero a Serviços, nas linhas de lista, na varredura dos botões, no sublinhado do menu e na abertura do menu do celular.
+
+| Papel | Tempo | Curva |
+|-------|-------|-------|
+| Expressivo (abertura, entradas de seção, imagens) | 0,7–1,3s (imagens até 1,8s no zoom) | `expo.out` / `cubic-bezier(.16,1,.3,1)` (`--ease-out`) |
+| Reposição (máquina assentando, corte, assinatura) | 0,45–0,75s | `cubic-bezier(.65,0,.35,1)` (`--ease-io`) |
+| Retorno de ação (pulso da agenda, varredura, sublinhado) | 0,32–0,5s | `--ease-out` |
+| Toque (`:active`) | 120ms | `ease` |
+
+Escalonamento de 0,04–0,12s entre itens do mesmo grupo. Tudo acontece **uma vez**; ao rolar de volta, nada desaparece.
+
+**A abertura (≈2,9s no desktop, 2,7s no celular).** Toda em Web Animations API (`script.js`), sem `setTimeout` no cronograma: cada passo é uma animação com `delay`, então a sequência inteira obedece ao mesmo relógio (e pode ser testada em câmera lenta).
+1. 0s: a **luz acende**. Uma cortina preta sólida (`.hero-dark`) perde a opacidade em 1,2s. Não se anima o `.hero-bg`: ele tem granulação em `mix-blend-mode` e feixe com `blur`, e animá-lo redesenha a tela inteira a cada quadro.
+2. 0,12s: letras de "BARBEARIA" em **contorno** sobem da máscara (750ms, escalonadas 40ms).
+3. 0,42s: a máquina entra **totalmente de fora da tela**, à direita e acima, deitada (−88°; −80° no celular) e **maior** (escala 1,22; 1,12 no celular), como se viesse da câmera. Ela arqueia, passa um pouco do ponto (−2,5°, escala 0,992) e assenta na diagonal (−32°). Duração 1550ms (1400ms no celular), curvas por trecho.
+4. Por onde a **ponta da lâmina** passa (alto da imagem, calculado pelo ângulo real a cada quadro), a palavra fica **sólida**. O corte nunca volta. A cópia da frente aparece **só atrás da lâmina**, com a profundidade do ângulo atual (antes ela aparecia sólida adiantada, e no celular a palavra ficava sólida, depois contorno, depois sólida).
+5. A 70% do trajeto, a linha laranja termina de atravessar a palavra (480ms).
+6. Ao pousar (≈1,97s): vibração (320ms), brilho e um **reflexo de luz** que percorre o metal das letras, da esquerda para a direita (700ms por letra, escalonado 38ms; faixa de `background-position` em cada letra, fora dela em repouso).
+7. 1,15s: rótulo, frase, botões e "2014" entram em sequência (800ms, +80ms cada). 1,6s: "Doug Funny" é pintado com **borda de pincel inclinada** (`clip-path: polygon`, 750ms).
+
+Seguranças: o texto cru da palavra fica invisível até ser dividido em letras (`.word:not(.is-split)`). Se `script.js` não rodar em 5s, o `<head>` tira o `intro-pending` (o hero nunca fica vazio). Se a imagem da máquina travar, o estado final aparece em 4s.
 
 **Profundidade:** a cópia da palavra "na frente" é recortada por um semiplano perpendicular ao eixo da máquina, calculado em JS (`updateDepthMask`) a partir da altura `--depth-y`. Acima dela a máquina fica na frente; abaixo, atrás.
 
@@ -227,13 +241,46 @@ Passo a passo para gerar de novo cada arquivo: **`ferramentas/README.md`**. Rend
 | 4 | **Poste gira com a rolagem** | `.pole-sprite` por cima da foto, mesmo enquadramento (cover 50% 40%, unidades `cq`); sprite de 24 quadros | Três ciclos de listras enquanto o quadro atravessa a tela; `background-position` em passos inteiros, escrito só quando o quadro muda. O sprite é baixado 600px antes de aparecer e mostrado depois de decodificado |
 | 5 | **Cortina na equipe** | `ScrollTrigger.batch(.member-stage)`, uma vez | `clip-path inset(100% 0 0 0) → inset(0)`, 0,9s, `power4.out`, stagger 0,12s. A foto vai de `--photo-shift` 8% a 0 e o nome em contorno de `--ghost-shift` −35% a 0, ambos pela propriedade CSS `translate`; o `transform` do hover não é tocado |
 | 6 | **Botões magnéticos** (só `(hover: hover) and (pointer: fine)`) | `gsap.quickTo` num objeto, que escreve a propriedade CSS `translate` | Até 8px na direção do cursor, 0,35s, `power3.out`; volta a 0 ao sair. Vale para `.btn-solid`, `.btn-outline-orange`, `.btn-ink` e os ícones sociais do rodapé, não para a agenda. `:active` de todos os botões: `transform: scale(.97)`, 120ms `ease`. São propriedades separadas, então não brigam |
+| 7 | **Profundidade pelo ponteiro** (desktop com mouse, depois da abertura) | `quickTo` (1,2s, `power3.out`) escreve `--mx/--my` (−1 a 1) no `.hero`; cada camada converte em `translate` no CSS | Contorno −3/−2px, palavra sólida +5/+4px, assinatura +8/+6px, máquina +11/+8px. `.has-depth` promove essas camadas a camadas próprias (`will-change: translate`): andar com elas é só recompor. Máquina e palavra andam no máximo 6px uma em relação à outra, então a máscara não é refeita a cada quadro. Volta ao centro ao rolar além de 15% do hero e quando o ponteiro sai da janela. Medido: 60 fps com o mouse em movimento (antes da promoção, ~7 fps) |
+| 8 | **Saída do hero** (desktop) | ScrollTrigger `scrub`, do topo ao fim do hero | Texto e botões sobem 90px a mais que a página e vão a 30% de opacidade, enquanto a palavra fica para trás e a máquina segue para Serviços |
+| 9 | **Entradas das seções** | `ScrollTrigger.batch`, `once`, `top 88%`; `clearProps` no fim (hover e transições do CSS voltam intactos) | Ver a tabela de papéis abaixo |
+| 10 | **Agenda** | `MutationObserver` + CSS | Ao trocar de profissional ou dia, os novos horários entram (450ms, 25ms entre eles). O valor do resumo que mudou pisca em laranja (900ms). A pílula escolhida pulsa (`press-pop`, 340ms, CSS puro) |
+
+**Papéis das entradas (motion.js §8):**
+
+| Papel | Elementos | De → para | Tempo |
+|-------|-----------|-----------|-------|
+| Rótulo | `.section .eyebrow` | texto de −14px e linha laranja `--line` 0 → 1 | 1,1s |
+| Texto | notas, títulos de coluna, textos da formação, CTA, contato, agenda, nome/função da equipe, rodapé | `y` 40px (24px no celular) + opacidade | 0,9s, 0,08s entre itens |
+| Linha de lista | `.service`, `.combo`, `.hours-row` | `clip-path` corte da esquerda para a direita (folga vertical de 20% para não cortar acentos) | 1,1s, 0,05s entre linhas, +0,15s para o título da coluna chegar antes |
+| Imagem | `.g-pole`, `.g-detail`, `.g-blade`, `.course-figure` | cortina `inset(100% 0 0 0)` → 0; a foto assenta de `--zoom` +0,2 (o poste não tem zoom: o sprite fica por cima) | 1,3s (zoom 1,8s) |
+| Pílula | `.topics li`, `.perks li` | `y` 14px + opacidade | 0,7s, 0,04s entre itens |
+| Momento: ingresso | `.pass` + `.stamp` | o ingresso sobe girando 1,2° → 0; o carimbo cai de 1,9× e −40° para −12° (`back.out(2.2)`, +0,55s) | 1,1s / 0,45s |
+| Momento: rodapé | `.footer-mark` | `yPercent` 45 → 0 e opacidade 0,25 → 1 com a rolagem, até o fim da página | `scrub` |
+| Profundidade (desktop) | fotos de `.g-detail` e `.g-blade` | `--drift` −5% → 5% enquanto atravessam a tela (descansam em zoom 1,12 para cobrir a moldura) | `scrub` |
+
+**Teclado:** o Tab rola a página só até o elemento encostar na borda de baixo, antes do ponto de disparo. Se o foco entra num elemento que ainda espera a entrada, ele aparece na hora (0,35s). Verificado nos 69 elementos focáveis (WCAG 2.4.7).
+
+**Microinterações (CSS):**
+- **Botões:** uma faixa (`--sweep` por variante) entra pela esquerda e sai pela direita, em 0,5s.
+- **Menu:** o sublinhado entra pela esquerda e sai pela direita, no hover e no link da seção atual; como o link atual muda com a rolagem, ele parece viajar.
+- **Menu do celular:** o painel abre como um corte (`clip-path`, 0,38s) e os links descem em sequência (30ms entre eles).
+
+**Responsivo:**
+
+| Largura | Movimento |
+|---------|-----------|
+| > 760px com mouse | Tudo, incluindo profundidade pelo ponteiro e magnetismo |
+| > 760px com toque (tablet) | Abertura completa, viagem da máquina, entradas; sem ponteiro nem magnetismo |
+| ≤ 760px | Abertura mais curta e menor, paralaxe leve no hero, entradas com distâncias menores (24px), sem deriva nas fotos |
 
 **Desempenho:**
+- Medido no Chromium sem placa de vídeo (pior caso): abertura no desktop com ~156 quadros em 4s (a versão anterior tinha 137); celular a 60 fps; rolagem com mediana de 16,7ms nos três aparelhos.
 - As animações usam só `transform`/`translate`, `opacity` e `clip-path`. A exceção é o quadro do poste (`background-position`, pedido assim, repinta só aquele quadro).
 - O `will-change` da máquina só existe enquanto a viagem está ativa.
 - A máscara de profundidade lê dois retângulos por quadro, e só enquanto o hero está na tela; os valores de pose (`--rot`, `--depth-y`) ficam em cache até o próximo resize.
 
-**Movimento reduzido:** nada anima e tudo aparece no estado final. O `motion.js` não cria nada (nem Lenis, nem divisão de títulos, nem cortina, nem magnetismo), e o poste mostra a foto parada, que é o quadro 0 do sprite.
+**Movimento reduzido:** nada anima e tudo aparece no estado final. O `motion.js` não cria nada (nem Lenis, nem divisão de títulos, nem cortina, nem magnetismo, nem entradas de seção, nem profundidade), e o poste mostra a foto parada, que é o quadro 0 do sprite. As transições e animações do CSS (varredura, sublinhado, menu, pulso da agenda) ficam instantâneas, com atrasos zerados.
 
 ---
 
