@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Diagnóstico das animações</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; background: #141210; color: #f1ebe2; max-width: 640px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  p.sub { color: #a89f92; margin: 0 0 24px; }
+  .row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid #2b2722; }
+  .tag { flex: none; min-width: 64px; text-align: center; font-weight: 700; font-size: .8rem; padding: 4px 8px; border-radius: 4px; background: #2b2722; }
+  .ok .tag { background: #1f5a34; } .bad .tag { background: #8a2a1c; } .warn .tag { background: #8a6a1c; }
+  .row b { display: block; } .row small { color: #a89f92; }
+  #resumo { margin-top: 24px; padding: 16px; border-radius: 8px; background: #1e1b17; border: 1px solid #e8631a; }
+  pre { white-space: pre-wrap; word-break: break-word; background: #1e1b17; padding: 12px; border-radius: 6px; font-size: .8rem; }
+</style>
+</head>
+<body>
+<h1>Diagnóstico das animações</h1>
+<p class="sub">Esta página só lê informações do seu navegador. Ela não altera nada nem envia dados para fora.</p>
+<div id="lista"></div>
+<div id="resumo">Verificando…</div>
+<pre id="ambiente"></pre>
+
+<script>
+const lista = document.getElementById('lista');
+const falhas = [];
+function item(estado, titulo, detalhe) {
+  const d = document.createElement('div'); d.className = 'row ' + estado;
+  d.innerHTML = `<span class="tag">${{ ok: 'OK', bad: 'PROBLEMA', warn: 'ATENÇÃO' }[estado]}</span><div><b></b><small></small></div>`;
+  d.querySelector('b').textContent = titulo; d.querySelector('small').textContent = detalhe;
+  lista.append(d); if (estado === 'bad') falhas.push(titulo);
+}
+async function existe(url) { try { const r = await fetch(url, { cache: 'no-store' }); return r.ok ? `carregou (${r.status})` : `ERRO ${r.status}`; } catch (e) { return 'ERRO de rede'; } }
+
+(async () => {
+  // 1. A causa mais provável: o sistema pede menos movimento
+  const reduz = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  item(reduz ? 'bad' : 'ok', 'Movimento reduzido no sistema: ' + (reduz ? 'LIGADO' : 'desligado'),
+    reduz ? 'O site desliga todas as animações de propósito. Windows: Configurações > Acessibilidade > Efeitos visuais > Efeitos de animação (ligar). macOS: Acessibilidade > Monitor > Reduzir movimento (desligar). Depois recarregue.' : 'Tudo certo neste ponto.');
+
+  // 2. Recursos do navegador usados pelo site
+  item(typeof Element.prototype.animate === 'function' ? 'ok' : 'bad', 'Web Animations API (abertura do hero)', typeof Element.prototype.animate === 'function' ? 'Suportada.' : 'Navegador antigo: a abertura não roda.');
+  item(CSS.supports('clip-path', 'inset(0)') ? 'ok' : 'bad', 'clip-path (cortinas e máscaras)', CSS.supports('clip-path', 'inset(0)') ? 'Suportado.' : 'Não suportado.');
+  item(CSS.supports('translate', '1px 1px') ? 'ok' : 'warn', 'Propriedade CSS "translate" (botões magnéticos)', CSS.supports('translate', '1px 1px') ? 'Suportada.' : 'Navegador antigo: só os botões magnéticos são afetados.');
+
+  // 3. Arquivos do site
+  for (const f of ['vendor/gsap.min.js', 'vendor/ScrollTrigger.min.js', 'vendor/SplitText.min.js', 'vendor/lenis.min.js', 'script.js', 'motion.js']) {
+    const r = await existe(f);
+    item(r.startsWith('carregou') ? 'ok' : 'bad', 'Arquivo ' + f, r + (r.startsWith('carregou') ? '' : ' — o site precisa da pasta inteira junto do index.html.'));
+  }
+
+  // 4. O site real rodando dentro de um quadro invisível
+  const quadro = document.createElement('iframe');
+  quadro.src = 'index.html'; quadro.style.cssText = 'position:fixed;left:-9999px;width:1440px;height:900px;border:0';
+  document.body.append(quadro);
+  await new Promise(r => { quadro.onload = r; setTimeout(r, 6000); });
+  await new Promise(r => setTimeout(r, 3500));
+  try {
+    const w = quadro.contentWindow, doc = quadro.contentDocument;
+    item(w.gsap ? 'ok' : 'bad', 'GSAP carregou dentro do site', w.gsap ? 'Sim.' : 'Não. As animações de rolagem não existem.');
+    item(w.StudioDF ? 'ok' : 'bad', 'script.js iniciou', w.StudioDF ? 'Sim.' : 'Não.');
+    const gat = w.ScrollTrigger ? w.ScrollTrigger.getAll().length : 0;
+    item(gat > 0 ? 'ok' : (reduz ? 'warn' : 'bad'), 'Animações de rolagem ativas: ' + gat, gat > 0 ? 'motion.js está rodando.' : (reduz ? 'Zero porque o movimento reduzido está ligado.' : 'Zero: o motion.js não montou nada.'));
+    const preso = doc.documentElement.classList.contains('intro-pending');
+    item(preso ? 'bad' : 'ok', 'Abertura do hero terminou', preso ? 'Ficou presa (classe intro-pending ainda ativa).' : 'Sim.');
+  } catch (e) {
+    item('warn', 'Não foi possível inspecionar o site por aqui', 'Abra esta página por um endereço http (Live Server ou Vercel), não direto do arquivo. Motivo: ' + e.message);
+  }
+
+  document.getElementById('resumo').textContent = falhas.length
+    ? 'Problemas encontrados: ' + falhas.join(' | ') + '. Me mande um print desta página.'
+    : 'Nenhum problema técnico encontrado. Se ainda não vê animação, me diga o navegador e o aparelho.';
+  document.getElementById('ambiente').textContent = 'Navegador: ' + navigator.userAgent + '\nTela: ' + innerWidth + 'x' + innerHeight + ' @' + devicePixelRatio + 'x';
+})();
+</script>
+</body>
+</html>

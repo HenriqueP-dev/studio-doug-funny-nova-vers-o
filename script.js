@@ -125,10 +125,19 @@ function initMenu() {
 /* ==========================================================================
    3. HERO: LETRAS, PROFUNDIDADE E ABERTURA (ver DESIGN.md §10)
    ========================================================================== */
+window.StudioDFHero = true;   // avisa o <head> que este arquivo rodou (ver a segurança do intro-pending)
+
+const EASE_OUT = 'cubic-bezier(0.16, 1, 0.3, 1)';
+const EASE_IO = 'cubic-bezier(0.65, 0, 0.35, 1)';
+
 function initHero(root) {
   const stage = $('.stage');
+  const heroEl = $('.hero');
   const words = $$('[data-word]');
-  words.forEach(word => { word.innerHTML = [...word.textContent].map(c => `<span class="ch"><i>${c}</i></span>`).join(''); });
+  words.forEach(word => {
+    word.innerHTML = [...word.textContent].map(c => `<span class="ch"><i>${c}</i></span>`).join('');
+    word.classList.add('is-split');
+  });
   const [wordOutline, wordFill, wordFront] = words;
   const clipperPos = $('.clipper-pos');
   const mover = $('.clipper-mover');
@@ -137,7 +146,8 @@ function initHero(root) {
   const glow = $('.clipper-glow');
   const cutline = $('.cutline');
   const script = $('.script');
-  const heroCopy = $$('.hero-copy, .hero-since');
+  const heroDark = $('.hero-dark');
+  const copyParts = $$('.hero-kicker, .hero-quote, .hero-cta, .hero-since');
 
   const stageVar = name => parseFloat(getComputedStyle(stage).getPropertyValue(name));
   // Pose do palco (variáveis CSS): lida uma vez e relida só quando a janela muda de tamanho,
@@ -152,12 +162,13 @@ function initHero(root) {
   const onIntroDone = cb => (introPending() ? introCallbacks.push(cb) : cb());
 
   /* Parte do título que fica NA FRENTE da cauda da máquina: semiplano perpendicular ao eixo
-     da máquina, a partir do ponto em que o eixo cruza a altura --depth-y (fração da palavra). */
-  const updateDepthMask = () => {
+     da máquina, a partir do ponto em que o eixo cruza a altura --depth-y (fração da palavra).
+     Devolve o polígono em coordenadas da palavra, ou null se algo ainda não tem tamanho. */
+  const depthPolygon = deg => {
     const wr = wordFront.getBoundingClientRect();
     const cr = clipperImg.getBoundingClientRect();
-    if (!wr.width || !cr.width) return;
-    const r = rotation() * Math.PI / 180;
+    if (!wr.width || !cr.width) return null;
+    const r = deg * Math.PI / 180;
     const tail = { x: -Math.sin(r), y: Math.cos(r) };
     const head = { x: -tail.x, y: -tail.y };
     const c = { x: cr.left + cr.width / 2 - wr.left, y: cr.top + cr.height / 2 - wr.top };
@@ -172,14 +183,33 @@ function initHero(root) {
       if (sa >= 0) poly.push(a);
       if ((sa >= 0) !== (sb >= 0)) { const t = sa / (sa - sb); poly.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); }
     });
-    wordFront.dataset.mask = poly.length > 2
-      ? `polygon(${poly.map(([x, y]) => `${x.toFixed(1)}px ${y.toFixed(1)}px`).join(',')})`
-      : 'inset(0 0 0 100%)';
+    return poly;
+  };
+  const toClip = poly => (poly && poly.length > 2
+    ? `polygon(${poly.map(([x, y]) => `${x.toFixed(1)}px ${y.toFixed(1)}px`).join(',')})`
+    : 'inset(0 0 0 100%)');
+  // corta o polígono numa linha vertical: fica só o que está à direita de minX
+  const keepRightOf = (poly, minX) => {
+    const out = [];
+    poly.forEach((a, i) => {
+      const b = poly[(i + 1) % poly.length];
+      const inA = a[0] >= minX, inB = b[0] >= minX;
+      if (inA) out.push(a);
+      if (inA !== inB) out.push([minX, a[1] + (b[1] - a[1]) * ((minX - a[0]) / (b[0] - a[0]))]);
+    });
+    return out;
+  };
+
+  const updateDepthMask = () => {
+    const poly = depthPolygon(rotation());
+    if (!poly) return;
+    wordFront.dataset.mask = toClip(poly);
     if (!introPending()) wordFront.style.clipPath = wordFront.dataset.mask;
   };
 
   /* Estado final (fim da abertura ou tempo de segurança) */
   const finishIntro = () => {
+    if (!introPending()) return;
     root.classList.remove('intro-pending');
     wordFill.style.clipPath = 'none';
     cutline.style.opacity = '0';
@@ -193,73 +223,118 @@ function initHero(root) {
      redimensionar a janela, ela ficava presa na pose antiga e a máscara de profundidade desalinhava.
      O estado final de todas elas é igual ao do CSS, então dá para cancelá-las sem mudança visual. */
   const releaseIntroAnimations = () => {
-    [stage, ...heroCopy].forEach(el => el.getAnimations({ subtree: true }).forEach(animation => {
+    [stage, heroDark, ...copyParts].forEach(el => el.getAnimations({ subtree: true }).forEach(animation => {
       if (animation.playState === 'finished') animation.cancel();
       else animation.finished.then(() => animation.cancel(), () => {});
     }));
   };
 
+  /* --------------------------------------------------------------------------
+     ABERTURA (≈2,9s no desktop). Todo o cronograma é feito de animações (delay + duração), sem
+     setTimeout, para que a sequência inteira obedeça ao mesmo relógio.
+     0,00s  a luz de cinema acende (a cortina preta .hero-dark sai)
+     0,12s  "BARBEARIA" em contorno sobe da máscara, letra a letra
+     0,42s  a máquina desce da direita, deitada e mais perto da câmera (maior), atravessa a palavra,
+            passa um pouco do ponto e assenta na diagonal.
+            Por onde a LÂMINA passa a palavra fica sólida; a cópia da frente segue a profundidade real.
+     ~1,5s  o corte termina de atravessar a palavra (linha laranja)
+     1,15s  rótulo, frase e botões entram em sequência
+     ~1,97s a máquina pousa: vibração, brilho e a luz percorre o metal das letras
+     1,60s  "Doug Funny" é pintado com borda de pincel
+     -------------------------------------------------------------------------- */
+  let started = false;
   const runIntro = () => {
+    started = true;
     const chars = words.map(w => $$('.ch > i', w));
-    const vw = window.innerWidth, mobile = vw <= 760;
+    const vw = window.innerWidth, vh = window.innerHeight, mobile = vw <= 760;
     const rot = rotation();
-    const startRot = mobile ? -78 : -86;
-    const dx = vw * (mobile ? 0.95 : 0.78), dy = -window.innerHeight * 0.06;
+    const T = { letters: 120, machine: 420, travel: mobile ? 1400 : 1550, copy: 1150, script: 1600 };
+    const startRot = mobile ? -80 : -88;
+    const startScale = mobile ? 1.12 : 1.22;
     updateDepthMask();
+
+    // de onde a máquina parte: totalmente fora da tela, à direita e acima (nada aparece parado na borda)
+    const home = clipperImg.getBoundingClientRect();
+    const length = clipperImg.offsetHeight * startScale;
+    const dx = vw + length * 0.52 - (home.left + home.width / 2);
+    const dy = -vh * (mobile ? 0.07 : 0.15);
+
+    // 0. luz de cinema: a cortina preta sai (só opacidade de uma camada sólida)
+    heroDark.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 1200, easing: 'cubic-bezier(0.33, 0, 0.2, 1)', fill: 'both' });
 
     // 1. letras sobem da máscara
     chars.forEach(list => list.forEach((el, i) => el.animate(
       [{ transform: 'translateY(105%)' }, { transform: 'translateY(0)' }],
-      { duration: 700, delay: 80 + i * 45, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'both' })));
+      { duration: 750, delay: T.letters + i * 40, easing: EASE_OUT, fill: 'both' })));
 
-    // 2. a máquina entra deitada pela direita e se endireita na diagonal
+    // 2. a máquina: entra deitada e maior (mais perto), arqueia, passa um pouco do ponto e assenta
     clipperPos.style.opacity = '1';
     const travel = mover.animate([
-      { transform: `translate(${dx}px, ${dy}px) rotate(${startRot}deg) scale(1.08)`, offset: 0 },
-      { transform: `translate(${dx * 0.18}px, ${dy * 0.4}px) rotate(${(startRot + rot) / 2 - 8}deg) scale(1.03)`, offset: 0.62 },
-      { transform: `translate(0px, 0px) rotate(${rot}deg) scale(1)`, offset: 1 }
-    ], { duration: 1500, delay: 450, easing: 'cubic-bezier(0.22, 0.8, 0.2, 1)', fill: 'both' });
+      { transform: `translate(${dx}px, ${dy}px) rotate(${startRot}deg) scale(${startScale})`, easing: 'cubic-bezier(0.3, 0.55, 0.3, 1)' },
+      { transform: `translate(${dx * 0.15}px, ${dy * 0.18}px) rotate(${(startRot + rot) / 2 - 6}deg) scale(${1 + (startScale - 1) * 0.3})`, offset: 0.58, easing: 'cubic-bezier(0.25, 0.6, 0.3, 1)' },
+      { transform: `translate(${-vw * 0.005}px, ${vh * 0.007}px) rotate(${rot - 2.5}deg) scale(0.992)`, offset: 0.86, easing: EASE_IO },
+      { transform: `translate(0px, 0px) rotate(${rot}deg) scale(1)` }
+    ], { duration: T.travel, delay: T.machine, fill: 'both' });
 
-    // 3. por onde a máquina passa, a palavra fica sólida; a linha de corte acompanha a borda
-    let raf = 0, cutDone = false;
+    // 3. o corte acompanha a ponta da lâmina (alto da imagem), não o centro da máquina
+    const livePose = () => {
+      const m = new DOMMatrixReadOnly(getComputedStyle(mover).transform);
+      return { deg: Math.atan2(m.b, m.a) * 180 / Math.PI, scale: Math.hypot(m.a, m.b) };
+    };
+    let raf = 0, cutDone = false, edge = Infinity;
     const finishCut = () => {
       if (cutDone) return;
       cutDone = true;
-      cancelAnimationFrame(raf);
       const wr = wordFill.getBoundingClientRect();
-      const startPct = parseFloat((wordFill.style.clipPath.match(/([\d.]+)%/) || [0, 0])[1]);
+      const startPct = Math.min(100, (Math.min(edge, wr.width) / wr.width) * 100);
       const startLeft = wr.left + wr.width * startPct / 100;
-      wordFill.animate([{ clipPath: `inset(0 0 0 ${startPct}%)` }, { clipPath: 'inset(0 0 0 0%)' }], { duration: 480, easing: 'cubic-bezier(0.65, 0, 0.35, 1)', fill: 'forwards' });
-      cutline.animate([{ left: `${startLeft}px`, opacity: 1 }, { left: `${wr.left}px`, opacity: 1, offset: 0.85 }, { left: `${wr.left}px`, opacity: 0 }], { duration: 560, easing: 'cubic-bezier(0.65, 0, 0.35, 1)', fill: 'forwards' });
+      wordFill.animate([{ clipPath: `inset(0 0 0 ${startPct}%)` }, { clipPath: 'inset(0 0 0 0%)' }], { duration: 480, easing: EASE_IO, fill: 'forwards' });
+      cutline.animate([{ left: `${startLeft}px`, opacity: 1 }, { left: `${wr.left}px`, opacity: 1, offset: 0.85 }, { left: `${wr.left}px`, opacity: 0 }], { duration: 560, easing: EASE_IO, fill: 'forwards' });
     };
     const track = () => {
-      const cr = clipperImg.getBoundingClientRect();
+      const { deg, scale } = livePose();
       const wr = wordFill.getBoundingClientRect();
-      const edge = Math.max(0, Math.min(wr.width, cr.left + cr.width * 0.5 - wr.left));
-      const pct = (edge / wr.width) * 100;
-      wordFill.style.clipPath = `inset(0 0 0 ${pct.toFixed(2)}%)`;
-      wordFront.style.clipPath = wordFront.dataset.mask;
-      cutline.style.left = `${wr.left + edge}px`;
-      cutline.style.opacity = pct < 99.5 ? '1' : '0';
+      const cr = clipperImg.getBoundingClientRect();
+      const bladeX = cr.left + cr.width / 2 + Math.sin(deg * Math.PI / 180) * clipperImg.offsetHeight * scale * 0.47;
+      if (!cutDone) {
+        edge = Math.min(edge, Math.max(0, Math.min(wr.width, bladeX - wr.left)));   // o corte nunca volta
+        const pct = (edge / wr.width) * 100;
+        wordFill.style.clipPath = `inset(0 0 0 ${pct.toFixed(2)}%)`;
+        cutline.style.left = `${wr.left + edge}px`;
+        cutline.style.opacity = pct < 99.5 ? '1' : '0';
+      }
+      // a cópia da frente: só onde a lâmina já passou, com a profundidade do ângulo atual
+      const poly = depthPolygon(deg + extraRotation);
+      if (poly) wordFront.style.clipPath = toClip(keepRightOf(poly, Number.isFinite(edge) ? edge : wr.width));
       const progress = travel.effect.getComputedTiming().progress || 0;
-      if (progress > 0.8 && travel.currentTime > 450) { finishCut(); return; }  // 4. o corte termina de atravessar
-      if (!cutDone) raf = requestAnimationFrame(track);
+      if (!cutDone && progress > 0.7 && travel.currentTime > T.machine) finishCut();  // 4. o corte termina de atravessar
+      if (travel.playState !== 'finished') raf = requestAnimationFrame(track);
     };
     wordFront.style.clipPath = 'inset(0 0 0 100%)';
-    setTimeout(() => { raf = requestAnimationFrame(track); }, 450);
+    // o acompanhamento começa junto com a máquina (atraso feito por uma animação vazia, no mesmo relógio)
+    mover.animate([{}, {}], { duration: 1, delay: T.machine }).finished.then(() => { raf = requestAnimationFrame(track); });
 
-    // 5. ao pousar, a máquina "liga": vibração curta e brilho
+    // 5. ao pousar, a máquina "liga": vibração curta, brilho e a luz percorre o metal das letras
     travel.finished.then(() => {
+      cancelAnimationFrame(raf);
       finishCut();
       buzz.animate([0, 1, -1, 1, -1, 0.5, 0].map(v => ({ transform: `translate(${v * 1.6}px, ${-v}px)` })), { duration: 320, easing: 'linear' });
       glow.animate([{ opacity: 0.55 }, { opacity: 1 }, { opacity: 0.55 }], { duration: 700, easing: 'ease-out' });
+      [wordFill, wordFront].forEach(word => $$('.ch > i', word).forEach((el, i) => el.animate(
+        [{ backgroundPosition: '105% 0, 0 0' }, { backgroundPosition: '-5% 0, 0 0' }],
+        { duration: 700, delay: 140 + i * 38, easing: 'cubic-bezier(0.45, 0, 0.25, 1)' })));
     });
 
-    // 6. assinatura e chamadas
-    script.animate([{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)' }], { duration: 650, delay: 1500, easing: 'cubic-bezier(0.65, 0, 0.35, 1)', fill: 'both' });
-    heroCopy.forEach(el => el.animate([{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }], { duration: 600, delay: 1050, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'both' }));
+    // 6. textos em sequência e assinatura pintada
+    const copyAnims = copyParts.map((el, i) => el.animate(
+      [{ opacity: 0, transform: 'translateY(18px)' }, { opacity: 1, transform: 'none' }],
+      { duration: 800, delay: T.copy + i * 80, easing: EASE_OUT, fill: 'both' }));
+    const paint = script.animate([
+      { clipPath: 'polygon(-20% 0%, -20% 0%, -32% 100%, -32% 100%)' },
+      { clipPath: 'polygon(-20% 0%, 120% 0%, 108% 100%, -32% 100%)' }
+    ], { duration: 750, delay: T.script, easing: EASE_IO, fill: 'both' });
 
-    setTimeout(finishIntro, 2700);
+    Promise.all([travel.finished, paint.finished, ...copyAnims.map(a => a.finished)]).then(finishIntro, finishIntro);
   };
 
   // espera a imagem da máquina (e as fontes) para medir o cruzamento certo
@@ -270,11 +345,11 @@ function initHero(root) {
   const fontsReady = Promise.race([document.fonts ? document.fonts.ready : Promise.resolve(), new Promise(r => setTimeout(r, 350))]);
   Promise.all([imageReady, fontsReady]).then(() => (introPending() ? runIntro() : updateDepthMask()));
 
-  // tempo de segurança: se algo falhar, mostra tudo no estado final
-  setTimeout(() => { if (introPending() && !wordFill.getAnimations().length) finishIntro(); }, 4000);
+  // tempo de segurança: se a abertura não começar (imagem travada), mostra tudo no estado final
+  setTimeout(() => { if (introPending() && !started) finishIntro(); }, 4000);
 
   return {
-    el: $('.hero'), stage, clipperPos, clipperImg, wordFront, updateDepthMask, introPending, onIntroDone,
+    el: heroEl, stage, clipperPos, clipperImg, wordFront, updateDepthMask, introPending, onIntroDone,
     setExtraRotation: deg => { extraRotation = deg; }
   };
 }
@@ -408,8 +483,14 @@ function initAgenda() {
     });
   };
 
+  /* Só refaz a lista quando o conteúdo muda (profissional, dia ou horários). Escolher um horário
+     apenas marca o botão (syncSelection): o botão focado continua existindo, então o foco do
+     teclado não se perde, e a atualização de minuto em minuto não mexe em nada se nada mudou. */
   const renderSlots = (container, { times, allPassed }) => {
     if (!container) return;
+    const signature = `${state.barber}|${state.day.toDateString()}|${times.join(',')}|${allPassed}`;
+    if (container.dataset.signature === signature) return;
+    container.dataset.signature = signature;
     if (!times.length) {
       const empty = document.createElement('span');
       empty.className = 'slot-empty';
@@ -431,15 +512,21 @@ function initAgenda() {
     }));
   };
 
+  const syncSelection = () => periodLists.forEach(list => list && $$('.slot', list).forEach(button => {
+    button.setAttribute('aria-pressed', String(button.textContent === state.time));
+  }));
+  const setText = (el, text) => { if (el.textContent !== text) el.textContent = text; };
+
   const render = () => {
     const periods = slotsByPeriod();
     if (state.time && !periods.some(p => p.times.includes(state.time))) state.time = '';
     periods.forEach((period, i) => renderSlots(periodLists[i], period));
+    syncSelection();
 
     const day = dayLabel(state.day);
-    summaryBarber.textContent = state.barber;
-    summaryDay.textContent = day;
-    summaryTime.textContent = state.time || 'Selecione um horário';
+    setText(summaryBarber, state.barber);
+    setText(summaryDay, day);
+    setText(summaryTime, state.time || 'Selecione um horário');
     summaryTime.classList.toggle('is-empty', !state.time);   // só estilo: texto de ajuda fica discreto
 
     const when = state.time ? `às ${state.time}` : 'em qualquer horário disponível';
