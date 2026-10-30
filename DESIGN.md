@@ -73,9 +73,9 @@ Números sempre `lining-nums`.
 | `.pack` | Pacotes secundários escuros, preço à direita |
 | `.combo` | Lista compacta em 3 colunas |
 | `.course-section` | Seção inteira laranja, retrato do instrutor em duotom (`multiply`) |
-| `.g-tile` | Galeria: poste (alto), detalhe (largo), lâmina, cartão do Instagram |
+| `.g-tile` | Galeria em 12 colunas: poste (alto), detalhe (largo), lâmina, cartão laranja do Instagram ("Trabalhos reais"). Aviso `.gallery-note` antes das imagens e selo `.g-tag` "Ilustração 3D" em cada legenda: são renders, nunca fotos de cortes |
 | `.member` | Retrato recortado + nome gigante em contorno atrás + brilho laranja |
-| Agenda | Passos 01/02/03, pílulas (estado selecionado por `aria-pressed`). **Demonstração**: só monta uma consulta para o WhatsApp, nunca reserva |
+| Agenda | Painel `.agenda-steps` com passos 01/02/03 (foto decorativa do profissional, dias em faixa rolável, manhã/tarde em grades) + resumo `.agenda-summary` em `<dl>`, fixo à direita no desktop e abaixo dos passos ≤ 1024px. Selecionado = laranja cheio por `aria-pressed`; o horário ganha também ✓ e halo. `#summary-time.is-empty` (script.js) deixa o texto de ajuda discreto. **Demonstração**: só monta uma consulta para o WhatsApp, nunca reserva |
 | `.turmas` | Tabela turma ↔ investimento + nota pedindo consulta das condições pelo WhatsApp |
 | Ícones | Sprite SVG de linha, traço 1,6 |
 
@@ -125,9 +125,9 @@ Números sempre `lining-nums`.
 | Largura | Mudança |
 |---------|---------|
 | ≤ 1240px | Menu vira botão (painel opaco, fecha com Esc). O botão vem antes do `<nav>` no HTML, então o Tab entra nos links abertos |
-| ≤ 1024px | Pacotes e formação em 1 coluna |
-| ≤ 760px | **Hero vertical**: palco no alto, texto em fluxo; máquina menor (54svh), atrás da palavra; serviços e combos em 1 coluna; galeria 2 colunas; equipe 1 coluna |
-| ≤ 480px | Some o botão do cabeçalho (o hero tem o CTA); galeria em 1 coluna |
+| ≤ 1024px | Pacotes e formação em 1 coluna; Instagram da galeria vira faixa larga; resumo da agenda abaixo dos passos |
+| ≤ 760px | **Hero vertical**: palco no alto, texto em fluxo; máquina menor (54svh), atrás da palavra; serviços e combos em 1 coluna; galeria 2 colunas (poste alto à esquerda); equipe 1 coluna; agenda em 1 coluna, faixa de dias mostra parte do próximo cartão |
+| ≤ 480px | Some o botão do cabeçalho (o hero tem o CTA); galeria em 1 coluna com alturas que mostram cada objeto inteiro |
 
 Verificado sem rolagem horizontal em 320, 375, 390, 768, 1024, 1280, 1440 e 1920px. Alvos de toque ≥ 44px no celular.
 

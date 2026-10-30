@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -377,28 +377,44 @@
           <p class="section-note">Os cortes, as aulas e o dia a dia do Studio são publicados no Instagram.</p>
         </header>
 
+        <!-- As imagens desta galeria são renders 3D (ferramentas/), não fotos de clientes.
+             Cada legenda diz "Ilustração 3D"; os trabalhos reais ficam no Instagram. -->
+        <p class="gallery-note">
+          <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
+          <span><strong>Imagens ilustrativas:</strong> renders 3D criados para o site, não são fotos de cortes. Os trabalhos reais estão no Instagram do Studio.</span>
+        </p>
+
         <div class="gallery">
           <figure class="g-tile g-pole">
             <img src="imagens/poste-barbeiro.webp" width="900" height="1300" alt="Poste de barbeiro com listras laranja, branca e preta" loading="lazy" decoding="async">
-            <figcaption>A tradição da barbearia</figcaption>
+            <figcaption>
+              <span class="g-tag">Ilustração 3D</span>
+              <span class="g-caption"><span class="g-num" aria-hidden="true">01</span>A tradição da barbearia</span>
+            </figcaption>
           </figure>
           <figure class="g-tile g-detail">
             <img src="imagens/maquina-detalhe.webp" width="1200" height="825" alt="Detalhe da máquina de corte com a gravação Doug Funny em laranja" loading="lazy" decoding="async">
-            <figcaption>Detalhe que faz diferença</figcaption>
+            <figcaption>
+              <span class="g-tag">Ilustração 3D</span>
+              <span class="g-caption"><span class="g-num" aria-hidden="true">02</span>Detalhe que faz diferença</span>
+            </figcaption>
           </figure>
           <figure class="g-tile g-blade">
             <img src="imagens/maquina-lamina.webp" width="840" height="640" alt="Lâmina de aço da máquina de corte" loading="lazy" decoding="async">
-            <figcaption>Lâmina afiada</figcaption>
+            <figcaption>
+              <span class="g-tag">Ilustração 3D</span>
+              <span class="g-caption"><span class="g-num" aria-hidden="true">03</span>Lâmina afiada</span>
+            </figcaption>
           </figure>
           <a class="g-tile g-insta" href="https://www.instagram.com/studiodougfunny/" target="_blank" rel="noopener noreferrer">
             <svg class="icon" aria-hidden="true"><use href="#i-instagram"/></svg>
-            <div>
+            <div class="g-insta-body">
+              <span class="g-insta-kicker">Trabalhos reais</span>
               <strong>Veja cortes e aulas no Instagram</strong>
-              <span>@studiodougfunny</span>
+              <span class="g-insta-handle">@studiodougfunny <span aria-hidden="true">→</span></span>
             </div>
           </a>
         </div>
-        <p class="gallery-note">Imagens 3D ilustrativas. As fotos reais dos trabalhos estão no Instagram do Studio.</p>
       </div>
     </section>
 
@@ -473,49 +489,66 @@
           <span><strong>Interface de demonstração:</strong> as datas e os horários são exemplos para avaliar a agenda. Nenhum horário é reservado por este site: a disponibilidade real e a confirmação são feitas diretamente com a equipe pelo WhatsApp.</span>
         </div>
 
-        <div class="agenda-controls">
-          <div>
-            <h3 class="agenda-step" id="agenda-step-barber"><b>01</b> Escolha o profissional</h3>
-            <div class="barber-tabs" role="group" aria-labelledby="agenda-step-barber">
-              <button class="barber-tab" type="button" aria-pressed="true" data-barber="Funny">Funny</button>
-              <button class="barber-tab" type="button" aria-pressed="false" data-barber="Miguel">Miguel</button>
-              <button class="barber-tab" type="button" aria-pressed="false" data-barber="Thaylor">Thaylor</button>
+        <div class="agenda-layout">
+          <div class="agenda-steps">
+            <div class="agenda-block">
+              <h3 class="agenda-step" id="agenda-step-barber"><b>01</b> Escolha o profissional</h3>
+              <!-- O nome acessível de cada botão é o nome do profissional (a foto é decorativa, alt="") -->
+              <div class="barber-tabs" role="group" aria-labelledby="agenda-step-barber">
+                <button class="barber-tab" type="button" aria-pressed="true" data-barber="Funny">
+                  <img class="barber-avatar" src="imagens/equipe-funny.webp" width="357" height="510" alt="" loading="lazy" decoding="async">
+                  <span class="barber-tab-name">Funny</span>
+                </button>
+                <button class="barber-tab" type="button" aria-pressed="false" data-barber="Miguel">
+                  <img class="barber-avatar" src="imagens/equipe-miguel.webp" width="858" height="900" alt="" loading="lazy" decoding="async">
+                  <span class="barber-tab-name">Miguel</span>
+                </button>
+                <button class="barber-tab" type="button" aria-pressed="false" data-barber="Thaylor">
+                  <img class="barber-avatar" src="imagens/equipe-thaylor.webp" width="693" height="900" alt="" loading="lazy" decoding="async">
+                  <span class="barber-tab-name">Thaylor</span>
+                </button>
+              </div>
             </div>
-          </div>
-          <div>
-            <h3 class="agenda-step" id="agenda-step-day"><b>02</b> Escolha o dia</h3>
-            <div class="day-strip" role="group" aria-labelledby="agenda-step-day"></div>
-          </div>
-        </div>
 
-        <h3 class="agenda-step" id="agenda-step-time"><b>03</b> Escolha o horário</h3>
-        <div class="agenda-times">
-          <div class="agenda-periods" role="group" aria-labelledby="agenda-step-time" aria-live="polite" aria-atomic="true">
-            <div class="agenda-period">
-              <h4>Manhã</h4>
-              <div class="slot-list" id="slots-morning"></div>
+            <div class="agenda-block">
+              <h3 class="agenda-step" id="agenda-step-day"><b>02</b> Escolha o dia</h3>
+              <div class="day-strip" role="group" aria-labelledby="agenda-step-day"></div>
             </div>
-            <div class="agenda-period">
-              <h4>Tarde</h4>
-              <div class="slot-list" id="slots-afternoon">
-                <noscript><span class="slot-empty">A agenda precisa de JavaScript. Fale com a equipe pelo WhatsApp.</span></noscript>
+
+            <div class="agenda-block">
+              <h3 class="agenda-step" id="agenda-step-time"><b>03</b> Escolha o horário <span class="agenda-step-note">de exemplo</span></h3>
+              <div class="agenda-periods" role="group" aria-labelledby="agenda-step-time" aria-live="polite" aria-atomic="true">
+                <div class="agenda-period">
+                  <h4>Manhã</h4>
+                  <div class="slot-list" id="slots-morning"></div>
+                </div>
+                <div class="agenda-period">
+                  <h4>Tarde</h4>
+                  <div class="slot-list" id="slots-afternoon">
+                    <noscript><span class="slot-empty">A agenda precisa de JavaScript. Fale com a equipe pelo WhatsApp.</span></noscript>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           <aside class="agenda-summary" aria-live="polite" aria-labelledby="agenda-summary-title">
             <div class="agenda-summary-content">
+              <span class="agenda-summary-kicker">Resumo</span>
               <h3 id="agenda-summary-title">Sua consulta</h3>
-              <div class="agenda-summary-details">
-                <p>Profissional: <strong id="summary-barber">Funny</strong></p>
-                <p>Dia: <strong id="summary-day">—</strong></p>
-                <p>Horário: <strong id="summary-time">Selecione um horário</strong></p>
-              </div>
-              <p class="agenda-summary-hint">Ainda não é uma reserva: a equipe confirma pelo WhatsApp se o horário está livre.</p>
+              <dl class="agenda-summary-details">
+                <div><dt>Profissional</dt><dd><strong id="summary-barber">Funny</strong></dd></div>
+                <div><dt>Dia</dt><dd><strong id="summary-day">—</strong></dd></div>
+                <div><dt>Horário</dt><dd><strong id="summary-time" class="is-empty">Selecione um horário</strong></dd></div>
+              </dl>
             </div>
             <a class="btn btn-solid" id="agenda-whatsapp-link" href="https://wa.me/5517991052256" target="_blank" rel="noopener noreferrer">
               <svg class="icon" aria-hidden="true"><use href="#i-whatsapp"/></svg> Consultar no WhatsApp
             </a>
+            <p class="agenda-summary-hint">
+              <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
+              <span>Ainda não é uma reserva: a equipe consulta a disponibilidade e responde pelo WhatsApp se o horário está livre.</span>
+            </p>
           </aside>
         </div>
       </div>

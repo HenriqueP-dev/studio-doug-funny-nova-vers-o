@@ -640,7 +640,7 @@
     add(enter('.member-info', rise, risen, { delay: 0.35, stagger: 0.12, start: 'top 95%' }));
 
     // agenda: aviso, passos, horários e resumo, em ordem de leitura
-    add(enter('.agenda-notice, .agenda-controls > div, #agenda-step-time, .agenda-periods, .agenda-summary', rise, risen, { stagger: 0.1 }));
+    add(enter('.agenda-notice, .agenda-block, .agenda-summary', rise, risen, { stagger: 0.1 }));
 
     // contato e rodapé
     add(enter('.info-item', rise, risen, { stagger: 0.06 }));
@@ -678,7 +678,14 @@
     lists.forEach(list => slotsObserver.observe(list, { childList: true }));
     const summaryObserver = new MutationObserver(records => {
       const changed = [...new Set(records.map(r => (r.target.nodeType === 1 ? r.target : r.target.parentElement)))];
-      changed.forEach(el => gsap.fromTo(el, { color: '#FF7433' }, { color: '#F5F3F0', duration: 0.9, ease: 'power2.out', clearProps: 'color' }));
+      // volta para a cor do próprio tema (claro ou escuro), lida antes de piscar
+      changed.forEach(el => {
+        gsap.killTweensOf(el, 'color');
+        el.style.removeProperty('color');
+        const base = getComputedStyle(el).color;
+        const accent = getComputedStyle(el).getPropertyValue('--orange').trim() || '#FF5500';   // laranja de texto do tema
+        gsap.fromTo(el, { color: accent }, { color: base, duration: 0.9, ease: 'power2.out', clearProps: 'color' });
+      });
     });
     summary.forEach(el => summaryObserver.observe(el, { childList: true, characterData: true, subtree: true }));
     return () => { slotsObserver.disconnect(); summaryObserver.disconnect(); };

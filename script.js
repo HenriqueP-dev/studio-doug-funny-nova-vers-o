@@ -527,6 +527,7 @@ function initAgenda() {
     setText(summaryBarber, state.barber);
     setText(summaryDay, day);
     setText(summaryTime, state.time || 'Selecione um horário');
+    summaryTime.classList.toggle('is-empty', !state.time);   // só estilo: texto de ajuda fica discreto
 
     const when = state.time ? `às ${state.time}` : 'em qualquer horário disponível';
     whatsappLink.href = whatsappUrl(`Olá! Gostaria de consultar a disponibilidade para ${day}, ${when}, com ${state.barber}.`);
