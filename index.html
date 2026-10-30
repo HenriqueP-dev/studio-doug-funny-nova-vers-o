@@ -483,49 +483,66 @@
           <span><strong>Interface de demonstração:</strong> as datas e os horários são exemplos para avaliar a agenda. Nenhum horário é reservado por este site: a disponibilidade real e a confirmação são feitas diretamente com a equipe pelo WhatsApp.</span>
         </div>
 
-        <div class="agenda-controls">
-          <div>
-            <h3 class="agenda-step" id="agenda-step-barber"><b>01</b> Escolha o profissional</h3>
-            <div class="barber-tabs" role="group" aria-labelledby="agenda-step-barber">
-              <button class="barber-tab" type="button" aria-pressed="true" data-barber="Funny">Funny</button>
-              <button class="barber-tab" type="button" aria-pressed="false" data-barber="Miguel">Miguel</button>
-              <button class="barber-tab" type="button" aria-pressed="false" data-barber="Thaylor">Thaylor</button>
+        <div class="agenda-layout">
+          <div class="agenda-steps">
+            <div class="agenda-block">
+              <h3 class="agenda-step" id="agenda-step-barber"><b>01</b> Escolha o profissional</h3>
+              <!-- O nome acessível de cada botão é o nome do profissional (a foto é decorativa, alt="") -->
+              <div class="barber-tabs" role="group" aria-labelledby="agenda-step-barber">
+                <button class="barber-tab" type="button" aria-pressed="true" data-barber="Funny">
+                  <img class="barber-avatar" src="imagens/equipe-funny.webp" width="357" height="510" alt="" loading="lazy" decoding="async">
+                  <span class="barber-tab-name">Funny</span>
+                </button>
+                <button class="barber-tab" type="button" aria-pressed="false" data-barber="Miguel">
+                  <img class="barber-avatar" src="imagens/equipe-miguel.webp" width="858" height="900" alt="" loading="lazy" decoding="async">
+                  <span class="barber-tab-name">Miguel</span>
+                </button>
+                <button class="barber-tab" type="button" aria-pressed="false" data-barber="Thaylor">
+                  <img class="barber-avatar" src="imagens/equipe-thaylor.webp" width="693" height="900" alt="" loading="lazy" decoding="async">
+                  <span class="barber-tab-name">Thaylor</span>
+                </button>
+              </div>
             </div>
-          </div>
-          <div>
-            <h3 class="agenda-step" id="agenda-step-day"><b>02</b> Escolha o dia</h3>
-            <div class="day-strip" role="group" aria-labelledby="agenda-step-day"></div>
-          </div>
-        </div>
 
-        <h3 class="agenda-step" id="agenda-step-time"><b>03</b> Escolha o horário</h3>
-        <div class="agenda-times">
-          <div class="agenda-periods" role="group" aria-labelledby="agenda-step-time" aria-live="polite" aria-atomic="true">
-            <div class="agenda-period">
-              <h4>Manhã</h4>
-              <div class="slot-list" id="slots-morning"></div>
+            <div class="agenda-block">
+              <h3 class="agenda-step" id="agenda-step-day"><b>02</b> Escolha o dia</h3>
+              <div class="day-strip" role="group" aria-labelledby="agenda-step-day"></div>
             </div>
-            <div class="agenda-period">
-              <h4>Tarde</h4>
-              <div class="slot-list" id="slots-afternoon">
-                <noscript><span class="slot-empty">A agenda precisa de JavaScript. Fale com a equipe pelo WhatsApp.</span></noscript>
+
+            <div class="agenda-block">
+              <h3 class="agenda-step" id="agenda-step-time"><b>03</b> Escolha o horário <span class="agenda-step-note">de exemplo</span></h3>
+              <div class="agenda-periods" role="group" aria-labelledby="agenda-step-time" aria-live="polite" aria-atomic="true">
+                <div class="agenda-period">
+                  <h4>Manhã</h4>
+                  <div class="slot-list" id="slots-morning"></div>
+                </div>
+                <div class="agenda-period">
+                  <h4>Tarde</h4>
+                  <div class="slot-list" id="slots-afternoon">
+                    <noscript><span class="slot-empty">A agenda precisa de JavaScript. Fale com a equipe pelo WhatsApp.</span></noscript>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           <aside class="agenda-summary" aria-live="polite" aria-labelledby="agenda-summary-title">
             <div class="agenda-summary-content">
+              <span class="agenda-summary-kicker">Resumo</span>
               <h3 id="agenda-summary-title">Sua consulta</h3>
-              <div class="agenda-summary-details">
-                <p>Profissional: <strong id="summary-barber">Funny</strong></p>
-                <p>Dia: <strong id="summary-day">—</strong></p>
-                <p>Horário: <strong id="summary-time">Selecione um horário</strong></p>
-              </div>
-              <p class="agenda-summary-hint">Ainda não é uma reserva: a equipe confirma pelo WhatsApp se o horário está livre.</p>
+              <dl class="agenda-summary-details">
+                <div><dt>Profissional</dt><dd><strong id="summary-barber">Funny</strong></dd></div>
+                <div><dt>Dia</dt><dd><strong id="summary-day">—</strong></dd></div>
+                <div><dt>Horário</dt><dd><strong id="summary-time" class="is-empty">Selecione um horário</strong></dd></div>
+              </dl>
             </div>
             <a class="btn btn-solid" id="agenda-whatsapp-link" href="https://wa.me/5517991052256" target="_blank" rel="noopener noreferrer">
               <svg class="icon" aria-hidden="true"><use href="#i-whatsapp"/></svg> Consultar no WhatsApp
             </a>
+            <p class="agenda-summary-hint">
+              <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
+              <span>Ainda não é uma reserva: a equipe consulta a disponibilidade e responde pelo WhatsApp se o horário está livre.</span>
+            </p>
           </aside>
         </div>
       </div>
