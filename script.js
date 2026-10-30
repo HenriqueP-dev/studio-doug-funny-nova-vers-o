@@ -2,7 +2,7 @@
    Studio Doug Funny — comportamento da página
    Sem dependências. Carregado com `defer` no fim do <head>.
 
-   1. Configuração (contato, horário de funcionamento, agenda de exemplo)
+   1. Configuração (contato, horário de funcionamento, agenda)
    2. Menu e link ativo
    3. Hero: letras, profundidade e abertura
    4. Rolagem: cabeçalho e paralaxe
@@ -27,43 +27,14 @@ const OPENING_HOURS = {
 };
 
 /* --------------------------------------------------------------------------
-   AGENDA DE DEMONSTRAÇÃO
-   Os horários abaixo são EXEMPLOS fixos para mostrar como a agenda funciona.
-   Eles não refletem a disponibilidade real da equipe e nada é reservado pelo site:
-   o visitante só monta uma mensagem e a equipe confirma (ou não) pelo WhatsApp.
-
-   Para ligar a uma fonte real, troque DEMO_SCHEDULE pelos dados reais (mesmo formato)
-   e mude AGENDA_IS_DEMO para false: o aviso de demonstração some e os textos deixam
-   de dizer "exemplo".
-   Formato: profissional → dia da semana (getDay) → lista de horários "HH:MM".
-   O turno (manhã/tarde) é deduzido de OPENING_HOURS.
+   AGENDA
+   O visitante escolhe profissional, dia e período (manhã ou tarde). Dias e períodos vêm de
+   OPENING_HOURS, o horário real de funcionamento: nenhum horário é inventado. O site não reserva
+   nada; ele monta uma mensagem e a equipe confirma pelo WhatsApp o horário exato e se o
+   profissional está disponível naquele período.
    -------------------------------------------------------------------------- */
-const AGENDA_IS_DEMO = true;
 const AGENDA_DAYS_SHOWN = 5;
-
-const DEMO_SCHEDULE = {
-  Funny: {
-    2: ['08:30', '09:00', '10:00', '14:30', '16:20', '17:00'],
-    3: ['09:00', '10:30', '15:00', '16:00', '17:30'],
-    4: ['08:30', '10:00', '14:00', '15:30', '18:00'],
-    5: ['09:30', '11:00', '14:00', '16:00', '17:30'],
-    6: ['08:00', '09:30', '11:00', '15:00']
-  },
-  Miguel: {
-    2: ['09:30', '11:00', '15:30', '16:30'],
-    3: ['08:00', '09:30', '14:00', '17:00'],
-    4: ['10:00', '14:30', '16:30', '18:00'],
-    5: ['14:00', '15:00', '17:00'],
-    6: ['08:30', '10:00', '13:00']
-  },
-  Thaylor: {
-    2: ['08:30', '16:00', '17:00'],
-    3: ['10:00', '11:00', '14:30'],
-    4: ['15:00', '17:00'],
-    5: ['09:00', '10:30'],
-    6: ['08:30', '11:00']
-  }
-};
+const PERIOD_NAMES = ['Manhã', 'Tarde'];   // nomes dos turnos, na ordem em que aparecem em OPENING_HOURS
 
 /* ==========================================================================
    Utilitários
@@ -138,7 +109,7 @@ function initHero(root) {
     word.innerHTML = [...word.textContent].map(c => `<span class="ch"><i>${c}</i></span>`).join('');
     word.classList.add('is-split');
   });
-  const [wordOutline, wordFill, wordFront] = words;
+  const [, wordFill, wordFront] = words;   // a 1ª cópia (contorno) não precisa de nome: anima junto com as outras por `words`
   const clipperPos = $('.clipper-pos');
   const mover = $('.clipper-mover');
   const buzz = $('.clipper-buzz');
@@ -360,10 +331,19 @@ function initHero(root) {
 function initScroll(root, reduceMotion, hero) {
   const header = $('.header');
   let heroVisible = true, ticking = false, parallax = true;
-  new IntersectionObserver(([entry]) => { heroVisible = entry.isIntersecting; }).observe(hero.el);
+
+  /* Cabeçalho: .is-solid depois de 40px de rolagem (fundo sólido) e .is-over-hero enquanto o hero
+     estiver atrás dele (no tema claro, esse trecho mantém o cabeçalho escuro: styles.css §10).
+     O IntersectionObserver diz se o hero está na tela; só então se mede onde ele termina. */
+  const updateHeader = () => {
+    const overHero = heroVisible && hero.el.getBoundingClientRect().bottom > header.offsetHeight;
+    header.classList.toggle('is-solid', window.scrollY > 40);
+    header.classList.toggle('is-over-hero', overHero);
+  };
+  new IntersectionObserver(([entry]) => { heroVisible = entry.isIntersecting; updateHeader(); }).observe(hero.el);
 
   const onScroll = () => {
-    header.classList.toggle('is-solid', window.scrollY > 40);
+    updateHeader();
     if (reduceMotion || !parallax || !heroVisible || ticking) return;
     ticking = true;
     requestAnimationFrame(() => {
@@ -408,18 +388,14 @@ function initReveals() {
    O site não reserva nada: monta uma mensagem de consulta para o WhatsApp.
    ========================================================================== */
 function initAgenda() {
-  const notice = $('#agenda-notice');
   const barberButtons = $$('.barber-tab');
   const dayStrip = $('.day-strip');
-  const periodLists = [$('#slots-morning'), $('#slots-afternoon')];
+  const periodLists = [$('#slots-morning'), $('#slots-afternoon')];   // uma coluna por turno
   const summaryBarber = $('#summary-barber');
   const summaryDay = $('#summary-day');
-  const summaryTime = $('#summary-time');
+  const summaryPeriod = $('#summary-period');
   const whatsappLink = $('#agenda-whatsapp-link');
   if (!dayStrip || !whatsappLink) return;
-
-  if (notice) notice.hidden = !AGENDA_IS_DEMO;
-  const slotLabel = AGENDA_IS_DEMO ? 'horário de exemplo' : 'horário';
 
   const weekdayName = new Intl.DateTimeFormat('pt-BR', { weekday: 'long' });
   const monthName = new Intl.DateTimeFormat('pt-BR', { month: 'short' });
@@ -428,7 +404,20 @@ function initAgenda() {
   const sameDay = (a, b) => a.toDateString() === b.toDateString();
   const nowMinutes = () => { const n = new Date(); return n.getHours() * 60 + n.getMinutes(); };
 
-  const state = { barber: barberButtons[0]?.dataset.barber || 'Funny', day: null, time: '' };
+  // period = índice do turno em OPENING_HOURS do dia (0 = manhã, 1 = tarde); -1 = nenhum escolhido
+  const state = { barber: barberButtons[0]?.dataset.barber || 'Funny', day: null, period: -1 };
+
+  /* Turnos do dia. Só aceita o formato documentado (um intervalo por nome em PERIOD_NAMES): um dia com
+     outro formato não é oferecido, em vez de adivinhar qual intervalo é manhã ou tarde. */
+  const turnsOf = date => {
+    const hours = OPENING_HOURS[date.getDay()];
+    if (!hours) return null;
+    if (hours.length !== PERIOD_NAMES.length) {
+      console.warn(`OPENING_HOURS[${date.getDay()}] precisa de ${PERIOD_NAMES.length} turnos (${PERIOD_NAMES.join(', ')}); o dia ficou de fora da agenda.`);
+      return null;
+    }
+    return hours;
+  };
 
   /* Próximos dias de funcionamento. Hoje só entra se o Studio ainda não fechou. */
   const upcomingDays = () => {
@@ -438,9 +427,9 @@ function initAgenda() {
     for (let offset = 0; days.length < AGENDA_DAYS_SHOWN && offset < 21; offset += 1) {
       const date = new Date(start);
       date.setDate(start.getDate() + offset);
-      const hours = OPENING_HOURS[date.getDay()];
-      if (!hours) continue;
-      if (offset === 0 && nowMinutes() >= toMinutes(hours[hours.length - 1][1])) continue;
+      const turns = turnsOf(date);
+      if (!turns) continue;
+      if (offset === 0 && nowMinutes() >= toMinutes(turns[turns.length - 1][1])) continue;
       days.push(date);
     }
     return days;
@@ -461,7 +450,7 @@ function initAgenda() {
       label.className = 'day-card-date';
       label.textContent = `${date.getDate()} ${monthName.format(date).replace('.', '')}`;
       button.append(name, label);
-      button.addEventListener('click', () => { state.day = date; state.time = ''; pressOnly($$('.day-card', dayStrip), button); render(); });
+      button.addEventListener('click', () => { state.day = date; pressOnly($$('.day-card', dayStrip), button); render(); });
       return button;
     }));
     state.day = new Date(dayStrip.firstElementChild.dataset.date);
@@ -469,88 +458,79 @@ function initAgenda() {
 
   const dayLabel = date => `${capitalize(weekdayName.format(date))}, ${pad(date.getDate())}/${pad(date.getMonth() + 1)}`;
 
-  /* Horários do profissional no dia, separados por turno, sem os que já passaram (se for hoje). */
-  const slotsByPeriod = () => {
-    const weekday = state.day.getDay();
-    const hours = OPENING_HOURS[weekday] || [];
-    const all = (DEMO_SCHEDULE[state.barber] || {})[weekday] || [];
-    const isToday = sameDay(state.day, new Date());
+  /* Turnos do dia escolhido, com o intervalo real; hoje, um turno que já terminou fica indisponível. */
+  const periodsOf = date => {
+    const isToday = sameDay(date, new Date());
     const now = nowMinutes();
-    return hours.map(([open, close]) => {
-      const inPeriod = all.filter(t => toMinutes(t) >= toMinutes(open) && toMinutes(t) < toMinutes(close));
-      const upcoming = isToday ? inPeriod.filter(t => toMinutes(t) > now) : inPeriod;
-      return { times: upcoming, allPassed: inPeriod.length > 0 && upcoming.length === 0 };
-    });
-  };
-
-  /* Só refaz a lista quando o conteúdo muda (profissional, dia ou horários). Escolher um horário
-     apenas marca o botão (syncSelection): o botão focado continua existindo, então o foco do
-     teclado não se perde, e a atualização de minuto em minuto não mexe em nada se nada mudou. */
-  const renderSlots = (container, { times, allPassed }) => {
-    if (!container) return;
-    const signature = `${state.barber}|${state.day.toDateString()}|${times.join(',')}|${allPassed}`;
-    if (container.dataset.signature === signature) return;
-    container.dataset.signature = signature;
-    if (!times.length) {
-      const empty = document.createElement('span');
-      empty.className = 'slot-empty';
-      empty.textContent = allPassed
-        ? 'Os horários deste período já passaram.'
-        : `Nenhum ${slotLabel} neste período.`;
-      container.replaceChildren(empty);
-      return;
-    }
-    container.replaceChildren(...times.map(time => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'slot';
-      button.textContent = time;
-      button.setAttribute('aria-label', `${time}, ${slotLabel}`);
-      button.setAttribute('aria-pressed', String(state.time === time));
-      button.addEventListener('click', () => { state.time = time; render(); });
-      return button;
+    return (turnsOf(date) || []).map(([open, close], i) => ({
+      name: PERIOD_NAMES[i], open, close, ended: isToday && now >= toMinutes(close)
     }));
   };
 
-  const syncSelection = () => periodLists.forEach(list => list && $$('.slot', list).forEach(button => {
-    button.setAttribute('aria-pressed', String(button.textContent === state.time));
+  /* Só refaz um turno quando o conteúdo dele muda (outro intervalo, ou o turno de hoje terminou):
+     escolher um período só marca o botão (syncSelection), então o foco do teclado não se perde, e a
+     atualização de minuto em minuto não mexe em nada se nada mudou. */
+  const renderPeriod = (container, period, i) => {
+    if (!container) return;
+    const signature = period ? `${period.open}|${period.close}|${period.ended}` : 'none';
+    if (container.dataset.signature === signature) return;
+    container.dataset.signature = signature;
+    if (!period || period.ended) {
+      const empty = document.createElement('span');
+      empty.className = 'slot-empty';
+      empty.textContent = period ? `A ${period.name.toLowerCase()} de hoje já terminou.` : 'Sem atendimento neste período.';
+      container.replaceChildren(empty);
+      return;
+    }
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'slot period-slot';
+    button.dataset.period = String(i);
+    button.textContent = `${period.open} às ${period.close}`;
+    button.setAttribute('aria-label', `${period.name}, das ${period.open} às ${period.close}`);
+    button.setAttribute('aria-pressed', String(state.period === i));
+    button.addEventListener('click', () => { state.period = i; render(); });
+    container.replaceChildren(button);
+  };
+
+  const syncSelection = () => periodLists.forEach(list => list && $$('.period-slot', list).forEach(button => {
+    button.setAttribute('aria-pressed', String(Number(button.dataset.period) === state.period));
   }));
   const setText = (el, text) => { if (el.textContent !== text) el.textContent = text; };
 
   const render = () => {
-    const periods = slotsByPeriod();
-    if (state.time && !periods.some(p => p.times.includes(state.time))) state.time = '';
-    periods.forEach((period, i) => renderSlots(periodLists[i], period));
+    const periods = periodsOf(state.day);
+    const chosenOk = periods[state.period] && !periods[state.period].ended;
+    if (!chosenOk) state.period = -1;   // o turno escolhido não existe neste dia ou já terminou hoje
+    periodLists.forEach((list, i) => renderPeriod(list, periods[i], i));
     syncSelection();
 
     const day = dayLabel(state.day);
+    const chosen = periods[state.period];
     setText(summaryBarber, state.barber);
     setText(summaryDay, day);
-    setText(summaryTime, state.time || 'Selecione um horário');
-    summaryTime.classList.toggle('is-empty', !state.time);   // só estilo: texto de ajuda fica discreto
+    // espaços não separáveis no intervalo: se quebrar a linha, quebra depois do nome, nunca no meio do horário
+    setText(summaryPeriod, chosen ? `${chosen.name}, ${chosen.open}\u00a0às\u00a0${chosen.close}` : 'Selecione um período');
+    summaryPeriod.classList.toggle('is-empty', !chosen);   // só estilo: texto de ajuda fica discreto
 
-    const when = state.time ? `às ${state.time}` : 'em qualquer horário disponível';
+    const when = chosen ? `no período da ${chosen.name.toLowerCase()} (${chosen.open} às ${chosen.close})` : 'em qualquer período';
     whatsappLink.href = whatsappUrl(`Olá! Gostaria de consultar a disponibilidade para ${day}, ${when}, com ${state.barber}.`);
   };
 
   barberButtons.forEach(button => button.addEventListener('click', () => {
     pressOnly(barberButtons, button);
     state.barber = button.dataset.barber;
-    state.time = '';
     render();
   }));
 
   renderDays();
   render();
 
-  // Com a página aberta por muito tempo: horários de hoje que passam saem da lista e, quando o
+  // Com a página aberta por muito tempo: um turno de hoje que termina sai da escolha e, quando o
   // Studio fecha (ou vira o dia), a faixa de dias é refeita a partir do próximo dia aberto.
   setInterval(() => {
     const first = upcomingDays()[0];
-    if (first && !sameDay(first, new Date(dayStrip.firstElementChild.dataset.date))) {
-      state.time = '';
-      renderDays();
-    }
+    if (first && !sameDay(first, new Date(dayStrip.firstElementChild.dataset.date))) renderDays();
     render();
   }, 60 * 1000);
 }

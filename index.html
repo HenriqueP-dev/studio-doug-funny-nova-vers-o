@@ -6,7 +6,7 @@
   <title>Studio Doug Funny | Barbearia & Formação Profissional</title>
   <meta name="description" content="Studio Doug Funny: barbearia e formação profissional de barbeiros em Barretos-SP, desde 2014.">
   <meta name="theme-color" content="#0A0A0A">
-  <meta name="color-scheme" content="dark">
+  <meta name="color-scheme" content="light">   <!-- o site é claro (styles.css §10); o hero escuro é pintado pelo CSS -->
 
   <!-- Antes da primeira pintura: liga o estado inicial da abertura (só com JS e sem movimento reduzido).
        Fica inline de propósito: em arquivo externo a página piscaria no estado final. -->
@@ -24,18 +24,17 @@
   <link rel="icon" href="imagens/icone-32.png" type="image/png" sizes="32x32">
   <link rel="apple-touch-icon" href="imagens/icone-180.png">
 
-  <!-- Compartilhamento (WhatsApp, Instagram, Facebook, X)
-       QUANDO O DOMÍNIO ESTIVER DEFINIDO: troque "imagens/compartilhamento.jpg" pelo endereço absoluto
-       (https://SEU-DOMINIO/imagens/compartilhamento.jpg) e ative as duas linhas comentadas abaixo.
-       Várias redes só mostram a imagem com endereço absoluto. -->
-  <!-- <link rel="canonical" href="https://SEU-DOMINIO/"> -->
-  <!-- <meta property="og:url" content="https://SEU-DOMINIO/"> -->
+  <!-- Compartilhamento (WhatsApp, Instagram, Facebook, X). As redes só mostram a imagem com endereço
+       ABSOLUTO. Domínio de produção atual (Vercel): https://studio-doug-funny-nova-vers-o.vercel.app/
+       Ao ligar um domínio próprio, troque-o aqui (canonical, og:url, og:image) e no JSON-LD abaixo (url, image, logo). -->
+  <link rel="canonical" href="https://studio-doug-funny-nova-vers-o.vercel.app/">
+  <meta property="og:url" content="https://studio-doug-funny-nova-vers-o.vercel.app/">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="pt_BR">
   <meta property="og:site_name" content="Studio Doug Funny">
   <meta property="og:title" content="Studio Doug Funny | Barbearia & Formação Profissional">
   <meta property="og:description" content="Barbearia e formação profissional de barbeiros em Barretos-SP, desde 2014.">
-  <meta property="og:image" content="imagens/compartilhamento.jpg">
+  <meta property="og:image" content="https://studio-doug-funny-nova-vers-o.vercel.app/imagens/compartilhamento.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Studio Doug Funny: a palavra BARBEARIA atravessada por uma máquina de corte, em preto e laranja">
@@ -49,8 +48,9 @@
     "name": "Studio Doug Funny",
     "description": "Barbearia e formação profissional de barbeiros em Barretos-SP, desde 2014.",
     "foundingDate": "2014",
-    "image": "imagens/compartilhamento.jpg",
-    "logo": "imagens/icone-512.png",
+    "url": "https://studio-doug-funny-nova-vers-o.vercel.app/",
+    "image": "https://studio-doug-funny-nova-vers-o.vercel.app/imagens/compartilhamento.jpg",
+    "logo": "https://studio-doug-funny-nova-vers-o.vercel.app/imagens/icone-512.png",
     "telephone": "+55 17 99105-2256",
     "email": "studiodfunny@hotmail.com",
     "address": {
@@ -333,9 +333,9 @@
               <li><svg class="icon" aria-hidden="true"><use href="#i-scissors"/></svg> Presencial &amp; Prático</li>
             </ul>
 
-            <!-- CONFIRMAR COM O STUDIO antes de completar esta tabela: duração do curso, datas de início,
-                 o que diferencia cada turma (a Turma 3 custa menos que as Turmas 1 e 2) e formas de pagamento.
-                 Nenhuma dessas informações existe no projeto; não preencher por suposição. -->
+            <!-- Turmas: só os preços informados pelo Studio. Duração, datas, diferenças entre as turmas e
+                 formas de pagamento entram aqui apenas quando o Studio as informar; até lá, a nota abaixo
+                 encaminha essas dúvidas para o WhatsApp. -->
             <table class="turmas">
               <caption>Investimento &amp; turmas</caption>
               <thead>
@@ -370,15 +370,17 @@
           <div>
             <span class="eyebrow">Portfólio</span>
             <h2 class="title reveal" id="trabalhos-title">
-              <span class="line"><span>Trabalhos, aulas</span></span>
-              <span class="line"><span><em>&amp; ambiente</em></span></span>
+              <span class="line"><span>Trabalhos &amp; aulas</span></span>
+              <span class="line"><span><em>no Instagram</em></span></span>
             </h2>
           </div>
-          <p class="section-note">Os cortes, as aulas e o dia a dia do Studio são publicados no Instagram.</p>
+          <p class="section-note">Os cortes, as aulas e o dia a dia do Studio são publicados no perfil @studiodougfunny.</p>
         </header>
 
         <!-- As imagens desta galeria são renders 3D (ferramentas/), não fotos de clientes.
-             Cada legenda diz "Ilustração 3D"; os trabalhos reais ficam no Instagram. -->
+             Cada legenda diz "Ilustração 3D"; os trabalhos reais ficam no Instagram, e o título diz isso.
+             Quando houver fotos reais (cortes, aulas, salão), troque as imagens no mesmo layout de 12 colunas,
+             tire as etiquetas "Ilustração 3D" e o aviso abaixo e ajuste o título ao que as fotos mostram. -->
         <p class="gallery-note">
           <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
           <span><strong>Imagens ilustrativas:</strong> renders 3D criados para o site, não são fotos de cortes. Os trabalhos reais estão no Instagram do Studio.</span>
@@ -469,7 +471,7 @@
     </section>
 
     <!-- ===================================================================
-         AGENDA (demonstração: dados de exemplo em script.js → DEMO_SCHEDULE)
+         AGENDA (consulta pelo WhatsApp: dias e períodos de OPENING_HOURS em script.js)
          =================================================================== -->
     <section class="section section-alt" id="agenda" aria-labelledby="agenda-title">
       <div class="wrap">
@@ -481,13 +483,8 @@
               <span class="line"><span><em>semanal</em></span></span>
             </h2>
           </div>
-          <p class="section-note">Escolha o profissional, o dia e um horário de interesse para montar sua consulta. A disponibilidade e a confirmação são feitas diretamente pelo WhatsApp.</p>
+          <p class="section-note">Escolha o profissional, o dia e o período de interesse para montar sua consulta. A disponibilidade e a confirmação são feitas diretamente pelo WhatsApp.</p>
         </header>
-
-        <div class="agenda-notice" id="agenda-notice" role="note">
-          <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
-          <span><strong>Interface de demonstração:</strong> as datas e os horários são exemplos para avaliar a agenda. Nenhum horário é reservado por este site: a disponibilidade real e a confirmação são feitas diretamente com a equipe pelo WhatsApp.</span>
-        </div>
 
         <div class="agenda-layout">
           <div class="agenda-steps">
@@ -516,7 +513,7 @@
             </div>
 
             <div class="agenda-block">
-              <h3 class="agenda-step" id="agenda-step-time"><b>03</b> Escolha o horário <span class="agenda-step-note">de exemplo</span></h3>
+              <h3 class="agenda-step" id="agenda-step-time"><b>03</b> Escolha o período</h3>
               <div class="agenda-periods" role="group" aria-labelledby="agenda-step-time" aria-live="polite" aria-atomic="true">
                 <div class="agenda-period">
                   <h4>Manhã</h4>
@@ -539,7 +536,7 @@
               <dl class="agenda-summary-details">
                 <div><dt>Profissional</dt><dd><strong id="summary-barber">Funny</strong></dd></div>
                 <div><dt>Dia</dt><dd><strong id="summary-day">—</strong></dd></div>
-                <div><dt>Horário</dt><dd><strong id="summary-time" class="is-empty">Selecione um horário</strong></dd></div>
+                <div><dt>Período</dt><dd><strong id="summary-period" class="is-empty">Selecione um período</strong></dd></div>
               </dl>
             </div>
             <a class="btn btn-solid" id="agenda-whatsapp-link" href="https://wa.me/5517991052256" target="_blank" rel="noopener noreferrer">
@@ -547,7 +544,7 @@
             </a>
             <p class="agenda-summary-hint">
               <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
-              <span>Ainda não é uma reserva: a equipe consulta a disponibilidade e responde pelo WhatsApp se o horário está livre.</span>
+              <span>Ainda não é uma reserva: os períodos seguem o horário de funcionamento do Studio, e a equipe confirma pelo WhatsApp o horário exato e a disponibilidade do profissional.</span>
             </p>
           </aside>
         </div>

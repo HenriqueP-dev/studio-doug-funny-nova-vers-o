@@ -132,6 +132,7 @@
   const EXTRA_ROTATION = -16;   // "gira um pouco" ao descer (graus, somados à pose)
   const MAX_SCALE = 0.35;       // tamanho máximo ao pousar
   const MIN_SCALE = 0.16;
+  const SHADOW_REACH = 115;     // até onde a sombra escura de .clipper desce além da máquina (40px de deslocamento + desfoque), em px sem escala
 
   /* Onde a máquina pousa: no espaço livre à direita do texto do título "Serviços & procedimentos",
      acima da nota lateral (desktop) ou ao lado do título (quando a nota vai para baixo dele).
@@ -146,7 +147,8 @@
 
     const h = hero.clipperPos.offsetHeight;
     const w = hero.clipperImg.offsetWidth || h * 513 / 1635;
-    const r = ((parseFloat(cs.getPropertyValue('--rot')) || -32) + EXTRA_ROTATION) * Math.PI / 180;
+    const startRot = parseFloat(cs.getPropertyValue('--rot')) || -32;
+    const r = (startRot + EXTRA_ROTATION) * Math.PI / 180;
     const boxW = w * Math.abs(Math.cos(r)) + h * Math.abs(Math.sin(r));
     const boxH = w * Math.abs(Math.sin(r)) + h * Math.abs(Math.cos(r));
 
@@ -179,8 +181,22 @@
       dx: (left + right) / 2 - baseX,
       dy: (top + bottom) / 2 + sy - baseY,
       scale,
-      rot: EXTRA_ROTATION
+      rot: EXTRA_ROTATION,
+      start: { y: baseY, w, h, rot: startRot }   // de onde ela parte (centro e tamanho sem escala): usado pela sombra
     };
+  }
+
+  /* A sombra escura de .clipper dá profundidade no palco escuro do hero. Na viagem o hero fica com
+     overflow visível e, no tema claro, essa sombra viraria uma mancha cinza sobre o bege de Serviços.
+     Esta conta diz se a sombra já alcança o bege visível; então .is-off-stage troca a sombra por uma
+     curta e clara (styles.css §10). Só números medidos no refresh: nada de ler o layout a cada quadro. */
+  function shadowOffStage(landing, t, heroEnd) {
+    const s = 1 + (landing.scale - 1) * t;
+    const r = (landing.start.rot + landing.rot * t) * Math.PI / 180;
+    const half = (landing.start.w * Math.abs(Math.sin(r)) + landing.start.h * Math.abs(Math.cos(r))) / 2;
+    const shadowBottom = landing.start.y + landing.dy * t + (half + SHADOW_REACH) * s;   // no documento
+    const beigeOnScreen = window.scrollY + window.innerHeight > heroEnd;
+    return shadowBottom > heroEnd && beigeOnScreen;
   }
 
   function clipperTravel(app, ctx) {
@@ -202,7 +218,7 @@
       hero.el.classList.add('is-traveling');
       const heroBottom = () => hero.el.offsetTop + hero.el.offsetHeight;
       let landing = measureLanding(app, els);
-      let maskLimit = heroBottom();
+      let heroEnd = heroBottom();   // fim do hero no documento
       const state = { travel: 0, fade: 0 };
 
       const apply = () => {
@@ -214,8 +230,9 @@
         pos.setProperty('--ps', (1 + (landing.scale - 1) * t).toFixed(4));
         pos.opacity = String(1 - state.fade);
         hero.setExtraRotation(landing.rot * t);
+        hero.clipperPos.classList.toggle('is-off-stage', shadowOffStage(landing, t, heroEnd));
         // a máscara só importa enquanto a palavra está na tela
-        if (window.scrollY < maskLimit) hero.updateDepthMask();
+        if (window.scrollY < heroEnd) hero.updateDepthMask();
       };
 
       const tl = gsap.timeline({
@@ -227,7 +244,7 @@
           endTrigger: title,
           end: 'center 40%',
           scrub: 0.6,
-          onRefresh: () => { landing = measureLanding(app, els); maskLimit = heroBottom(); apply(); },
+          onRefresh: () => { landing = measureLanding(app, els); heroEnd = heroBottom(); apply(); },
           onToggle: self => { hero.clipperPos.style.willChange = self.isActive ? 'transform, opacity' : ''; }
         }
       });
@@ -254,6 +271,7 @@
       stopWaiting();
       gsap.set(['.hero-copy', '.hero-since'], { clearProps: 'transform,opacity' });
       hero.el.classList.remove('is-traveling');
+      hero.clipperPos.classList.remove('is-off-stage');
       ['--px', '--py', '--pr', '--ps', 'will-change'].forEach(p => hero.clipperPos.style.removeProperty(p));
       hero.clipperPos.style.opacity = '1';
       hero.el.style.removeProperty('--wy');
@@ -639,8 +657,8 @@
     // equipe: nome e função depois da cortina do retrato
     add(enter('.member-info', rise, risen, { delay: 0.35, stagger: 0.12, start: 'top 95%' }));
 
-    // agenda: aviso, passos, horários e resumo, em ordem de leitura
-    add(enter('.agenda-notice, .agenda-block, .agenda-summary', rise, risen, { stagger: 0.1 }));
+    // agenda: passos e resumo, em ordem de leitura
+    add(enter('.agenda-block, .agenda-summary', rise, risen, { stagger: 0.1 }));
 
     // contato e rodapé
     add(enter('.info-item', rise, risen, { stagger: 0.06 }));
@@ -663,14 +681,14 @@
 
   /* ==========================================================================
      9. AGENDA: RETORNO VISUAL
-     Ao trocar de profissional ou de dia, os novos horários entram em sequência curta (continuidade:
-     dá para ver que a lista mudou). Ao escolher um horário, o resumo pisca em laranja no valor que
-     mudou. A seleção em si (pulso da pílula) é CSS, então também funciona sem GSAP.
-     script.js só refaz a lista quando o conteúdo muda, então nada pisca na atualização de minuto.
+     Ao trocar para um dia com outros períodos (ex.: sábado), os novos intervalos entram em sequência
+     curta (continuidade: dá para ver que a lista mudou). Ao escolher um período, o resumo pisca em
+     laranja no valor que mudou. A seleção em si (pulso da pílula) é CSS, então também funciona sem GSAP.
+     script.js só refaz um período quando o conteúdo muda, então nada pisca na atualização de minuto.
      ========================================================================== */
   function agendaFeedback() {
     const lists = ['#slots-morning', '#slots-afternoon'].map(s => document.querySelector(s)).filter(Boolean);
-    const summary = ['#summary-barber', '#summary-day', '#summary-time'].map(s => document.querySelector(s)).filter(Boolean);
+    const summary = ['#summary-barber', '#summary-day', '#summary-period'].map(s => document.querySelector(s)).filter(Boolean);
     const slotsObserver = new MutationObserver(records => {
       const added = records.flatMap(r => [...r.addedNodes]).filter(n => n.nodeType === 1);
       if (added.length) gsap.fromTo(added, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: 'power3.out', stagger: 0.025, clearProps: 'opacity,transform' });
@@ -683,7 +701,7 @@
         gsap.killTweensOf(el, 'color');
         el.style.removeProperty('color');
         const base = getComputedStyle(el).color;
-        const accent = getComputedStyle(el).getPropertyValue('--orange').trim() || '#FF5500';   // laranja de texto do tema
+        const accent = getComputedStyle(el).getPropertyValue('--accent').trim() || '#FF5500';   // laranja de texto do fundo atual (styles.css §1)
         gsap.fromTo(el, { color: accent }, { color: base, duration: 0.9, ease: 'power2.out', clearProps: 'color' });
       });
     });

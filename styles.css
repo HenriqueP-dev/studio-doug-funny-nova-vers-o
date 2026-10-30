@@ -13,18 +13,32 @@
    7. Rodapé
    8. Responsivo
    9. Movimento reduzido
+   10. Tema claro (o tema em uso)
    ========================================================================== */
 
 /* ==========================================================================
    1. TOKENS
    ========================================================================== */
 :root {
+  /* Paleta escura de base: é a do hero. O site usa o tema claro (seção 10), que troca superfícies e texto. */
   --bg: #0A0A0A;
   --bg-2: #111012;
   --surface: #17161A;
   --line: #2A282C;
-  --orange: #FF5500;           /* laranja da identidade Doug Funny */
-  --orange-hi: #FF7433;
+  /* Laranja: cada papel tem o seu token (DESIGN.md §2). Nunca use --brand para texto sobre fundo claro.
+     --brand / --brand-hi     laranja da identidade e sua variação clara: preenchimentos (botões, cartão
+                              destaque, seção Formação, seleção da agenda), linhas da marca e a assinatura
+     --brand-text / -hi       laranja de TEXTO sobre fundo claro (5,1 a 6,3:1 em bege e branco)
+     --accent / --accent-hi   o laranja que texto, ícones e bordas finas usam: depende do fundo. Vale a marca
+                              sobre escuro e --brand-text sobre claro (tema claro); contextos escuros e
+                              laranja o redefinem
+     --focus                  anel de foco do teclado; se ausente, usa --accent (seções laranja: tinta) */
+  --brand: #FF5500;
+  --brand-hi: #FF7433;
+  --brand-text: #A93806;
+  --brand-text-hi: #8F3104;
+  --accent: var(--brand);
+  --accent-hi: var(--brand-hi);
   --ink: #0A0A0A;              /* texto sobre laranja */
   --text: #F5F3F0;
   --muted: #A8A29E;
@@ -82,7 +96,7 @@ a { color: inherit; text-decoration: none; }
 ul { list-style: none; }
 button { font: inherit; color: inherit; }
 
-:focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--focus, var(--accent)); outline-offset: 3px; }
 
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
@@ -91,7 +105,8 @@ button { font: inherit; color: inherit; }
 
 .skip-link {
   position: absolute; left: var(--s-4); top: -100px; z-index: 500;
-  padding: var(--s-3) var(--s-5); background: var(--orange); color: var(--ink); font-weight: 700; border-radius: var(--radius);
+  padding: var(--s-3) var(--s-5); background: var(--brand); color: var(--ink); font-weight: 700; border-radius: var(--radius);
+  --focus: var(--brand);   /* só aparece no topo da página, sobre o hero escuro */
 }
 .skip-link:focus { top: var(--s-4); }
 
@@ -105,7 +120,7 @@ button { font: inherit; color: inherit; }
 /* Rótulo de seção */
 .eyebrow {
   display: inline-flex; align-items: center; gap: var(--s-3);
-  color: var(--orange); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--accent); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase;
 }
 .eyebrow::after { content: ''; width: 2.5rem; height: 1px; background: currentColor; transform: scaleX(var(--line, 1)); transform-origin: 0 50%; }
 
@@ -114,7 +129,7 @@ button { font: inherit; color: inherit; }
   font-family: var(--display); font-weight: 400; text-transform: uppercase;
   font-size: clamp(3rem, 8.2vw, 7.5rem); line-height: 0.9; letter-spacing: -0.005em;
 }
-.title em { font-family: var(--serif); font-style: italic; text-transform: none; font-size: 0.92em; letter-spacing: -0.01em; color: var(--orange); }
+.title em { font-family: var(--serif); font-style: italic; text-transform: none; font-size: 0.92em; letter-spacing: -0.01em; color: var(--accent); }
 .title .outline { color: transparent; -webkit-text-stroke: 1.5px var(--stroke-c, var(--text)); }
 
 /* Revelação por máscara (uma única técnica para o site todo) */
@@ -149,13 +164,13 @@ button { font: inherit; color: inherit; }
 }
 .btn:hover::before { transform: scaleX(1); transform-origin: 0 50%; }
 .btn .icon { font-size: 1.15rem; }
-.btn-solid { --sweep: var(--orange-hi); background: var(--orange); border-color: var(--orange); color: var(--ink); }
-.btn-solid:hover { border-color: var(--orange-hi); transform: translateY(-2px); }
+.btn-solid { --sweep: var(--brand-hi); background: var(--brand); border-color: var(--brand); color: var(--ink); }
+.btn-solid:hover { border-color: var(--brand-hi); transform: translateY(-2px); }
 .btn-line { --sweep: rgba(255, 85, 0, 0.12); border-color: rgba(245, 243, 240, 0.45); color: var(--text); }
-.btn-line:hover { border-color: var(--orange); color: var(--orange); }
-.btn-ink { --sweep: #24211f; background: var(--ink); border-color: var(--ink); color: var(--orange); }
+.btn-line:hover { border-color: var(--accent); color: var(--accent); }
+.btn-ink { --sweep: #24211f; background: var(--ink); border-color: var(--ink); color: var(--brand); }   /* fundo escuro: marca (5,4:1) */
 .btn-ink:hover { transform: translateY(-2px); }
-.btn-outline-orange { --sweep: var(--orange); border-color: var(--orange); color: var(--orange); }
+.btn-outline-orange { --sweep: var(--brand); border-color: var(--accent); color: var(--accent); }
 .btn-outline-orange:hover { color: var(--ink); transition-delay: 0.08s; }
 
 /* Toque/clique: todos os botões afundam de leve. O magnetismo (motion.js) usa a propriedade
@@ -185,7 +200,8 @@ button { font: inherit; color: inherit; }
 
 .brand { display: inline-flex; flex-direction: column; justify-content: center; flex: none; min-height: 44px; line-height: 0.9; }
 .brand-sub { font-family: var(--serif); font-style: italic; font-size: 0.95rem; color: var(--muted); }
-.brand-main { font-family: var(--display); font-size: 1.65rem; letter-spacing: 0.02em; color: var(--orange); text-transform: uppercase; }
+.brand-main { font-family: var(--display); font-size: 1.65rem; letter-spacing: 0.02em; color: var(--accent); text-transform: uppercase; }
+.brand-sub, .brand-main { transition: color 0.3s ease; }   /* acompanha o fundo do cabeçalho ao trocar de estado */
 
 .nav-menu { display: flex; gap: var(--s-1); }
 .nav-link {
@@ -193,7 +209,7 @@ button { font: inherit; color: inherit; }
   font-size: 0.74rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(245, 243, 240, 0.78);
   transition: color 0.2s ease;
 }
-.nav-link:hover, .nav-link[aria-current="true"] { color: var(--orange); }
+.nav-link:hover, .nav-link[aria-current="true"] { color: var(--accent); }
 /* sublinhado: entra pela esquerda e sai pela direita; como o link atual muda com a rolagem,
    ele parece viajar de um item para o outro */
 .nav-link { position: relative; }
@@ -207,6 +223,7 @@ button { font: inherit; color: inherit; }
   display: none; flex: none; align-items: center; justify-content: center;
   width: 46px; height: 46px; margin-left: auto;
   border: 1px solid var(--line); border-radius: 50%; background: rgba(10, 10, 10, 0.6); cursor: pointer;
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;   /* junto com o fundo do cabeçalho */
 }
 .menu-toggle .icon { font-size: 1.25rem; }
 .menu-toggle .icon-close, .menu-toggle[aria-expanded="true"] .icon-open { display: none; }
@@ -215,7 +232,7 @@ button { font: inherit; color: inherit; }
 .header-actions { display: flex; align-items: center; gap: var(--s-2); flex: none; }
 .header .btn { min-height: 44px; padding: 0.6rem 1.2rem; }
 .icon-link { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; font-size: 1.25rem; color: var(--muted); transition: color 0.2s ease; }
-.icon-link:hover { color: var(--orange); }
+.icon-link:hover { color: var(--accent); }
 
 /* ==========================================================================
    5. HERO — a máquina como protagonista
@@ -306,7 +323,7 @@ button { font: inherit; color: inherit; }
   position: absolute; z-index: 5; top: var(--word-top); left: 0; width: 2px; height: 0.78em;
   font-size: clamp(4.4rem, 19vw, 21rem);
   transform: translateY(calc(-50% + var(--wy)));
-  background: linear-gradient(180deg, transparent, var(--orange-hi) 20%, #fff 50%, var(--orange-hi) 80%, transparent);
+  background: linear-gradient(180deg, transparent, var(--brand-hi) 20%, #fff 50%, var(--brand-hi) 80%, transparent);
   box-shadow: 0 0 22px 4px rgba(255, 110, 40, 0.75);
   opacity: 0;
 }
@@ -315,7 +332,7 @@ button { font: inherit; color: inherit; }
   position: absolute; z-index: 6; left: 58%; top: calc(var(--word-top) + 12%);
   transform: translate(-50%, var(--wy)) rotate(-7deg);
   translate: calc(var(--mx) * 8px) calc(var(--my) * 6px);
-  font-family: var(--script); color: var(--orange); white-space: nowrap;
+  font-family: var(--script); color: var(--brand); white-space: nowrap;   /* a assinatura é sempre a cor da marca */
   font-size: clamp(3.4rem, 9.6vw, 9.5rem); line-height: 1;
   text-shadow: 0 6px 30px rgba(0, 0, 0, 0.6);
 }
@@ -325,7 +342,7 @@ button { font: inherit; color: inherit; }
   position: absolute; z-index: 7; left: var(--gutter); bottom: clamp(1.75rem, 5vh, 3.5rem);
   max-width: 34rem;
 }
-.hero-kicker { margin-bottom: var(--s-3); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--orange); }
+.hero-kicker { margin-bottom: var(--s-3); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); }
 .hero-quote { margin-bottom: var(--s-5); font-family: var(--serif); font-style: italic; font-size: clamp(1.4rem, 2.2vw, 1.9rem); line-height: 1.2; }
 .hero-cta { display: flex; flex-wrap: wrap; gap: var(--s-3); }
 
@@ -362,7 +379,7 @@ button { font: inherit; color: inherit; }
 .section-note { color: var(--muted); font-size: 1rem; }
 
 /* Linha de corte que liga o hero à seção seguinte */
-.cut-divider { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--orange); transform-origin: 0 50%; box-shadow: 0 0 18px rgba(255, 85, 0, 0.7); transition: transform 1.2s var(--ease-io); }
+.cut-divider { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--brand); transform-origin: 0 50%; box-shadow: 0 0 18px rgba(255, 85, 0, 0.7); transition: transform 1.2s var(--ease-io); }
 .js .cut-divider:not(.is-in) { transform: scaleX(0); }
 .cut-divider.is-driven { transition: none; }   /* desenhada pela rolagem (motion.js), sem transição CSS */
 
@@ -372,11 +389,11 @@ button { font: inherit; color: inherit; }
   position: relative; display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-4);
   padding: 1.15rem 0; border-bottom: 1px solid var(--line);
 }
-.service::before { content: ''; position: absolute; left: 0; bottom: -1px; height: 2px; width: 100%; background: var(--orange); transform: scaleX(0); transform-origin: 0 50%; transition: transform 0.45s var(--ease-out); }
+.service::before { content: ''; position: absolute; left: 0; bottom: -1px; height: 2px; width: 100%; background: var(--accent); transform: scaleX(0); transform-origin: 0 50%; transition: transform 0.45s var(--ease-out); }
 .service:hover::before { transform: scaleX(1); }
 .service-name { font-family: var(--display); font-size: clamp(1.45rem, 2.4vw, 2.1rem); text-transform: uppercase; letter-spacing: 0.01em; line-height: 1.05; transition: transform 0.35s var(--ease-out), color 0.25s ease; }
-.service:hover .service-name { transform: translateX(8px); color: var(--orange); }
-.service-price { font-family: var(--serif); font-style: italic; font-size: clamp(1.5rem, 2.4vw, 2.1rem); line-height: 1; color: var(--orange); white-space: nowrap; }
+.service:hover .service-name { transform: translateX(8px); color: var(--accent); }
+.service-price { font-family: var(--serif); font-style: italic; font-size: clamp(1.5rem, 2.4vw, 2.1rem); line-height: 1; color: var(--accent); white-space: nowrap; }
 .service-price small { margin-right: 0.4rem; font-family: var(--body); font-style: normal; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 
 /* ---------- 6.2 Pacotes ---------- */
@@ -386,7 +403,7 @@ button { font: inherit; color: inherit; }
 .pass {
   --pass-pad: clamp(2rem, 4vw, 3.5rem);
   position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: flex-start;
-  padding: var(--pass-pad); background: var(--orange); color: var(--ink); border-radius: 14px;
+  padding: var(--pass-pad); background: var(--brand); color: var(--ink); border-radius: 14px;
 }
 .pass-label { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; }
 .pass h3 { margin: var(--s-3) 0 var(--s-2); font-family: var(--display); font-weight: 400; font-size: clamp(2.6rem, 5vw, 4.4rem); text-transform: uppercase; line-height: 0.92; }
@@ -410,24 +427,26 @@ button { font: inherit; color: inherit; }
   background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
   transition: border-color 0.3s ease, transform 0.3s ease;
 }
-.pack:hover { border-color: var(--orange); transform: translateY(-3px); }
+.pack:hover { border-color: var(--accent); transform: translateY(-3px); }
 .pack-top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s-4); }
 .pack h3 { font-family: var(--display); font-weight: 400; font-size: clamp(1.9rem, 3vw, 2.5rem); text-transform: uppercase; line-height: 0.95; }
-.pack-price { font-family: var(--display); font-size: clamp(2.6rem, 4vw, 3.4rem); line-height: 1; color: var(--orange); white-space: nowrap; }
+.pack-price { font-family: var(--display); font-size: clamp(2.6rem, 4vw, 3.4rem); line-height: 1; color: var(--accent); white-space: nowrap; }
 .pack .checks { margin: var(--s-4) 0 var(--s-5); color: var(--muted); }
-.pack .checks .icon { color: var(--orange); }
+.pack .checks .icon { color: var(--accent); }
 .pack .btn { align-self: flex-start; margin-top: auto; }
-.pill { display: inline-block; margin-top: var(--s-2); padding: 0.3rem 0.75rem; border: 1px solid rgba(255, 85, 0, 0.6); border-radius: 999px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; color: var(--orange); }
+.pill { display: inline-block; margin-top: var(--s-2); padding: 0.3rem 0.75rem; border: 1px solid rgba(255, 85, 0, 0.6); border-radius: 999px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; color: var(--accent); }
 
 .combos-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-4); flex-wrap: wrap; margin-bottom: var(--s-4); }
 .combos-head h3 { font-family: var(--display); font-weight: 400; font-size: clamp(1.8rem, 3vw, 2.4rem); text-transform: uppercase; }
 .combos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 var(--s-7); border-top: 1px solid var(--line); }
 .combo { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-4); padding: 1rem 0; border-bottom: 1px solid var(--line); }
 .combo-name { font-weight: 600; font-size: 1.05rem; }
-.combo-price { font-family: var(--serif); font-style: italic; font-size: 1.6rem; color: var(--orange); white-space: nowrap; line-height: 1; }
+.combo-price { font-family: var(--serif); font-style: italic; font-size: 1.6rem; color: var(--accent); white-space: nowrap; line-height: 1; }
 
 /* ---------- 6.3 Formação (seção laranja) ---------- */
-.course-section { background: var(--orange); color: var(--ink); overflow: hidden; --stroke-c: var(--ink); }
+.course-section { background: var(--brand); color: var(--ink); overflow: hidden; --stroke-c: var(--ink); }
+/* fundo laranja: texto, ícones e anel de foco em tinta escura (o laranja de texto teria 2:1 aqui) */
+.pass, .course-section { --accent: var(--ink); --accent-hi: var(--ink); --focus: var(--ink); }
 .course-section .eyebrow { margin-bottom: var(--s-5); color: var(--ink); }
 .course-section .title em { color: var(--ink); }
 .course { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(2rem, 6vw, 6rem); align-items: end; }
@@ -439,7 +458,9 @@ button { font: inherit; color: inherit; }
 }
 .course-figure img {
   position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-  width: 112%; height: auto; max-width: none;
+  /* o arquivo tem 357px de largura (o original, imagens/funny.png, tem 512×512): no máximo 1,25×
+     para não borrar. Com uma foto maior, troque o 357px pela largura nova. */
+  width: min(112%, 357px * 1.25); height: auto; max-width: none;
   filter: grayscale(1) contrast(1.15) brightness(1.15); mix-blend-mode: multiply;
   scale: var(--zoom, 1); transform-origin: 50% 100%;   /* entrada (motion.js): assenta de um zoom, a partir da base */
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 86%, transparent);
@@ -475,7 +496,7 @@ button { font: inherit; color: inherit; }
   display: flex; gap: var(--s-3); align-items: flex-start; max-width: 64ch;
   margin-bottom: var(--s-5); color: var(--muted); font-size: 0.92rem; line-height: 1.55;
 }
-.gallery-note .icon { margin-top: 0.2rem; font-size: 1.1rem; color: var(--orange); }
+.gallery-note .icon { margin-top: 0.2rem; font-size: 1.1rem; color: var(--accent); }
 .gallery-note strong { color: var(--text); font-weight: 600; }
 
 /* Grade de 12 colunas: poste alto à esquerda; detalhe largo, lâmina e Instagram à direita */
@@ -503,7 +524,7 @@ button { font: inherit; color: inherit; }
   font-family: var(--serif); font-style: italic; font-size: clamp(1.35rem, 2.1vw, 1.9rem); line-height: 1.1;
   text-shadow: 0 2px 16px rgba(0, 0, 0, 0.7);
 }
-.g-num { flex: none; font-family: var(--display); font-style: normal; font-size: 0.85rem; letter-spacing: 0.1em; color: var(--orange); }
+.g-num { flex: none; font-family: var(--display); font-style: normal; font-size: 0.85rem; letter-spacing: 0.1em; color: var(--brand); }   /* sobre a foto escura */
 .g-pole { grid-column: 1 / span 5; grid-row: 1 / span 2; container-type: size; }
 .g-pole img { object-position: 50% 40%; }
 /* Poste girando com a rolagem (motion.js): sprite de 24 quadros renderizados (ferramentas/render_poste.py)
@@ -520,7 +541,10 @@ button { font: inherit; color: inherit; }
 .pole-sprite.is-ready { opacity: 1; }
 .g-tile:hover .pole-sprite { scale: 1.06; }
 .g-detail { grid-column: 6 / span 7; grid-row: 1; }
-.g-detail img { object-position: 30% 45%; }
+/* A gravação "DOUG FUNNY" fica na borda esquerda do render: o quadro parte dela, e o zoom de repouso
+   (1,12 no desktop, motion.js §8) cresce para a direita em vez de cortá-la. A deriva é só vertical,
+   então a foto continua cobrindo o bloco. */
+.g-detail img { object-position: 0% 0%; transform-origin: 0% 50%; }
 .g-blade { grid-column: 6 / span 4; grid-row: 2; }
 .g-blade img { object-position: 45% 70%; }
 
@@ -529,11 +553,11 @@ button { font: inherit; color: inherit; }
   grid-column: 10 / span 3; grid-row: 2;
   display: flex; flex-direction: column; justify-content: space-between; gap: var(--s-5);
   padding: clamp(1.5rem, 2.4vw, 2.25rem);
-  border-color: var(--orange); background: var(--orange); color: var(--ink);
+  border-color: var(--brand); background: var(--brand); color: var(--ink);
   transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
 }
 .g-insta::after { display: none; }
-.g-insta:hover { background: var(--orange-hi); border-color: var(--orange-hi); transform: translateY(-3px); }
+.g-insta:hover { background: var(--brand-hi); border-color: var(--brand-hi); transform: translateY(-3px); }
 .g-insta .icon { font-size: 2.4rem; }
 .g-insta-kicker { display: block; margin-bottom: var(--s-2); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; }
 .g-insta strong { display: block; margin-bottom: var(--s-4); font-family: var(--display); font-weight: 400; font-size: clamp(1.7rem, 2.4vw, 2.3rem); text-transform: uppercase; line-height: 0.95; }
@@ -570,13 +594,9 @@ button { font: inherit; color: inherit; }
 .member:hover .member-stage img { transform: translateX(-50%) scale(1.03); filter: grayscale(0.3) var(--portrait-filter); }
 .member-info { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-3); padding: var(--s-4) var(--s-1) 0; }
 .member-name { font-family: var(--display); font-weight: 400; font-size: 2.2rem; text-transform: uppercase; line-height: 1; }
-.member-role { font-family: var(--serif); font-style: italic; font-size: 1.2rem; color: var(--orange); text-align: right; }
+.member-role { font-family: var(--serif); font-style: italic; font-size: 1.2rem; color: var(--accent); text-align: right; }
 
 /* ---------- 6.6 Agenda ---------- */
-.agenda-notice { display: flex; gap: var(--s-3); align-items: flex-start; margin-bottom: var(--s-6); padding: var(--s-4) var(--s-5); border: 1px solid rgba(255, 85, 0, 0.4); border-radius: 10px; background: rgba(255, 85, 0, 0.06); color: var(--muted); font-size: 0.92rem; }
-.agenda-notice .icon { margin-top: 0.2rem; color: var(--orange); font-size: 1.1rem; }
-.agenda-notice strong { color: var(--text); }
-
 /* Passos à esquerda, resumo à direita (fixo na rolagem no desktop; abaixo dos passos em telas menores) */
 .agenda-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 21rem); align-items: start; gap: var(--s-5); }
 
@@ -590,23 +610,17 @@ button { font: inherit; color: inherit; }
 }
 .agenda-step b {
   display: grid; place-items: center; flex: none; width: 2.4rem; height: 2.4rem;
-  border: 1.5px solid var(--orange); border-radius: 50%;
-  font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.1rem; line-height: 1; color: var(--orange);
+  border: 1.5px solid var(--accent); border-radius: 50%;
+  font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.1rem; line-height: 1; color: var(--accent);
 }
-.agenda-step-note {
-  margin-left: auto; padding: 0.25rem 0.65rem; border: 1px solid var(--line); border-radius: 999px;
-  font-family: var(--body); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.16em; color: var(--muted);
-}
-/* com dados reais (AGENDA_IS_DEMO = false) o aviso some, e este selo junto */
-.agenda-notice[hidden] ~ .agenda-layout .agenda-step-note { display: none; }
 
 /* Escolhas: o estado selecionado vem de aria-pressed (laranja cheio + texto escuro) */
 .barber-tab, .day-card, .slot {
   border: 1px solid var(--line); background: var(--bg-2); color: var(--text); cursor: pointer;
   transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
-.barber-tab:hover, .day-card:hover, .slot:hover { border-color: var(--orange); color: var(--orange); }
-.barber-tab[aria-pressed="true"], .day-card[aria-pressed="true"], .slot[aria-pressed="true"] { border-color: var(--orange); background: var(--orange); color: var(--ink); }
+.barber-tab:hover, .day-card:hover, .slot:hover { border-color: var(--accent); color: var(--accent); }
+.barber-tab[aria-pressed="true"], .day-card[aria-pressed="true"], .slot[aria-pressed="true"] { border-color: var(--brand); background: var(--brand); color: var(--ink); }
 
 /* 01 Profissional: foto (decorativa) + nome */
 .barber-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-2); }
@@ -653,6 +667,8 @@ button { font: inherit; color: inherit; }
   border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg);
 }
 .slot-empty { grid-column: 1 / -1; color: var(--muted); font-size: 0.92rem; }
+/* 03 Período: um botão por turno, com o intervalo real de funcionamento (OPENING_HOURS) */
+.slot-list .period-slot { grid-column: 1 / -1; min-height: 52px; font-size: 1rem; }
 /* Pulso ao escolher (CSS puro: funciona sem GSAP; com movimento reduzido vira instantâneo).
    Propriedade `scale`, separada do transform do :active. */
 @keyframes press-pop { 0% { scale: 0.92; } 55% { scale: 1.04; } 100% { scale: 1; } }
@@ -667,18 +683,18 @@ button { font: inherit; color: inherit; }
   background: radial-gradient(120% 80% at 100% 0%, rgba(255, 85, 0, 0.14), transparent 60%), var(--bg);
 }
 .agenda-summary-content { min-width: 0; }
-.agenda-summary-kicker { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; color: var(--orange); }
+.agenda-summary-kicker { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; color: var(--accent); }
 .agenda-summary h3 { margin-top: var(--s-1); font-family: var(--display); font-weight: 400; font-size: clamp(1.8rem, 2.6vw, 2.2rem); line-height: 1; text-transform: uppercase; }
 .agenda-summary-details { margin-top: var(--s-4); border-top: 1px solid var(--line); }
 .agenda-summary-details > div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-4); padding: 0.8rem 0; border-bottom: 1px solid var(--line); }
 .agenda-summary-details dt { flex: none; color: var(--muted); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
 .agenda-summary-details dd { min-width: 0; text-align: right; }
 .agenda-summary strong { color: var(--text); font-weight: 600; }
-#summary-time { font-family: var(--display); font-weight: 400; font-size: 1.7rem; line-height: 1; color: var(--orange); }
-#summary-time.is-empty { font-family: var(--body); font-size: 0.92rem; font-weight: 500; line-height: 1.4; color: var(--muted); }
+#summary-period { font-family: var(--display); font-weight: 400; font-size: 1.7rem; line-height: 1; color: var(--accent); }
+#summary-period.is-empty { font-family: var(--body); font-size: 0.92rem; font-weight: 500; line-height: 1.4; color: var(--muted); }
 .agenda-summary .btn { width: 100%; padding-inline: var(--s-4); letter-spacing: 0.08em; }
 .agenda-summary-hint { display: flex; gap: var(--s-2); align-items: flex-start; color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
-.agenda-summary-hint .icon { margin-top: 0.15rem; font-size: 1rem; color: var(--orange); }
+.agenda-summary-hint .icon { margin-top: 0.15rem; font-size: 1rem; color: var(--accent); }
 
 /* ---------- 6.7 Contato ---------- */
 .cta-band { text-align: center; padding-bottom: clamp(3rem, 6vw, 5rem); margin-bottom: clamp(3rem, 6vw, 5rem); border-bottom: 1px solid var(--line); }
@@ -687,17 +703,17 @@ button { font: inherit; color: inherit; }
 .contact-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-6); }
 .contact-col h3 { margin-bottom: var(--s-4); font-family: var(--display); font-weight: 400; font-size: 1.6rem; text-transform: uppercase; }
 .info-item { display: flex; gap: var(--s-3); align-items: flex-start; padding: var(--s-3) 0; color: var(--muted); }
-.info-item .icon { margin-top: 0.15rem; font-size: 1.3rem; color: var(--orange); }
+.info-item .icon { margin-top: 0.15rem; font-size: 1.3rem; color: var(--accent); }
 .info-item strong { display: block; color: var(--text); font-weight: 600; }
 .info-item a { display: inline-block; min-height: 44px; padding: var(--s-1) 0; transition: color 0.2s ease; }
-.info-item a:hover { color: var(--orange); }
+.info-item a:hover { color: var(--accent); }
 .address { font-style: normal; }
 .hours { display: grid; }
 .hours-row { display: flex; justify-content: space-between; gap: var(--s-4); padding: var(--s-3) 0; border-bottom: 1px solid var(--line); }
 .hours-row:first-child { border-top: 1px solid var(--line); }
 .hours-day { font-weight: 600; }
 .hours-times { text-align: right; color: var(--muted); font-size: 0.95rem; }
-.hours-closed { color: var(--orange); font-family: var(--serif); font-style: italic; font-size: 1.1rem; }
+.hours-closed { color: var(--accent); font-family: var(--serif); font-style: italic; font-size: 1.1rem; }
 
 /* ==========================================================================
    7. RODAPÉ
@@ -706,10 +722,10 @@ button { font: inherit; color: inherit; }
 .footer-top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s-6); flex-wrap: wrap; margin-bottom: var(--s-6); }
 .footer-links { display: grid; grid-template-columns: repeat(3, max-content); gap: 0 var(--s-6); }
 .footer-links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--muted); font-size: 0.95rem; transition: color 0.2s ease; }
-.footer-links a:hover { color: var(--orange); }
+.footer-links a:hover { color: var(--accent); }
 .footer-social { display: flex; gap: var(--s-2); }
 .footer-social a { display: grid; place-items: center; width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 50%; font-size: 1.25rem; transition: border-color 0.2s ease, color 0.2s ease; }
-.footer-social a:hover { border-color: var(--orange); color: var(--orange); }
+.footer-social a:hover { border-color: var(--accent); color: var(--accent); }
 .footer-copy { display: flex; justify-content: space-between; gap: var(--s-4); flex-wrap: wrap; padding: var(--s-5) 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.85rem; }
 .footer-mark { margin-bottom: -0.08em; font-family: var(--display); text-transform: uppercase; font-size: clamp(4rem, 19vw, 18rem); line-height: 0.8; text-align: center; color: transparent; -webkit-text-stroke: 1px rgba(255, 85, 0, 0.45); white-space: nowrap; user-select: none; }
 
@@ -847,9 +863,10 @@ button { font: inherit; color: inherit; }
 }
 
 /* ==========================================================================
-   10. LIGHT THEME PREVIEW (branch experimento/tema-claro)
-   This section changes colors and surfaces only; existing motion code is unchanged.
-   The hero keeps its original cinematic dark backdrop.
+   10. TEMA CLARO (o tema do site)
+   Sempre ligado (<html data-theme="light">), sem alternância. Troca só cores e superfícies; o
+   movimento é o mesmo. O hero continua escuro (palco da máquina) e volta o laranja para a marca;
+   a Equipe é marrom-escura. Papéis do laranja: seção 1 e DESIGN.md §2.
    ========================================================================== */
 [data-theme="light"] {
   color-scheme: light;
@@ -857,10 +874,8 @@ button { font: inherit; color: inherit; }
   --bg-2: #EAE4DC;
   --surface: #FFFCF8;
   --line: #D2C9BE;
-  --orange: #A93806;
-  --orange-hi: #8F3104;
-  --orange-fill: #FF5500;
-  --orange-fill-hover: #FF7433;
+  --accent: var(--brand-text);      /* texto laranja sobre os fundos claros */
+  --accent-hi: var(--brand-text-hi);
   --ink: #211811;
   --text: #211B17;
   --muted: #62574E;
@@ -869,69 +884,71 @@ button { font: inherit; color: inherit; }
 [data-theme="light"] .hero {
   --text: #F5F3F0;
   --muted: #C7BEB4;
+  --accent: var(--brand);            /* o hero continua escuro: laranja da marca */
+  --accent-hi: var(--brand-hi);
   color: var(--text);
 }
-[data-theme="light"] .header:not(.is-solid) { color: #F5F3F0; }
-[data-theme="light"] .header:not(.is-solid) .brand-sub,
-[data-theme="light"] .header:not(.is-solid) .nav-link,
-[data-theme="light"] .header:not(.is-solid) .icon-link { color: rgba(245, 243, 240, 0.88); }
-[data-theme="light"] .header:not(.is-solid) .menu-toggle { color: #F5F3F0; border-color: rgba(245, 243, 240, 0.5); background: rgba(10, 10, 10, 0.6); }
-[data-theme="light"] .header.is-solid { color: var(--text); background: rgba(255, 252, 248, 0.94); }
-[data-theme="light"] .header.is-solid .brand-sub,
-[data-theme="light"] .header.is-solid .nav-link,
-[data-theme="light"] .header.is-solid .icon-link { color: var(--muted); }
-[data-theme="light"] .header.is-solid .nav-link:hover,
-[data-theme="light"] .header.is-solid .nav-link[aria-current="true"],
-[data-theme="light"] .header.is-solid .icon-link:hover { color: var(--orange); }
-[data-theme="light"] .header.is-solid .menu-toggle { color: var(--text); background: var(--surface); }
-[data-theme="light"] .nav-menu.is-open .nav-link { color: var(--text); }
-[data-theme="light"] .nav-menu.is-open .nav-link:hover,
-[data-theme="light"] .nav-menu.is-open .nav-link[aria-current="true"] { color: var(--orange); }
+/* Cabeçalho escuro enquanto está no topo ou sobre o hero (.is-over-hero, script.js initScroll); claro e
+   sólido só depois que o hero sai de trás dele. */
+[data-theme="light"] .header:is(:not(.is-solid), .is-over-hero) { color: #F5F3F0; --accent: var(--brand); --accent-hi: var(--brand-hi); }   /* sobre o hero escuro */
+[data-theme="light"] .header:is(:not(.is-solid), .is-over-hero) .brand-sub,
+[data-theme="light"] .header:is(:not(.is-solid), .is-over-hero) .nav-link,
+[data-theme="light"] .header:is(:not(.is-solid), .is-over-hero) .icon-link { color: rgba(245, 243, 240, 0.88); }
+[data-theme="light"] .header:is(:not(.is-solid), .is-over-hero) .nav-link:is(:hover, [aria-current="true"]),
+[data-theme="light"] .header:is(:not(.is-solid), .is-over-hero) .icon-link:hover { color: var(--accent); }
+[data-theme="light"] .header:is(:not(.is-solid), .is-over-hero) .menu-toggle { color: #F5F3F0; border-color: rgba(245, 243, 240, 0.5); background: rgba(10, 10, 10, 0.6); }
+[data-theme="light"] .header.is-solid.is-over-hero { border-bottom-color: rgba(245, 243, 240, 0.08); }   /* fundo escuro sólido da seção 4 */
+[data-theme="light"] .header.is-solid:not(.is-over-hero) { color: var(--text); background: rgba(255, 252, 248, 0.94); }
+[data-theme="light"] .header.is-solid:not(.is-over-hero) .brand-sub,
+[data-theme="light"] .header.is-solid:not(.is-over-hero) .nav-link,
+[data-theme="light"] .header.is-solid:not(.is-over-hero) .icon-link { color: var(--muted); }
+[data-theme="light"] .header.is-solid:not(.is-over-hero) .nav-link:hover,
+[data-theme="light"] .header.is-solid:not(.is-over-hero) .nav-link[aria-current="true"],
+[data-theme="light"] .header.is-solid:not(.is-over-hero) .icon-link:hover { color: var(--accent); }
+[data-theme="light"] .header.is-solid:not(.is-over-hero) .menu-toggle { color: var(--text); background: var(--surface); }
 [data-theme="light"] .nav-link { color: var(--text); }
 [data-theme="light"] .btn-line { border-color: rgba(33, 27, 23, 0.45); color: var(--text); }
-[data-theme="light"] .btn-line:hover { border-color: var(--orange); color: var(--orange); }
+[data-theme="light"] .btn-line:hover { border-color: var(--accent); color: var(--accent); }
 /* o hero continua escuro no tema claro: a borda do botão de linha precisa ser clara ali */
 [data-theme="light"] .hero .btn-line { border-color: rgba(245, 243, 240, 0.45); }
-[data-theme="light"] .hero .btn-line:hover { border-color: var(--orange-fill); color: var(--orange-fill); }
-[data-theme="light"] .btn-solid,
-[data-theme="light"] .btn-outline-orange:hover { background: var(--orange-fill); border-color: var(--orange-fill); color: var(--ink); }
-[data-theme="light"] .btn-solid:hover,
-[data-theme="light"] .btn-outline-orange:hover { background: var(--orange-fill-hover); border-color: var(--orange-fill-hover); }
-[data-theme="light"] .btn-ink:hover { background: #342920; }
-/* varredura do hover (seção 3) com as cores do tema claro: texto escuro sobre laranja vivo */
-[data-theme="light"] .btn-solid, [data-theme="light"] .btn-outline-orange { --sweep: var(--orange-fill-hover); }
-[data-theme="light"] .btn-ink { --sweep: #342920; }
+[data-theme="light"] .hero .btn-line:hover { border-color: var(--brand); color: var(--brand); }
+/* Os preenchimentos dos botões já usam --brand (seção 3). As regras de :hover que trocavam o fundo de
+   uma vez saíram: elas escondiam a varredura do hover. */
+[data-theme="light"] .btn-outline-orange:hover { border-color: var(--brand); }
+[data-theme="light"] .btn-ink { --sweep: #342920; }   /* varredura do botão escuro no tema claro */
+/* Viagem da máquina até Serviços (motion.js §2): quando a sombra preta alcançaria o bege, .is-off-stage
+   a troca por uma sombra curta e clara. Mesma estrutura (duas drop-shadow) para a transição ser suave. */
+[data-theme="light"] .hero.is-traveling .clipper { transition: filter 0.5s ease; }
+[data-theme="light"] .clipper-pos.is-off-stage .clipper { filter: drop-shadow(0 16px 22px rgba(60, 36, 18, 0.22)) drop-shadow(0 0 40px rgba(255, 85, 0, 0.18)); }
 [data-theme="light"] .hero-since { color: #C7BEB4; }
 [data-theme="light"] .hero-since strong { color: #F5F3F0; }
 [data-theme="light"] .team-section {
   --text: #F5F1EB;
   --muted: #C7BEB4;
+  --accent: var(--brand-hi);         /* seção escura: rótulo, título em itálico e função em #FF7433 */
+  --accent-hi: var(--brand-hi);
   color: #F5F1EB;
   background: radial-gradient(70% 60% at 50% 100%, rgba(255, 85, 0, 0.2), transparent 70%), #25211E;
 }
-[data-theme="light"] .team-section .eyebrow,
-[data-theme="light"] .team-section .title em { color: #FF7433; }
 [data-theme="light"] .member-stage {
   border-color: rgba(245, 241, 235, 0.14);
   background: radial-gradient(65% 60% at 50% 62%, rgba(255, 85, 0, 0.3), transparent 74%), #39312C;
 }
 [data-theme="light"] .member-stage::after { background: linear-gradient(180deg, transparent, rgba(10, 10, 10, 0.38)); }
 [data-theme="light"] .member-ghost { -webkit-text-stroke-color: rgba(245, 241, 235, 0.38); }
-[data-theme="light"] .member-role { color: #FF7433; }
-[data-theme="light"] .agenda-notice { background: rgba(200, 70, 10, 0.07); }
 [data-theme="light"] .agenda-summary { background: radial-gradient(120% 80% at 100% 0%, rgba(200, 70, 10, 0.10), transparent 60%), var(--surface); }
-[data-theme="light"] .pass,
-[data-theme="light"] .course-section { background: var(--orange-fill); }
-[data-theme="light"] .barber-tab[aria-pressed="true"],
-[data-theme="light"] .day-card[aria-pressed="true"],
-[data-theme="light"] .slot[aria-pressed="true"] { background: var(--orange-fill); border-color: var(--orange-fill); color: var(--ink); }
-[data-theme="light"] .g-insta { background: var(--orange-fill); border-color: var(--orange-fill); }
-[data-theme="light"] .g-insta:hover { background: var(--orange-fill-hover); border-color: var(--orange-fill-hover); }
-[data-theme="light"] .g-tile { background: #D9D0C5; }
+/* fundo provisório das fotos enquanto carregam; o cartão do Instagram fica de fora e mantém o laranja da seção 6.4 */
+[data-theme="light"] .g-tile:not(.g-insta) { background: #D9D0C5; }
 [data-theme="light"] .g-tag { border-color: rgba(255, 252, 248, 0.4); background: rgba(33, 27, 23, 0.76); color: #FFFCF8; }
 [data-theme="light"] .g-caption { color: #FFFCF8; }
 [data-theme="light"] .barber-avatar { background: #D8CFC5; }
 
 @media (max-width: 1240px) {
   [data-theme="light"] .header:not(.is-solid) { background: rgba(10, 10, 10, 0.82); }
+  /* o painel do menu é claro mesmo com o cabeçalho escuro: laranja de texto. Só existe nesta faixa
+     (acima dela os links ficam no próprio cabeçalho); o .header no seletor vence as regras de estado. */
+  [data-theme="light"] .nav-menu { --accent: var(--brand-text); --accent-hi: var(--brand-text-hi); }
+  [data-theme="light"] .header .nav-menu.is-open .nav-link { color: var(--text); }
+  [data-theme="light"] .header .nav-menu.is-open .nav-link:hover,
+  [data-theme="light"] .header .nav-menu.is-open .nav-link[aria-current="true"] { color: var(--accent); }
 }

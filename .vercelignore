@@ -1,0 +1,12 @@
+# Arquivos de desenvolvimento: continuam no repositório, mas não vão para o site publicado.
+# Nenhum deles é carregado pela página (verificado: referências no HTML/CSS/JS e rede do navegador).
+# Ficam no ar, de propósito: diagnostico.html (página de diagnóstico, noindex), novo_favicon.png
+# (arquivo enviado para ser o novo ícone) e vendor/LICENSES.md (licenças das bibliotecas).
+/docs/
+/DESIGN.md
+/.claude/
+/skills-lock.json
+/ferramentas/
+/imagens/funny.png
+/imagens/miguel.png
+/imagens/thaylor.png

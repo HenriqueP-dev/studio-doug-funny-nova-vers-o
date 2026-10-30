@@ -2,13 +2,15 @@
 
 > Site de uma barbearia e escola de barbeiros em Barretos-SP (desde 2014). Objetivo: **vender** e transmitir **alto nível**. Público: homens da região (cortes, barba, pacotes) e futuros barbeiros (curso de R$ 1.400 a R$ 2.600).
 
-> Versão: "Redesign cinematográfico" (v3). Extraído de `index.html`, `styles.css` e `script.js`. Valores abaixo são os do código.
+> Versão: "Redesign cinematográfico" (v3) com o **tema claro como padrão**. Extraído de `index.html`, `styles.css`, `script.js` e `motion.js`. Valores abaixo são os do código.
 
 ## 1. Visual Theme
 
 **Theme statement:** cinematográfico, afiado, urbano — "uma máquina de corte que atravessa o título como se cortasse a tela".
 
-**Character:** palco escuro com luz laranja de cinema, tipografia condensada monumental e a **máquina de corte como protagonista**. O contraste vem de três vozes tipográficas: condensada (força), serifada em itálico (elegância) e uma assinatura em pincel (marca). Uma única seção inteira em laranja (Formação) quebra o ritmo escuro.
+**Character:** site **claro** (bege quente e branco-papel, texto marrom-escuro) que abre num **hero de palco escuro** com luz laranja de cinema, tipografia condensada monumental e a **máquina de corte como protagonista**. O contraste vem de três vozes tipográficas: condensada (força), serifada em itálico (elegância) e uma assinatura em pincel (marca). Duas seções quebram o ritmo claro: Formação, inteira em laranja, e Equipe, em marrom-escuro.
+
+**Tema:** o claro é o único tema em uso, fixo no HTML (`<html data-theme="light">`); não há alternância. O hero continua escuro de propósito: é o palco da máquina e da abertura. As regras do tema claro ficam em `styles.css` §10.
 
 **Referências do cliente:**
 - Mockup próprio "Doug Funny" (preto + laranja, "BARBEARIA" gigante com máquina atravessando e "Doug Funny" em pincel).
@@ -19,21 +21,44 @@
 
 ## 2. Color Palette
 
+Os tokens ficam em `styles.css`: §1 (`:root`) guarda a paleta escura de base, que o hero usa; §10 (`[data-theme="light"]`) troca as superfícies e o texto para o tema claro, que é o tema em uso.
+
+**Superfícies e texto (tema claro):**
+
 | Token | Valor | Uso |
 |-------|-------|-----|
-| `--bg` | `#0A0A0A` | Fundo principal |
-| `--bg-2` | `#111012` | Seções alternadas (pacotes, agenda) |
-| `--surface` | `#17161A` | Cards |
-| `--line` | `#2A282C` | Divisórias |
-| `--orange` | `#FF5500` | **Cor da identidade**: CTAs, preços, rótulos, seção Formação |
-| `--orange-hi` | `#FF7433` | Hover |
-| `--ink` | `#0A0A0A` | Texto sobre laranja |
-| `--text` | `#F5F3F0` | Texto principal |
-| `--muted` | `#A8A29E` | Texto de apoio |
+| `--bg` | `#F5F1EB` | Fundo principal (bege) |
+| `--bg-2` | `#EAE4DC` | Seções alternadas |
+| `--surface` | `#FFFCF8` | Cards, cabeçalho sólido, resumo da agenda |
+| `--line` | `#D2C9BE` | Divisórias e bordas de 1px |
+| `--text` | `#211B17` | Texto principal |
+| `--muted` | `#62574E` | Texto de apoio |
+| `--ink` | `#211811` | Texto sobre laranja e fundo do botão escuro (`.btn-ink`) |
 | `--metal` | degradê `#FFF → #6F6B67` | Só nas letras gigantes do hero |
 
-**Contraste (WCAG AA):** texto sobre fundo ~17:1 · cinza sobre fundo ~7,9:1 · laranja sobre fundo ~6,1:1 · tinta sobre laranja ~6,2:1.
-**Regra:** botões laranja usam texto **escuro** (branco sobre `#FF5500` dá só 3,2:1).
+**Laranja: um token por papel.** O mesmo laranja não serve para preencher e para escrever: `#FF5500` sobre bege dá só 2,9:1.
+
+| Token | Valor | Uso |
+|-------|-------|-----|
+| `--brand` | `#FF5500` | **Cor da identidade** em preenchimentos (botões, ingresso, seção Formação, cartão do Instagram, seleção da agenda), linhas da marca e a assinatura. Nunca como texto sobre fundo claro |
+| `--brand-hi` | `#FF7433` | Hover dos preenchimentos; acento da seção Equipe |
+| `--brand-text` | `#A93806` | Laranja de **texto** sobre os fundos claros |
+| `--brand-text-hi` | `#8F3104` | Hover do laranja de texto |
+| `--accent` / `--accent-hi` | por contexto | O laranja que texto, ícones e bordas finas usam (rótulos, preços, itálico dos títulos, link atual). Cada contexto define o seu (tabela abaixo) |
+| `--focus` | por contexto | Anel de foco do teclado; sem definição, usa `--accent` |
+
+| Contexto | Fundo | `--accent` |
+|----------|-------|------------|
+| Seções claras (padrão) | bege, branco-papel | `--brand-text` |
+| Hero e cabeçalho sobre o hero (`.header:not(.is-solid)`, `.header.is-over-hero`) | escuro | `--brand` |
+| Cabeçalho sólido depois do hero e painel do menu do celular | claro | `--brand-text` |
+| Equipe (`.team-section`) | marrom-escuro `#25211E` | `--brand-hi` |
+| Ingresso e Formação (`.pass`, `.course-section`) | `--brand` | `--ink` (também o anel de foco) |
+
+Paleta escura de base (`:root`, usada pelo hero): `--bg #0A0A0A`, `--bg-2 #111012`, `--surface #17161A`, `--line #2A282C`, `--text #F5F3F0`, `--muted #A8A29E`; dentro do hero, `--muted` vira `#C7BEB4`.
+
+**Contraste medido (WCAG AA):** texto 15,1:1 no bege · apoio 6,2:1 (5,6:1 no bege-2) · laranja de texto 5,7:1 (5,1:1 no bege-2) · tinta sobre laranja 5,4:1 · laranja sobre o botão escuro 5,4:1 · laranja no hero 6,2:1 · `#FF7433` na Equipe 5,9:1.
+**Regras:** botões laranja usam texto **escuro** (branco sobre `#FF5500` dá só 3,2:1). Texto, ícone ou borda fina em laranja usa `--accent`; `--brand` direto só em preenchimentos ou onde o fundo é sempre escuro (assinatura, texto do botão escuro, numeração sobre as fotos da galeria).
 
 ---
 
@@ -72,10 +97,11 @@ Números sempre `lining-nums`.
 | `.pass` | Pacote destaque como **ingresso** laranja: picote com recortes laterais e carimbo girado |
 | `.pack` | Pacotes secundários escuros, preço à direita |
 | `.combo` | Lista compacta em 3 colunas |
-| `.course-section` | Seção inteira laranja, retrato do instrutor em duotom (`multiply`) |
-| `.g-tile` | Galeria em 12 colunas: poste (alto), detalhe (largo), lâmina, cartão laranja do Instagram ("Trabalhos reais"). Aviso `.gallery-note` antes das imagens e selo `.g-tag` "Ilustração 3D" em cada legenda: são renders, nunca fotos de cortes |
+| `.header` | Fixo; degradê escuro no topo e fundo sólido depois de 40px. No tema claro fica **escuro enquanto o hero estiver atrás dele** (`.is-over-hero`, `script.js` → `initScroll`, pelo IntersectionObserver do hero e pela base do hero) e claro depois |
+| `.course-section` | Seção inteira laranja, retrato do instrutor em duotom (`multiply`), limitado a 1,25× a largura do arquivo (357px) até haver uma foto maior |
+| `.g-tile` | Galeria em 12 colunas: poste (alto), detalhe (largo), lâmina, cartão laranja do Instagram ("Trabalhos reais"). Aviso `.gallery-note` antes das imagens e selo `.g-tag` "Ilustração 3D" em cada legenda: são renders, nunca fotos de cortes. O título ("Trabalhos & aulas no Instagram") diz onde estão os trabalhos reais; com fotos reais, troque as imagens no mesmo layout e ajuste o título |
 | `.member` | Retrato recortado + nome gigante em contorno atrás + brilho laranja |
-| Agenda | Painel `.agenda-steps` com passos 01/02/03 (foto decorativa do profissional, dias em faixa rolável, manhã/tarde em grades) + resumo `.agenda-summary` em `<dl>`, fixo à direita no desktop e abaixo dos passos ≤ 1024px. Selecionado = laranja cheio por `aria-pressed`; o horário ganha também ✓ e halo. `#summary-time.is-empty` (script.js) deixa o texto de ajuda discreto. **Demonstração**: só monta uma consulta para o WhatsApp, nunca reserva |
+| Agenda | Painel `.agenda-steps` com passos 01/02/03 (foto decorativa do profissional, dias em faixa rolável, manhã e tarde como **períodos** do horário real) + resumo `.agenda-summary` em `<dl>`, fixo à direita no desktop e abaixo dos passos ≤ 1024px. Selecionado = laranja cheio por `aria-pressed`; o período ganha também ✓ e halo. `#summary-period.is-empty` (script.js) deixa o texto de ajuda discreto. **Consulta**: monta uma mensagem para o WhatsApp com profissional, dia e período; nunca reserva |
 | `.turmas` | Tabela turma ↔ investimento + nota pedindo consulta das condições pelo WhatsApp |
 | Ícones | Sprite SVG de linha, traço 1,6 |
 
@@ -94,7 +120,8 @@ Números sempre `lining-nums`.
 
 - Profundidade principal: **sobreposição** (máquina entre as cópias da palavra; retrato na frente do nome em contorno).
 - Luz: brilhos radiais laranja, feixe diagonal, granulação SVG (8–9%) e vinheta no hero.
-- Sombra só na máquina (`drop-shadow`). Cards separados por tom e borda de 1px.
+- Sombra só na máquina (`drop-shadow`). No palco escuro ela é longa e escura (`0 40px 60px rgba(0,0,0,.7)`) e dá profundidade sobre as letras e a luz laranja. Na viagem até Serviços (desktop), quando essa sombra alcançaria o bege visível, `motion.js` §2 põe `.is-off-stage` em `.clipper-pos` e o CSS (§10) a troca, em 0,5s, por uma sombra curta e clara (`0 16px 22px rgba(60,36,18,.22)`); de volta ao topo, a escura retorna. A conta usa só medidas feitas no refresh, sem ler o layout a cada quadro.
+- Cards separados por tom e borda de 1px (`--line`).
 - Raios: 4px (base), 10–14px (cards, galeria), 999px (botões, pílulas).
 
 ---
@@ -105,7 +132,7 @@ Números sempre `lining-nums`.
 - Manter a **máquina como protagonista do hero**; nas demais seções o movimento é complementar.
 - Usar a assinatura em pincel **uma vez só**.
 - Garantir que "BARBEARIA" fique legível: no celular a palavra fica **inteira na frente** da máquina (`--depth-y: -0.3`).
-- Usar laranja para ação, preço e rótulos.
+- Usar laranja para ação, preço e rótulos, sempre pelo token do papel (§2): `--brand` para preencher, `--accent` para texto.
 - Retratos da equipe em preto e branco (os originais têm fundo vermelho que briga com o laranja). O recorte precisa ser limpo, sem halo nem furos. Nunca disfarce um defeito de recorte com CSS: refaça com `ferramentas/recortar_equipe.py`.
 - Conteúdo comercial sempre real (ver §9).
 - Na agenda, falar em **consulta**, nunca em reserva ou confirmação, enquanto ela não estiver ligada a uma disponibilidade real.
@@ -129,17 +156,17 @@ Números sempre `lining-nums`.
 | ≤ 760px | **Hero vertical**: palco no alto, texto em fluxo; máquina menor (54svh), atrás da palavra; serviços e combos em 1 coluna; galeria 2 colunas (poste alto à esquerda); equipe 1 coluna; agenda em 1 coluna, faixa de dias mostra parte do próximo cartão |
 | ≤ 480px | Some o botão do cabeçalho (o hero tem o CTA); galeria em 1 coluna com alturas que mostram cada objeto inteiro |
 
-Verificado sem rolagem horizontal em 320, 375, 390, 768, 1024, 1280, 1440 e 1920px. Alvos de toque ≥ 44px no celular.
+Verificado sem rolagem horizontal em 320, 375, 390, 768, 834, 1024, 1280, 1440 e 1920px. Alvos de toque ≥ 44px no celular.
 
 ---
 
 ## 9. Agent Prompt Guide
 
 **Invariantes:**
-1. **Agenda:** seletores usados pelo JS: `#agenda-notice`, `.barber-tab[data-barber]`, `.day-strip`, `.day-card` (`data-date`), `#slots-morning`, `#slots-afternoon`, `.slot`, `#summary-barber`, `#summary-day`, `#summary-time`, `#agenda-whatsapp-link`. Menu: `.menu-toggle`, `#primary-navigation`, `.nav-link` (o link ativo recebe `aria-current`).
-   - Os dados de exemplo ficam em `script.js` → `DEMO_SCHEDULE` (profissional → dia da semana → horários). Os turnos vêm de `OPENING_HOURS`.
-   - Horários que já passaram não aparecem no dia de hoje. Se o Studio já fechou, hoje sai da faixa de dias.
-   - Para usar dados reais: substitua `DEMO_SCHEDULE` e ponha `AGENDA_IS_DEMO = false`. Com isso o aviso some e os textos deixam de dizer "exemplo".
+1. **Agenda:** seletores usados pelo JS: `.barber-tab[data-barber]`, `.day-strip`, `.day-card` (`data-date`), `#slots-morning`, `#slots-afternoon`, `.slot.period-slot` (`data-period`), `#summary-barber`, `#summary-day`, `#summary-period`, `#agenda-whatsapp-link`. Menu: `.menu-toggle`, `#primary-navigation`, `.nav-link` (o link ativo recebe `aria-current`).
+   - Dias e períodos vêm de `script.js` → `OPENING_HOURS`, o horário real de funcionamento: nenhum horário é inventado. Cada dia aberto tem um intervalo por nome de `PERIOD_NAMES` (`Manhã`, `Tarde`), nessa ordem; um dia com outro formato fica de fora da agenda, com aviso no console. A faixa mostra `AGENDA_DAYS_SHOWN` (5) dias abertos.
+   - Hoje: um período que já terminou aparece como encerrado; se o Studio já fechou, hoje sai da faixa. A página se atualiza sozinha a cada minuto.
+   - A mensagem diz profissional, dia e período (ou "em qualquer período"). O horário exato e a disponibilidade são confirmados pela equipe no WhatsApp.
 2. **Hero:** `.stage`, `[data-word]` (3 cópias, nesta ordem), `.clipper-pos > .clipper-mover > .clipper-buzz > .clipper`, `.cutline`, `.script`. Pose final por variáveis CSS em `.stage`: `--cx`, `--cy`, `--ch`, `--rot`, `--depth-y`, `--word-top`.
 3. **WhatsApp** `5517991052256` (em `script.js` → `WHATSAPP_NUMBER` e nos links do HTML); mensagens pré-preenchidas mantidas.
 4. **Conteúdo real:** Funny (Barbeiro & Instrutor), Miguel, Thaylor; preços, combos, turmas; endereço Rua Doutor Riolando Prado, 62, Nogueira, Barretos-SP, CEP 14783-254; horários ter–sex 08:00–12:30 e 14:00–19:00, sáb 08:00–13:30 e 15:00–18:30, dom e seg fechado; e-mail e Instagram. O horário aparece em **três lugares**, que precisam ficar iguais: seção Contato, `OPENING_HOURS` (script.js) e o JSON-LD no `<head>`.
@@ -167,8 +194,8 @@ Verificado sem rolagem horizontal em 320, 375, 390, 768, 1024, 1280, 1440 e 1920
    - poste: `.g-pole` (com `img`);
    - equipe: `.member-stage` (com `img` e `.member-ghost`);
    - botões magnéticos: `.btn-solid`, `.btn-outline-orange`, `.btn-ink`, `.footer-social a`.
-8. **Busca e compartilhamento:** Open Graph, ícones e JSON-LD `BarberShop` no `<head>`. Quando houver domínio, troque a `og:image` por um endereço absoluto e ative `canonical`/`og:url` (há um comentário no HTML).
-9. **Pendências comerciais:** duração, datas, diferenças entre turmas e formas de pagamento do curso (comentário `CONFIRMAR COM O STUDIO` no HTML).
+8. **Busca e compartilhamento:** Open Graph, ícones e JSON-LD `BarberShop` no `<head>`, com endereços absolutos do domínio atual (`https://studio-doug-funny-nova-vers-o.vercel.app/`) em `canonical`, `og:url`, `og:image` e no JSON-LD (`url`, `image`, `logo`). Ao ligar um domínio próprio, troque-o nesses lugares (há um comentário no HTML).
+9. **Pendências comerciais:** duração, datas de início, diferenças entre as turmas (a Turma 3 custa menos que as Turmas 1 e 2) e formas de pagamento do curso. Nada disso deve ser estimado: até o Studio informar, a nota da tabela encaminha essas dúvidas ao WhatsApp. Também falta uma foto do Funny em alta resolução (≥ 1200px de largura): o único original, `imagens/funny.png`, tem 512×512.
 
 **Imagens (todas próprias):**
 | Arquivo | Origem |
@@ -235,7 +262,7 @@ Seguranças: o texto cru da palavra fica invisível até ser dividido em letras 
 | # | Animação | Como | Valores |
 |---|----------|------|---------|
 | 1 | **Rolagem suave** | Lenis no ticker da GSAP (`lenis.raf(t*1000)`, `lagSmoothing(0)`), `lenis.on('scroll', ScrollTrigger.update)` | Só a roda do mouse fica suave; toque e teclado são nativos. Links `#…` usam `lenis.scrollTo` e param logo abaixo do cabeçalho; o foco vai para a seção. "Pular para o conteúdo" é nativo. `html.lenis` desliga o `scroll-behavior` |
-| 2 | **Máquina conduz até Serviços** (desktop > 760px) | ScrollTrigger `scrub: 0.6`, do topo do hero até o centro de `#servicos-title` a 40% da tela; altera `--px/--py/--pr/--ps` e `opacity` de `.clipper-pos` | 0–80% do trajeto: desce na diagonal, gira −16° e diminui (`power2.inOut`). 80–100%: some (`power1.in`). A linha `.cut-divider` é desenhada de 45% a 80%, chegando junto com a máquina. "BARBEARIA" fica para trás 0,22× (paralaxe). O pouso é calculado no espaço livre à direita do texto do título, acima da nota; a escala fica entre 0,16 e 0,35, ajustada para caber, e é recalculada a cada refresh, não a cada quadro |
+| 2 | **Máquina conduz até Serviços** (desktop > 760px) | ScrollTrigger `scrub: 0.6`, do topo do hero até o centro de `#servicos-title` a 40% da tela; altera `--px/--py/--pr/--ps` e `opacity` de `.clipper-pos` | 0–80% do trajeto: desce na diagonal, gira −16° e diminui (`power2.inOut`). 80–100%: some (`power1.in`). A linha `.cut-divider` é desenhada de 45% a 80%, chegando junto com a máquina. "BARBEARIA" fica para trás 0,22× (paralaxe). O pouso é calculado no espaço livre à direita do texto do título, acima da nota; a escala fica entre 0,16 e 0,35, ajustada para caber, e é recalculada a cada refresh, não a cada quadro. Fora do palco a sombra escura vira uma sombra curta e clara (`.is-off-stage`, ver §6) |
 | 2b | **Paralaxe leve** (celular ≤ 760px) | ScrollTrigger `scrub`, dentro do hero recortado | A máquina desce 0,28× a altura do hero e gira 8°; a palavra fica para trás 0,12× |
 | 3 | **Títulos letra por letra** | SplitText `words,chars`, `mask: 'chars'`, `aria: 'hidden'` e `aria-label` no `<h2>`; divide depois de `document.fonts.ready` (até 2,5s); `autoSplit` | `yPercent 110 → 0`, 0,7s, stagger 0,02s, `expo.out`; a 2ª linha (itálico/contorno) entra 0,1s depois; uma vez (`once`, `top 82%`). A máscara tem folga (`.title-char-mask`) para não cortar Ç/Ã/Á nem o itálico. Substitui a máscara por linha (`.is-split`) |
 | 4 | **Poste gira com a rolagem** | `.pole-sprite` por cima da foto, mesmo enquadramento (cover 50% 40%, unidades `cq`); sprite de 24 quadros | Três ciclos de listras enquanto o quadro atravessa a tela; `background-position` em passos inteiros, escrito só quando o quadro muda. O sprite é baixado 600px antes de aparecer e mostrado depois de decodificado |
@@ -244,7 +271,7 @@ Seguranças: o texto cru da palavra fica invisível até ser dividido em letras 
 | 7 | **Profundidade pelo ponteiro** (desktop com mouse, depois da abertura) | `quickTo` (1,2s, `power3.out`) escreve `--mx/--my` (−1 a 1) no `.hero`; cada camada converte em `translate` no CSS | Contorno −3/−2px, palavra sólida +5/+4px, assinatura +8/+6px, máquina +11/+8px. `.has-depth` promove essas camadas a camadas próprias (`will-change: translate`): andar com elas é só recompor. Máquina e palavra andam no máximo 6px uma em relação à outra, então a máscara não é refeita a cada quadro. Volta ao centro ao rolar além de 15% do hero e quando o ponteiro sai da janela. Medido: 60 fps com o mouse em movimento (antes da promoção, ~7 fps) |
 | 8 | **Saída do hero** (desktop) | ScrollTrigger `scrub`, do topo ao fim do hero | Texto e botões sobem 90px a mais que a página e vão a 30% de opacidade, enquanto a palavra fica para trás e a máquina segue para Serviços |
 | 9 | **Entradas das seções** | `ScrollTrigger.batch`, `once`, `top 88%`; `clearProps` no fim (hover e transições do CSS voltam intactos) | Ver a tabela de papéis abaixo |
-| 10 | **Agenda** | `MutationObserver` + CSS | Ao trocar de profissional ou dia, os novos horários entram (450ms, 25ms entre eles). O valor do resumo que mudou pisca em laranja (900ms). A pílula escolhida pulsa (`press-pop`, 340ms, CSS puro) |
+| 10 | **Agenda** | `MutationObserver` + CSS | Ao trocar de profissional ou dia, os novos períodos entram (450ms, 25ms entre eles). O valor do resumo que mudou pisca em laranja (900ms). A pílula escolhida pulsa (`press-pop`, 340ms, CSS puro) |
 
 **Papéis das entradas (motion.js §8):**
 
@@ -259,7 +286,7 @@ Seguranças: o texto cru da palavra fica invisível até ser dividido em letras 
 | Momento: rodapé | `.footer-mark` | `yPercent` 45 → 0 e opacidade 0,25 → 1 com a rolagem, até o fim da página | `scrub` |
 | Profundidade (desktop) | fotos de `.g-detail` e `.g-blade` | `--drift` −5% → 5% enquanto atravessam a tela (descansam em zoom 1,12 para cobrir a moldura) | `scrub` |
 
-**Teclado:** o Tab rola a página só até o elemento encostar na borda de baixo, antes do ponto de disparo. Se o foco entra num elemento que ainda espera a entrada, ele aparece na hora (0,35s). Verificado nos 69 elementos focáveis (WCAG 2.4.7).
+**Teclado:** o Tab rola a página só até o elemento encostar na borda de baixo, antes do ponto de disparo. Se o foco entra num elemento que ainda espera a entrada, ele aparece na hora (0,35s). Verificado num ciclo completo de Tab: 43 elementos no desktop e 35 no celular (WCAG 2.4.7).
 
 **Microinterações (CSS):**
 - **Botões:** uma faixa (`--sweep` por variante) entra pela esquerda e sai pela direita, em 0,5s.
