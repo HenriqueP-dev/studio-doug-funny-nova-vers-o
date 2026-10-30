@@ -73,7 +73,7 @@ Números sempre `lining-nums`.
 | `.pack` | Pacotes secundários escuros, preço à direita |
 | `.combo` | Lista compacta em 3 colunas |
 | `.course-section` | Seção inteira laranja, retrato do instrutor em duotom (`multiply`) |
-| `.g-tile` | Galeria: poste (alto), detalhe (largo), lâmina, cartão do Instagram |
+| `.g-tile` | Galeria em 12 colunas: poste (alto), detalhe (largo), lâmina, cartão laranja do Instagram ("Trabalhos reais"). Aviso `.gallery-note` antes das imagens e selo `.g-tag` "Ilustração 3D" em cada legenda: são renders, nunca fotos de cortes |
 | `.member` | Retrato recortado + nome gigante em contorno atrás + brilho laranja |
 | Agenda | Passos 01/02/03, pílulas (estado selecionado por `aria-pressed`). **Demonstração**: só monta uma consulta para o WhatsApp, nunca reserva |
 | `.turmas` | Tabela turma ↔ investimento + nota pedindo consulta das condições pelo WhatsApp |

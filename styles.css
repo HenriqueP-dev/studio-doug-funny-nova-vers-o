@@ -429,13 +429,41 @@ button { font: inherit; color: inherit; }
 .course .btn-ink { margin-top: var(--s-5); }
 
 /* ---------- 6.4 Trabalhos (galeria) ---------- */
-.gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(2, clamp(240px, 26vw, 340px)); gap: var(--s-4); }
-.g-tile { position: relative; overflow: hidden; border-radius: 10px; background: #0d0c0c; }
-.g-tile img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.9s var(--ease-out), filter 0.6s ease; }
-.g-tile:hover img { transform: scale(1.06); }
-.g-tile figcaption { position: absolute; left: var(--s-5); bottom: var(--s-4); z-index: 1; font-family: var(--serif); font-style: italic; font-size: 1.35rem; }
-.g-tile::after { content: ''; position: absolute; inset: 50% 0 0; background: linear-gradient(180deg, transparent, rgba(10, 10, 10, 0.85)); pointer-events: none; }
-.g-pole { grid-row: 1 / span 2; container-type: size; }
+/* Aviso antes das imagens: são renders 3D, não fotos de cortes (DESIGN.md §7) */
+.gallery-note {
+  display: flex; gap: var(--s-3); align-items: flex-start; max-width: 64ch;
+  margin-bottom: var(--s-5); color: var(--muted); font-size: 0.92rem; line-height: 1.55;
+}
+.gallery-note .icon { margin-top: 0.2rem; font-size: 1.1rem; color: var(--orange); }
+.gallery-note strong { color: var(--text); font-weight: 600; }
+
+/* Grade de 12 colunas: poste alto à esquerda; detalhe largo, lâmina e Instagram à direita */
+.gallery {
+  display: grid; grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: repeat(2, clamp(260px, 27vw, 380px)); gap: var(--s-4);
+}
+.g-tile { position: relative; overflow: hidden; margin: 0; border: 1px solid var(--line); border-radius: 14px; background: #0d0c0c; }
+.g-tile img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.9s var(--ease-out); }
+.g-tile:hover img { transform: scale(1.05); }
+.g-tile::after { content: ''; position: absolute; inset: 40% 0 0; background: linear-gradient(180deg, transparent, rgba(10, 10, 10, 0.92)); pointer-events: none; }
+/* Legenda: selo "Ilustração 3D" no alto, número + texto embaixo (acima do sprite do poste e do degradê) */
+.g-tile figcaption {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; gap: var(--s-3);
+  padding: clamp(1rem, 2vw, 1.5rem); pointer-events: none;
+}
+.g-tag {
+  padding: 0.3rem 0.7rem; border: 1px solid rgba(245, 243, 240, 0.28); border-radius: 999px;
+  background: rgba(10, 10, 10, 0.7); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; white-space: nowrap; color: var(--text);
+}
+.g-caption {
+  display: flex; align-items: baseline; gap: var(--s-3);
+  font-family: var(--serif); font-style: italic; font-size: clamp(1.35rem, 2.1vw, 1.9rem); line-height: 1.1;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.7);
+}
+.g-num { flex: none; font-family: var(--display); font-style: normal; font-size: 0.85rem; letter-spacing: 0.1em; color: var(--orange); }
+.g-pole { grid-column: 1 / span 5; grid-row: 1 / span 2; container-type: size; }
 .g-pole img { object-position: 50% 40%; }
 /* Poste girando com a rolagem (motion.js): sprite de 24 quadros renderizados (ferramentas/render_poste.py)
    por cima da foto estática. Mesmo enquadramento da foto (cover, 50% 40%); o quadro muda em passos
@@ -450,19 +478,27 @@ button { font: inherit; color: inherit; }
 }
 .pole-sprite.is-ready { opacity: 1; }
 .g-tile:hover .pole-sprite { scale: 1.06; }
-.g-detail { grid-column: 2 / span 2; }
+.g-detail { grid-column: 6 / span 7; grid-row: 1; }
 .g-detail img { object-position: 30% 45%; }
+.g-blade { grid-column: 6 / span 4; grid-row: 2; }
+.g-blade img { object-position: 45% 70%; }
+
+/* Cartão do Instagram: o caminho para os trabalhos reais, em laranja (ação) com texto escuro */
 .g-insta {
-  display: flex; flex-direction: column; justify-content: space-between; padding: var(--s-6);
-  border: 1.5px solid var(--orange); background: radial-gradient(90% 90% at 100% 100%, rgba(255, 85, 0, 0.25), transparent 70%), var(--bg-2);
-  transition: background-color 0.3s ease, transform 0.3s ease;
+  grid-column: 10 / span 3; grid-row: 2;
+  display: flex; flex-direction: column; justify-content: space-between; gap: var(--s-5);
+  padding: clamp(1.5rem, 2.4vw, 2.25rem);
+  border-color: var(--orange); background: var(--orange); color: var(--ink);
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
 }
 .g-insta::after { display: none; }
-.g-insta:hover { transform: translateY(-3px); }
-.g-insta .icon { font-size: 2.2rem; color: var(--orange); }
-.g-insta strong { display: block; margin-bottom: var(--s-2); font-family: var(--display); font-weight: 400; font-size: clamp(1.7rem, 2.6vw, 2.3rem); text-transform: uppercase; line-height: 0.95; }
-.g-insta span { color: var(--muted); font-size: 0.95rem; }
-.gallery-note { margin-top: var(--s-4); color: var(--muted); font-size: 0.85rem; }
+.g-insta:hover { background: var(--orange-hi); border-color: var(--orange-hi); transform: translateY(-3px); }
+.g-insta .icon { font-size: 2.4rem; }
+.g-insta-kicker { display: block; margin-bottom: var(--s-2); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; }
+.g-insta strong { display: block; margin-bottom: var(--s-4); font-family: var(--display); font-weight: 400; font-size: clamp(1.7rem, 2.4vw, 2.3rem); text-transform: uppercase; line-height: 0.95; }
+.g-insta-handle { display: inline-flex; align-items: center; gap: var(--s-2); padding-top: var(--s-3); border-top: 1.5px solid rgba(10, 10, 10, 0.4); font-weight: 700; font-size: 0.95rem; }
+.g-insta-handle span { transition: transform 0.3s var(--ease-out); }
+.g-insta:hover .g-insta-handle span { transform: translateX(4px); }
 
 /* ---------- 6.5 Equipe ---------- */
 .team-section { background: radial-gradient(70% 60% at 50% 100%, rgba(255, 85, 0, 0.14), transparent 70%), var(--bg); }
