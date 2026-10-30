@@ -840,10 +840,21 @@ button { font: inherit; color: inherit; }
 [data-theme="light"] .btn-ink:hover { background: #342920; }
 [data-theme="light"] .hero-since { color: #C7BEB4; }
 [data-theme="light"] .hero-since strong { color: #F5F3F0; }
-[data-theme="light"] .team-section { background: radial-gradient(70% 60% at 50% 100%, rgba(200, 70, 10, 0.10), transparent 70%), var(--bg); }
-[data-theme="light"] .member-stage { background: radial-gradient(65% 60% at 50% 62%, rgba(200, 70, 10, 0.22), transparent 74%), #E5DDD3; }
-[data-theme="light"] .member-stage::after { background: linear-gradient(180deg, transparent, rgba(33, 27, 23, 0.18)); }
-[data-theme="light"] .member-ghost { -webkit-text-stroke-color: rgba(33, 27, 23, 0.35); }
+[data-theme="light"] .team-section {
+  --text: #F5F1EB;
+  --muted: #C7BEB4;
+  color: #F5F1EB;
+  background: radial-gradient(70% 60% at 50% 100%, rgba(255, 85, 0, 0.2), transparent 70%), #25211E;
+}
+[data-theme="light"] .team-section .eyebrow,
+[data-theme="light"] .team-section .title em { color: #FF7433; }
+[data-theme="light"] .member-stage {
+  border-color: rgba(245, 241, 235, 0.14);
+  background: radial-gradient(65% 60% at 50% 62%, rgba(255, 85, 0, 0.3), transparent 74%), #39312C;
+}
+[data-theme="light"] .member-stage::after { background: linear-gradient(180deg, transparent, rgba(10, 10, 10, 0.38)); }
+[data-theme="light"] .member-ghost { -webkit-text-stroke-color: rgba(245, 241, 235, 0.38); }
+[data-theme="light"] .member-role { color: #FF7433; }
 [data-theme="light"] .agenda-notice { background: rgba(200, 70, 10, 0.07); }
 [data-theme="light"] .agenda-summary { background: radial-gradient(120% 80% at 100% 0%, rgba(200, 70, 10, 0.10), transparent 60%), var(--surface); }
 [data-theme="light"] .pass,
