@@ -95,3 +95,23 @@ cd ferramentas
 muda. `roll=0` é o render de sempre: o recorte de `imagens/maquina-doug-funny.webp` é um corte 1:1 do render de
 900×2250 (`samples=160 pct=100`), e `montar_giro.py` usa essa imagem como referência para que o quadro 0 caia
 exatamente em cima dela. Ângulos negativos entram como `m` no nome do arquivo (`quadro_m30.png`).
+
+**Folhas que o site usa** (`imagens/maquina-giro-a.*` e `maquina-giro-b.*`, lidas por `script.js`; cada uma tem um `.avif`,
+um `.webp` de reserva e um `.json` com os ângulos, o tamanho do quadro e a grade). São duas porque a nitidez só importa
+perto da pose final:
+
+```bash
+cd ferramentas
+# A: volta inteira, de 10 em 10°, leve (abertura e rolagem). ≈ 36 quadros × 12 s
+python render_maquina.py view=hero rolls=0,10,20,...,350 samples=64 pct=50 outdir=quadros-a
+python montar_giro.py quadros-a --pct 50 --altura 408 --saida ../imagens/maquina-giro-a --formato avif --qualidade 45
+python montar_giro.py quadros-a --pct 50 --altura 408 --saida ../imagens/maquina-giro-a --formato webp --qualidade 70
+# B: só de −30° a +30°, de 5 em 5°, nítida (pouso e mouse). 13 quadros × 20 s
+python render_maquina.py view=hero rolls=-30,-25,...,30 samples=96 pct=50 outdir=quadros-b
+python montar_giro.py quadros-b --pct 50 --altura 817 --saida ../imagens/maquina-giro-b --formato avif --qualidade 50
+python montar_giro.py quadros-b --pct 50 --altura 817 --saida ../imagens/maquina-giro-b --formato webp --qualidade 75
+```
+
+(`rolls=` aceita a lista inteira separada por vírgulas, sem reticências; elas estão aí só para abreviar.) Com `--pct 50`
+os quadros ficam a metade da resolução da imagem do site, e `montar_giro.py` confere sozinho que o quadro 0 cai em cima
+dela (desvio máximo de 0,5 px). Se a máquina, a luz ou a câmera mudarem, as duas folhas precisam ser refeitas.

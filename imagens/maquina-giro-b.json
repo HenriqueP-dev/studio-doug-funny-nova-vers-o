@@ -1,0 +1,46 @@
+{
+ "angulos": [
+  -30.0,
+  -25.0,
+  -20.0,
+  -15.0,
+  -10.0,
+  -5.0,
+  0.0,
+  5.0,
+  10.0,
+  15.0,
+  20.0,
+  25.0,
+  30.0
+ ],
+ "quadros": 13,
+ "larguraQuadro": 270,
+ "alturaQuadro": 817,
+ "colunas": 6,
+ "linhas": 3,
+ "folha": [
+  1620,
+  2451
+ ],
+ "proporcao": 0.33048,
+ "referencia": {
+  "arquivo": "maquina-doug-funny.webp",
+  "largura": 513,
+  "altura": 1635,
+  "caixaMaquina": [
+   6,
+   6,
+   507,
+   1629
+  ]
+ },
+ "recorteNoRender": [
+  67.81,
+  164.5,
+  337.7,
+  982.0
+ ],
+ "escalaRefPorRender": 2.0,
+ "pct": 50.0
+}

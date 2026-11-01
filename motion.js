@@ -130,6 +130,8 @@
      da paralaxe antiga) e por opacity, ou seja, só transform e opacity.
      ========================================================================== */
   const EXTRA_ROTATION = -16;   // "gira um pouco" ao descer (graus, somados à pose)
+  const TRAVEL_ROLL = -360;     // giro em torno do próprio eixo ao longo da viagem: uma volta, no mesmo sentido do giro da abertura
+  const WORD_RECEDE = 0.9;      // escala final de "BARBEARIA" ao sair do hero (recuo em profundidade)
   const MAX_SCALE = 0.35;       // tamanho máximo ao pousar
   const MIN_SCALE = 0.16;
   const SHADOW_REACH = 115;     // até onde a sombra escura de .clipper desce além da máquina (40px de deslocamento + desfoque), em px sem escala
@@ -230,6 +232,7 @@
         pos.setProperty('--ps', (1 + (landing.scale - 1) * t).toFixed(4));
         pos.opacity = String(1 - state.fade);
         hero.setExtraRotation(landing.rot * t);
+        hero.spin.set('scroll', TRAVEL_ROLL * t);   // gira de verdade (quadros renderizados) enquanto desce; no topo volta à imagem
         hero.clipperPos.classList.toggle('is-off-stage', shadowOffStage(landing, t, heroEnd));
         // a máscara só importa enquanto a palavra está na tela
         if (window.scrollY < heroEnd) hero.updateDepthMask();
@@ -252,9 +255,10 @@
         .to(state, { fade: 1, duration: 0.2, ease: 'power1.in' }, 0.8);  // pousa e some
       if (divider) tl.to(divider, { scaleX: 1, duration: 0.35 }, 0.45);  // a linha termina quando ela chega
 
-      // "BARBEARIA" sobe mais devagar que a página (paralaxe)
-      gsap.fromTo(hero.el, { '--wy': '0px' }, {
+      // "BARBEARIA" sobe mais devagar que a página (paralaxe) e recua em profundidade: fica menor enquanto sai
+      gsap.fromTo(hero.el, { '--wy': '0px', '--ws': 1 }, {
         '--wy': () => `${hero.el.offsetHeight * 0.22}px`,
+        '--ws': WORD_RECEDE,
         ease: 'none',
         scrollTrigger: { trigger: hero.el, start: 'top top', end: 'bottom top', scrub: true, invalidateOnRefresh: true }
       });
@@ -275,7 +279,9 @@
       ['--px', '--py', '--pr', '--ps', 'will-change'].forEach(p => hero.clipperPos.style.removeProperty(p));
       hero.clipperPos.style.opacity = '1';
       hero.el.style.removeProperty('--wy');
+      hero.el.style.removeProperty('--ws');
       hero.setExtraRotation(0);
+      hero.spin.rest();
       if (divider) { divider.classList.remove('is-driven'); divider.classList.add('is-in'); }
       hero.updateDepthMask();
     };
@@ -486,25 +492,52 @@
      andam no máximo 6px uma em relação à outra, então a máscara de profundidade não precisa ser
      refeita a cada quadro (seria redesenhar a palavra gigante). Ao rolar para fora, tudo volta ao centro.
      ========================================================================== */
+  const POINTER_ROLL = 14;     // graus de giro da máquina com o ponteiro na borda da tela (positivo: o rosto vai para a direita)
+  const POINTER_IDLE = 1300;   // ms com o ponteiro parado até a máquina relaxar de volta à pose (e à imagem nítida da página)
   function pointerDepth(app, ctx) {
     const { hero } = app;
-    const state = { x: 0, y: 0 };
-    let xTo = null, yTo = null, active = false;
-    const center = () => { if (xTo) { xTo(0); yTo(0); } };
+    const state = { x: 0, y: 0, roll: 0 };
+    let xTo = null, yTo = null, rollTo = null, active = false, idleTimer = 0;
+    const relax = () => { if (rollTo) rollTo(0); };
+    const center = () => { clearTimeout(idleTimer); if (xTo) { xTo(0); yTo(0); rollTo(0); } };
     const move = event => {
       if (!active || !xTo) return;
       if (window.scrollY > hero.el.offsetHeight * 0.15) { center(); return; }
-      xTo(clamp(-1, 1, (event.clientX / window.innerWidth) * 2 - 1));
+      const x = clamp(-1, 1, (event.clientX / window.innerWidth) * 2 - 1);
+      xTo(x);
       yTo(clamp(-1, 1, (event.clientY / window.innerHeight) * 2 - 1));
+      rollTo(x * POINTER_ROLL);
+      /* A máquina vira o rosto para o ponteiro enquanto ele se move. Os quadros girados são um pouco mais suaves
+         que a imagem da página (em tela retina dá para notar), então, parado o ponteiro, ela relaxa de volta à pose. */
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(relax, POINTER_IDLE);
     };
     const stopWaiting = afterIntro(app, ctx, () => {
       hero.el.classList.add('has-depth');
+      /* Em aparelho que não acompanha, a inclinação do palco (a parte mais cara da profundidade) se desliga sozinha:
+         enquanto o ponteiro se move, mede o intervalo entre as atualizações e, se a média passa de 30 ms (menos de
+         ~33 qps), tira a inclinação. O giro da máquina e o deslocamento das camadas continuam. */
+      let lastTick = 0, average = 0, ticks = 0;
+      const guard = () => {
+        const now = performance.now();
+        if (now - lastTick < 4) return;   // x, y e giro são três animações e chamam apply no mesmo quadro: conta uma vez só
+        if (lastTick && now - lastTick < 200) {
+          average = ticks ? average * 0.85 + (now - lastTick) * 0.15 : now - lastTick;
+          if (++ticks > 30 && average > 30) hero.el.classList.add('no-tilt');
+        } else {
+          ticks = 0;
+        }
+        lastTick = now;
+      };
       const apply = () => {
+        guard();
         hero.el.style.setProperty('--mx', state.x.toFixed(3));
         hero.el.style.setProperty('--my', state.y.toFixed(3));
+        hero.spin.set('pointer', state.roll);   // quadros da folha nítida
       };
       xTo = gsap.quickTo(state, 'x', { duration: 1.2, ease: 'power3.out', onUpdate: apply });
       yTo = gsap.quickTo(state, 'y', { duration: 1.2, ease: 'power3.out', onUpdate: apply });
+      rollTo = gsap.quickTo(state, 'roll', { duration: 1.2, ease: 'power3.out', onUpdate: apply });
       ScrollTrigger.create({
         trigger: hero.el, start: 'top top', end: '15% top',
         onToggle: self => { active = self.isActive; if (!active) center(); }
@@ -516,12 +549,14 @@
 
     return () => {
       stopWaiting();
+      clearTimeout(idleTimer);
       window.removeEventListener('pointermove', move);
       document.documentElement.removeEventListener('pointerleave', center);
       gsap.killTweensOf(state);
-      hero.el.classList.remove('has-depth');
+      hero.el.classList.remove('has-depth', 'no-tilt');
       hero.el.style.removeProperty('--mx');
       hero.el.style.removeProperty('--my');
+      hero.spin.set('pointer', 0);
       hero.updateDepthMask();
     };
   }
@@ -709,7 +744,10 @@
     return () => { slotsObserver.disconnect(); summaryObserver.disconnect(); };
   }
 
-  /* Celular: só uma paralaxe leve dentro do hero (sem viagem até Serviços) */
+  /* Celular: profundidade dentro do hero, sem viagem até Serviços. A máquina desce devagar e GIRA em torno do
+     próprio eixo (quadros renderizados, baixados depois da abertura), enquanto "BARBEARIA" recua e fica menor. */
+  const MOBILE_ROLL = -270;     // graus de giro enquanto o hero sai da tela
+  const MOBILE_RECEDE = 0.92;   // escala final de "BARBEARIA"
   function clipperParallax(app, ctx) {
     const { hero } = app;
     app.scroll.disableParallax();
@@ -725,7 +763,9 @@
           pos.setProperty('--py', `${(h * 0.28 * state.t).toFixed(1)}px`);
           pos.setProperty('--pr', `${(8 * state.t).toFixed(2)}deg`);
           hero.el.style.setProperty('--wy', `${(h * 0.12 * state.t).toFixed(1)}px`);
+          hero.el.style.setProperty('--ws', (1 - (1 - MOBILE_RECEDE) * state.t).toFixed(4));
           hero.setExtraRotation(8 * state.t);
+          hero.spin.set('scroll', MOBILE_ROLL * state.t);
           hero.updateDepthMask();
         },
         scrollTrigger: { trigger: hero.el, start: 'top top', end: 'bottom top', scrub: true, onRefresh: () => { h = hero.el.offsetHeight; } }
@@ -736,7 +776,9 @@
       stopWaiting();
       ['--py', '--pr'].forEach(p => hero.clipperPos.style.removeProperty(p));
       hero.el.style.removeProperty('--wy');
+      hero.el.style.removeProperty('--ws');
       hero.setExtraRotation(0);
+      hero.spin.rest();
       hero.updateDepthMask();
     };
   }

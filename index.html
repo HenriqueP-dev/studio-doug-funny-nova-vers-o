@@ -16,6 +16,15 @@
       document.documentElement.classList.add('intro-pending');
       // segurança: se script.js não chegar a rodar (arquivo bloqueado ou rede caída), o hero não fica vazio
       setTimeout(function () { if (!window.StudioDFHero) document.documentElement.classList.remove('intro-pending'); }, 5000);
+      // Giro da máquina (script.js, "GIRO DA MÁQUINA EM 3D"): a folha leve (≈160 KB) já começa a baixar aqui, com
+      // prioridade BAIXA para não competir com a imagem do hero e as fontes. Só no desktop e fora de Save-Data/2G/3G.
+      var net = navigator.connection || {};
+      if (window.matchMedia('(min-width: 761px)').matches && !net.saveData && !/^(slow-)?[23]g$/.test(net.effectiveType || '')) {
+        var hint = document.createElement('link');
+        hint.rel = 'preload'; hint.as = 'image'; hint.type = 'image/avif'; hint.href = 'imagens/maquina-giro-a.avif';
+        hint.setAttribute('fetchpriority', 'low');
+        document.head.appendChild(hint);
+      }
     }
   </script>
 

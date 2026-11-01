@@ -101,6 +101,224 @@ window.StudioDFHero = true;   // avisa o <head> que este arquivo rodou (ver a se
 const EASE_OUT = 'cubic-bezier(0.16, 1, 0.3, 1)';
 const EASE_IO = 'cubic-bezier(0.65, 0, 0.35, 1)';
 
+/* --------------------------------------------------------------------------
+   GIRO DA MÁQUINA EM 3D (sequência renderizada)
+   A máquina é um render do Blender. Para girá-la de verdade em torno do próprio eixo, o MESMO modelo,
+   com a mesma luz e a mesma câmera, foi renderizado em várias posições (ferramentas/render_maquina.py
+   rolls=… e montar_giro.py): duas folhas de quadros.
+     imagens/maquina-giro-a   volta inteira, de 10 em 10°, leve         (abertura e rolagem)
+     imagens/maquina-giro-b   só perto da pose final, de 5 em 5°, nítida (pouso e mouse)
+   Aqui os quadros viram um <canvas> exatamente sob a imagem da máquina. Regras:
+   - Nunca atrasa nada: as folhas são baixadas em prioridade baixa e só valem se já chegaram quando a
+     máquina começa a se mover. Se não chegaram (rede lenta, Save-Data, falha), a abertura é a de sempre.
+   - Termina SEMPRE no giro 0, que é a imagem da página (mesma pose, mesma luz): o pouso é uma dissolvência
+     de 0,2s entre dois quadros iguais, sem pulo.
+   - Movimento reduzido: nada disto roda.
+   Voltas, velocidade e desaceleração foram escolhidas num laboratório com 7 candidatas (DESIGN.md §10).
+   -------------------------------------------------------------------------- */
+const SPIN_FILES = { a: 'imagens/maquina-giro-a', b: 'imagens/maquina-giro-b' };
+const SPIN_TURNS = 1;                      // voltas da abertura
+const SPIN_EASE = [0.45, 0, 0.15, 1];      // sai devagar, acelera e desacelera por bastante tempo até pousar de frente
+
+const cubicBezier = (x1, y1, x2, y2) => {
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+  const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+  const X = t => ((ax * t + bx) * t + cx) * t;
+  const Y = t => ((ay * t + by) * t + cy) * t;
+  return x => {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    let lo = 0, hi = 1, t = x;
+    for (let i = 0; i < 28; i++) { if (X(t) < x) lo = t; else hi = t; t = (lo + hi) / 2; }   // bisseção: sempre converge
+    return Y(t);
+  };
+};
+
+function createSpin({ pos, buzz, img }) {
+  const conn = navigator.connection || {};
+  const allowed = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    && !conn.saveData && !/^(slow-)?[23]g$/.test(conn.effectiveType || '');
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+  const norm180 = a => { const m = ((a % 360) + 360) % 360; return m > 180 ? m - 360 : m; };
+  const easing = cubicBezier(...SPIN_EASE);
+  const entryRoll = p => 360 * SPIN_TURNS * (1 - easing(clamp(p, 0, 1)));
+
+  const A = { name: 'a' }, B = { name: 'b' };   // cada folha: meta, sheet (imagem), canvas, ctx e a geometria dos quadros
+  let started = false, ready = false, decided = false, engaged = false, shadow = null, hideTimer = 0;
+
+  const fetchLayer = L => {
+    const base = SPIN_FILES[L.name];
+    const picture = ext => new Promise((resolve, reject) => {
+      const im = new Image();
+      im.decoding = 'async';
+      if ('fetchPriority' in im) im.fetchPriority = 'low';
+      im.onload = () => resolve(im);
+      im.onerror = reject;
+      im.src = `${base}.${ext}`;
+    }).then(im => (im.decode ? im.decode().then(() => im, () => im) : im));   // decodificada antes de valer: o 1º quadro não trava
+    return Promise.all([
+      fetch(`${base}.json`).then(r => (r.ok ? r.json() : Promise.reject(new Error(String(r.status))))),
+      picture('avif').catch(() => picture('webp'))
+    ]).then(([meta, sheet]) => {
+      const n = meta.angulos.length, step = n > 1 ? meta.angulos[1] - meta.angulos[0] : 360;
+      Object.assign(L, { meta, sheet, n, step, first: meta.angulos[0], last: meta.angulos[n - 1], full: Math.abs(step * n - 360) < 1e-3, weights: new Float32Array(n) });
+    });
+  };
+  /* Começa a baixar (idempotente). A folha leve primeiro; a nítida só depois, sem disputar banda com ela. */
+  const warm = () => {
+    if (started || !allowed) return;
+    started = true;
+    fetchLayer(A).then(() => { ready = true; return fetchLayer(B).catch(() => {}); }).catch(() => {});
+  };
+
+  const makeCanvas = L => {
+    const c = document.createElement('canvas');
+    c.className = L.name === 'b' ? 'clipper-giro clipper-giro-b' : 'clipper-giro';
+    c.width = L.meta.larguraQuadro; c.height = L.meta.alturaQuadro;
+    c.setAttribute('aria-hidden', 'true');
+    buzz.insertBefore(c, img);
+    L.canvas = c; L.ctx = c.getContext('2d');
+    L.vis = false; L.op = L.name === 'b' ? 0 : 1;   // estado atual (o CSS começa escondido); só se escreve no estilo quando muda
+  };
+  const view = (L, visible, opacity) => {
+    if (!L.canvas) return;
+    if (L.vis !== visible) { L.canvas.style.visibility = visible ? 'visible' : 'hidden'; L.vis = visible; }
+    if (opacity !== undefined && L.op !== opacity) { L.canvas.style.opacity = String(opacity); L.op = opacity; }
+  };
+  const makeShadow = () => {
+    shadow = document.createElement('img');
+    shadow.className = 'clipper-sombra';
+    shadow.alt = ''; shadow.setAttribute('aria-hidden', 'true');
+    shadow.decoding = 'async'; shadow.width = img.width; shadow.height = img.height;
+    shadow.src = img.currentSrc || img.src;   // o mesmo arquivo da página: já está no cache
+    buzz.insertBefore(shadow, A.canvas);
+  };
+
+  const blit = (L, i, alpha) => {
+    const { larguraQuadro: w, alturaQuadro: h, colunas } = L.meta;
+    L.ctx.globalAlpha = alpha;
+    L.ctx.drawImage(L.sheet, (i % colunas) * w, Math.floor(i / colunas) * h, w, h, 0, 0, w, h);
+  };
+  const fractional = (L, angle) => (L.full
+    ? (((angle - L.first) % 360) + 360) % 360 / L.step
+    : clamp((angle - L.first) / L.step, 0, L.n - 1));
+  /* Desenha o ângulo pedido como uma média ponderada dos quadros ao redor. Parado ou devagar, é a mistura
+     dos dois quadros vizinhos (movimento contínuo, sem degraus). Rápido, vira borrão de movimento de graça:
+     a média se espalha pelo arco que a máquina percorre durante uma exposição de obturador 180° a 60 qps.
+     Cada quadro é desenhado uma vez, com alfa = peso ÷ soma dos pesos até ali (média acumulada). */
+  const paint = (L, angle, speed) => {
+    L.ctx.clearRect(0, 0, L.canvas.width, L.canvas.height);
+    const arc = Math.abs(speed) / 120;
+    const taps = clamp(Math.ceil(arc / (L.step / 2)), 1, 9);
+    const w = L.weights;
+    w.fill(0);
+    for (let k = 0; k < taps; k++) {
+      const f = fractional(L, angle + (taps > 1 ? (k / (taps - 1) - 0.5) * arc : 0)), i0 = Math.floor(f), t = f - i0;
+      w[i0 % L.n] += (1 - t) / taps;
+      if (t > 0.001) w[L.full ? (i0 + 1) % L.n : Math.min(i0 + 1, L.n - 1)] += t / taps;
+    }
+    let sum = 0;
+    for (let i = 0; i < L.n; i++) if (w[i] > 0.002) { sum += w[i]; blit(L, i, w[i] / sum); }
+    L.ctx.globalAlpha = 1;
+  };
+  /* A folha leve cobre a volta toda; a nítida entra por cima (dissolvência de 0,16s) quando a máquina chega perto
+     da pose final. Depois que a nítida cobre a leve por inteiro, a leve é escondida e deixa de ser redesenhada
+     (menos trabalho a cada quadro, e nenhuma borda velha aparece por baixo). */
+  let bSince = 0;
+  const draw = (angle, speed) => {
+    if (B.sheet && !B.canvas) makeCanvas(B);
+    const a = norm180(angle), inside = !!B.canvas && a >= B.first - 0.01 && a <= B.last + 0.01;
+    if (inside) {
+      if (!bSince) bSince = performance.now();
+      view(B, true, 1);
+      paint(B, a, speed);
+      if (performance.now() - bSince > 240) { view(A, false); return; }
+    } else {
+      bSince = 0;
+      view(B, true, 0);
+    }
+    view(A, true);
+    paint(A, angle, speed);
+  };
+
+  /* Cria (uma vez) as camadas do giro: os quadros e a cópia que faz a sombra. Ficam escondidas até `engage`. */
+  const build = () => {
+    if (!A.canvas) makeCanvas(A);
+    if (B.sheet && !B.canvas) makeCanvas(B);
+    if (!shadow) makeShadow();
+  };
+  const engage = () => {
+    if (engaged) return;
+    clearTimeout(hideTimer);
+    build();
+    bSince = 0;
+    engaged = true;
+    pos.classList.add('has-spin', 'is-spinning');
+  };
+  const release = () => {
+    if (!engaged) return;
+    engaged = false;
+    pos.classList.remove('is-spinning');   // a imagem volta (0,2s) por cima dos quadros, que saem depois
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => {
+      view(A, false); view(B, false, 0);
+      pos.classList.remove('has-spin');
+    }, 280);
+  };
+
+  /* Começo da abertura: se as folhas já chegaram, cria as camadas e faz o primeiro desenho agora, com a máquina ainda
+     fora da tela, em vez de no meio do trajeto (onde um quadro mais pesado seria visto). */
+  const prepare = () => { if (ready) { build(); paint(A, 0, 0); } };
+
+  /* Abertura: chamado a cada quadro do trajeto de entrada (progress de 0 a 1). Decide uma vez, no primeiro
+     quadro: a máquina nunca começa a girar no meio do caminho. */
+  const entry = (progress, ms) => {
+    if (!decided) { decided = true; if (!ready) return; engage(); }
+    if (!engaged) return;
+    const d = 0.01;
+    draw(entryRoll(progress), (entryRoll(progress + d) - entryRoll(progress - d)) / (2 * d) / (ms / 1000));
+  };
+  const land = () => {
+    if (!engaged) return;
+    draw(0, 0);
+    release();
+  };
+
+  /* Rolagem e mouse (motion.js): o ângulo vem de fora, depois da abertura, em partes que se somam (a viagem pela
+     rolagem e a inclinação pelo ponteiro). Perto de 0 não há o que mostrar e a imagem da página fica; fora disso os
+     quadros assumem (dissolvência de 0,2s) e voltam à imagem quando a máquina para perto de 0. A velocidade, para
+     o borrão, sai da variação do ângulo entre uma chamada e a seguinte. */
+  const parts = {};
+  let lastAngle = 0, lastTime = 0, lastSpeed = 0, drawnAngle = 0, restTimer = 0;
+  const set = (part, value) => {
+    parts[part] = value;
+    if (!ready) return false;
+    const angle = Object.values(parts).reduce((sum, v) => sum + v, 0);
+    const now = performance.now();
+    const raw = lastTime ? (angle - lastAngle) / Math.max(8, now - lastTime) * 1000 : 0;
+    const speed = lastSpeed * 0.4 + raw * 0.6;       // suaviza o ruído do intervalo entre quadros
+    const near = Math.abs(norm180(angle)) < 0.35;
+    lastAngle = angle; lastTime = now;
+    if (!engaged) {
+      if (near) { lastSpeed = 0; return true; }
+      engage();
+    } else if (Math.abs(angle - drawnAngle) < 0.25 && Math.abs(speed) < 40) {
+      // quase igual ao que já está desenhado (a folha tem passos de 5° a 10°): redesenhar seria trabalho perdido
+      if (near) { clearTimeout(restTimer); restTimer = setTimeout(release, 450); }
+      return true;
+    }
+    lastSpeed = speed; drawnAngle = angle;
+    draw(angle, speed);
+    clearTimeout(restTimer);
+    if (near) restTimer = setTimeout(release, 450);
+    return true;
+  };
+  /* Volta já à imagem da página (sai da cena sem esperar) e esquece os ângulos. */
+  const rest = () => { Object.keys(parts).forEach(k => { parts[k] = 0; }); clearTimeout(restTimer); lastAngle = 0; lastSpeed = 0; drawnAngle = 0; release(); };
+
+  return { warm, prepare, entry, land, set, rest, isReady: () => ready, isEngaged: () => engaged };
+}
+
 function initHero(root) {
   const stage = $('.stage');
   const heroEl = $('.hero');
@@ -119,6 +337,7 @@ function initHero(root) {
   const script = $('.script');
   const heroDark = $('.hero-dark');
   const copyParts = $$('.hero-kicker, .hero-quote, .hero-cta, .hero-since');
+  const spin = createSpin({ pos: clipperPos, buzz, img: clipperImg });
 
   const stageVar = name => parseFloat(getComputedStyle(stage).getPropertyValue(name));
   // Pose do palco (variáveis CSS): lida uma vez e relida só quando a janela muda de tamanho,
@@ -131,22 +350,45 @@ function initHero(root) {
   const introPending = () => root.classList.contains('intro-pending');
   const introCallbacks = [];
   const onIntroDone = cb => (introPending() ? introCallbacks.push(cb) : cb());
+  /* Folhas do giro (ver o bloco do giro, acima), em prioridade baixa. No desktop começam já, para a máquina poder
+     girar na abertura; no celular só depois da abertura e em ociosidade, para não disputar banda com a imagem do hero. */
+  if (window.matchMedia('(max-width: 760px)').matches) {
+    onIntroDone(() => (window.requestIdleCallback || (cb => setTimeout(cb, 800)))(() => spin.warm(), { timeout: 4000 }));
+  } else {
+    spin.warm();
+  }
 
+  /* A perspectiva do palco (styles.css, .has-depth .stage) inclina TUDO junto, então o recorte continua certo
+     se for calculado no plano do palco. Medido com a inclinação ligada, o retângulo do navegador seria a
+     caixa do quadrilátero projetado e o corte erraria até ~20px. Por isso a inclinação é desligada só
+     durante a leitura (sem pintar nada entre as duas trocas) e só quando existe alguma. */
+  const tilt = () => (heroEl.classList.contains('no-tilt') ? 0
+    : Math.abs(parseFloat(heroEl.style.getPropertyValue('--mx')) || 0) + Math.abs(parseFloat(heroEl.style.getPropertyValue('--my')) || 0));
+  const measureFlat = () => {
+    const flat = tilt() > 0.0005;
+    if (flat) stage.style.transform = 'none';
+    const rects = [wordFront.getBoundingClientRect(), clipperImg.getBoundingClientRect()];
+    if (flat) stage.style.transform = '';
+    return rects;
+  };
   /* Parte do título que fica NA FRENTE da cauda da máquina: semiplano perpendicular ao eixo
      da máquina, a partir do ponto em que o eixo cruza a altura --depth-y (fração da palavra).
      Devolve o polígono em coordenadas da palavra, ou null se algo ainda não tem tamanho. */
   const depthPolygon = deg => {
-    const wr = wordFront.getBoundingClientRect();
-    const cr = clipperImg.getBoundingClientRect();
+    const [wr, cr] = measureFlat();
     if (!wr.width || !cr.width) return null;
+    /* Com a rolagem a palavra recua (--ws < 1, styles.css). O recorte é escrito em px do PRÓPRIO elemento,
+       então as medidas da tela (já reduzidas) voltam ao tamanho dele; com --ws = 1 nada muda. */
+    const s = parseFloat(heroEl.style.getPropertyValue('--ws')) || 1;
+    const W = wr.width / s, H = wr.height / s;
     const r = deg * Math.PI / 180;
     const tail = { x: -Math.sin(r), y: Math.cos(r) };
     const head = { x: -tail.x, y: -tail.y };
-    const c = { x: cr.left + cr.width / 2 - wr.left, y: cr.top + cr.height / 2 - wr.top };
+    const c = { x: (cr.left + cr.width / 2 - wr.left) / s, y: (cr.top + cr.height / 2 - wr.top) / s };
     const fy = readPose().depthY;
-    const ty = wr.height * (Number.isFinite(fy) ? fy : 0.36);
+    const ty = H * (Number.isFinite(fy) ? fy : 0.36);
     const p = { x: c.x + head.x * ((ty - c.y) / head.y), y: ty };
-    const rect = [[0, 0], [wr.width, 0], [wr.width, wr.height], [0, wr.height]];
+    const rect = [[0, 0], [W, 0], [W, H], [0, H]];
     const side = ([x, y]) => (x - p.x) * tail.x + (y - p.y) * tail.y;
     const poly = [];
     rect.forEach((a, i) => {
@@ -176,6 +418,21 @@ function initHero(root) {
     if (!poly) return;
     wordFront.dataset.mask = toClip(poly);
     if (!introPending()) wordFront.style.clipPath = wordFront.dataset.mask;
+  };
+
+  /* Brilho especular: no pouso uma faixa de luz atravessa o metal da cabeça à base, junto da luz que percorre as
+     letras. É uma camada criada na hora e removida ao terminar (a máscara usa a própria imagem da máquina). */
+  const glint = () => {
+    const shine = document.createElement('span');
+    shine.className = 'clipper-brilho';
+    shine.setAttribute('aria-hidden', 'true');
+    const band = document.createElement('i');
+    shine.appendChild(band);
+    buzz.appendChild(shine);
+    const sweep = band.animate(
+      [{ transform: 'translateY(-130%) skewY(-10deg)' }, { transform: 'translateY(440%) skewY(-10deg)' }],
+      { duration: 950, delay: 150, easing: 'cubic-bezier(0.45, 0, 0.25, 1)' });
+    sweep.finished.then(() => shine.remove(), () => shine.remove());
   };
 
   /* Estado final (fim da abertura ou tempo de segurança) */
@@ -223,6 +480,7 @@ function initHero(root) {
     const startRot = mobile ? -80 : -88;
     const startScale = mobile ? 1.12 : 1.22;
     updateDepthMask();
+    spin.prepare();   // se as folhas do giro já chegaram, monta as camadas agora (a máquina ainda está fora da tela)
 
     // de onde a máquina parte: totalmente fora da tela, à direita e acima (nada aparece parado na borda)
     const home = clipperImg.getBoundingClientRect();
@@ -278,6 +536,7 @@ function initHero(root) {
       const poly = depthPolygon(deg + extraRotation);
       if (poly) wordFront.style.clipPath = toClip(keepRightOf(poly, Number.isFinite(edge) ? edge : wr.width));
       const progress = travel.effect.getComputedTiming().progress || 0;
+      spin.entry(progress, T.travel);                                                 // o giro segue o mesmo relógio da máquina
       if (!cutDone && progress > 0.7 && travel.currentTime > T.machine) finishCut();  // 4. o corte termina de atravessar
       if (travel.playState !== 'finished') raf = requestAnimationFrame(track);
     };
@@ -288,9 +547,11 @@ function initHero(root) {
     // 5. ao pousar, a máquina "liga": vibração curta, brilho e a luz percorre o metal das letras
     travel.finished.then(() => {
       cancelAnimationFrame(raf);
+      spin.land();   // o giro termina no quadro 0, igual à imagem da página, e a imagem volta por cima
       finishCut();
       buzz.animate([0, 1, -1, 1, -1, 0.5, 0].map(v => ({ transform: `translate(${v * 1.6}px, ${-v}px)` })), { duration: 320, easing: 'linear' });
       glow.animate([{ opacity: 0.55 }, { opacity: 1 }, { opacity: 0.55 }], { duration: 700, easing: 'ease-out' });
+      glint();
       [wordFill, wordFront].forEach(word => $$('.ch > i', word).forEach((el, i) => el.animate(
         [{ backgroundPosition: '105% 0, 0 0' }, { backgroundPosition: '-5% 0, 0 0' }],
         { duration: 700, delay: 140 + i * 38, easing: 'cubic-bezier(0.45, 0, 0.25, 1)' })));
@@ -320,7 +581,7 @@ function initHero(root) {
   setTimeout(() => { if (introPending() && !started) finishIntro(); }, 4000);
 
   return {
-    el: heroEl, stage, clipperPos, clipperImg, wordFront, updateDepthMask, introPending, onIntroDone,
+    el: heroEl, stage, clipperPos, clipperImg, wordFront, updateDepthMask, introPending, onIntroDone, spin,
     setExtraRotation: deg => { extraRotation = deg; }
   };
 }

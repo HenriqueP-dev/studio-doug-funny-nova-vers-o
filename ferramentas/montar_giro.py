@@ -95,8 +95,8 @@ info = {
     'folha': list(folha.size), 'proporcao': round(largura / altura, 5),
     'referencia': {'arquivo': os.path.basename(args.ref), 'largura': ref.width, 'altura': ref.height, 'caixaMaquina': list(map(int, rb))},
     'recorteNoRender': [round(x0, 2), round(y0, 2), round(x1, 2), round(y1, 2)],
-    'escalaRefPorRender': round(s, 5), 'pct': args.pct, 'formato': args.formato, 'qualidade': args.qualidade
-}
+    'escalaRefPorRender': round(s, 5), 'pct': args.pct
+}   # sem formato/qualidade: o mesmo .json vale para o .webp e para o .avif
 with open(args.saida + '.json', 'w') as f:
     json.dump(info, f, indent=1)
 kb = os.path.getsize(destino) / 1024

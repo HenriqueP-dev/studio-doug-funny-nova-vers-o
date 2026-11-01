@@ -242,6 +242,7 @@ button { font: inherit; color: inherit; }
   min-height: max(100vh, 740px); min-height: max(100svh, 740px);
   background: var(--bg);
   --wy: 0px;
+  --ws: 1;            /* escala da palavra: de 1 a ~0,9 enquanto o hero sai da tela (motion.js) */
   --mx: 0; --my: 0;   /* profundidade pelo ponteiro (motion.js, só com mouse): de -1 a 1 */
 }
 
@@ -280,7 +281,7 @@ button { font: inherit; color: inherit; }
 
 .word {
   position: absolute; left: 50%; top: var(--word-top);
-  transform: translate(-50%, calc(-50% + var(--wy)));
+  transform: translate(-50%, calc(-50% + var(--wy))) scale(var(--ws));   /* --ws: a palavra recua em profundidade ao rolar (motion.js) */
   padding: 0 0.02em;
   font-family: var(--display); text-transform: uppercase;
   font-size: clamp(4.4rem, 19vw, 21rem); line-height: 1; letter-spacing: -0.01em; white-space: nowrap;
@@ -309,14 +310,56 @@ button { font: inherit; color: inherit; }
 /* Com a profundidade pelo ponteiro ligada (motion.js, desktop com mouse), as camadas que se movem viram
    camadas próprias da placa de vídeo: andar com elas é só recompor, sem redesenhar as letras gigantes. */
 .hero.has-depth .word, .hero.has-depth .clipper-pos, .hero.has-depth .script { will-change: translate; }
+/* Perspectiva (motion.js §7, só com mouse): o palco inteiro vira, como um cartaz que acompanha o ponteiro.
+   As três cópias da palavra, a máquina e a assinatura ficam no MESMO plano, então a inclinação não separa
+   uma da outra e a máscara de profundidade continua valendo (script.js mede sem a inclinação). */
+.hero.has-depth:not(.no-tilt) .stage {
+  transform: perspective(1400px) rotateX(calc(var(--my) * -2deg)) rotateY(calc(var(--mx) * 3deg));
+  will-change: transform;
+}   /* .no-tilt: o motion.js desliga a inclinação sozinho se o aparelho não acompanha (é a parte mais cara da profundidade) */
 .clipper-mover { height: 100%; transform: rotate(var(--rot)); transform-origin: 50% 50%; }
 .clipper-buzz { position: relative; height: 100%; }
 .clipper { height: 100%; width: auto; max-width: none; filter: drop-shadow(0 40px 60px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 40px rgba(255, 85, 0, 0.18)); }
 .clipper-glow {
-  position: absolute; left: 50%; top: 50%; width: 140%; height: 70%;
+  position: absolute; z-index: -1; left: 50%; top: 50%; width: 140%; height: 70%;   /* atrás da máquina (o filtro da imagem a põe na camada positiva, depois da luz, na ordem do HTML) */
   transform: translate(-50%, -50%); border-radius: 50%;
   background: radial-gradient(closest-side, rgba(255, 85, 0, 0.45), transparent);
   opacity: 0.55; filter: blur(30px);
+}
+
+/* Giro em 3D (script.js §3b). Enquanto a máquina gira, quem aparece são quadros renderizados num <canvas>
+   que fica exatamente sob a imagem; a imagem segue no layout (e no LCP), quase transparente, e volta no
+   pouso. A sombra do filtro da imagem some junto com ela, então uma cópia ESTÁTICA da imagem faz a sombra
+   (o desfoque de uma imagem que não muda não precisa ser refeito a cada quadro; num canvas que muda, precisa).
+   Ordem das camadas dentro da máquina, de trás para a frente: luz laranja < sombra < quadros < imagem (a luz
+   continua ATRÁS da máquina, como antes: o filtro da imagem a pintava depois da luz, na ordem do HTML). */
+.clipper { position: relative; z-index: 2; }
+.clipper-giro, .clipper-sombra {
+  position: absolute; left: 50%; top: 0; height: 100%; width: auto; max-width: none;
+  pointer-events: none;
+}
+.clipper-sombra { z-index: 0; transform: translate(-50%, 40px); filter: brightness(0) blur(30px); opacity: 0; transition: opacity 0.2s linear; }
+.clipper-giro { z-index: 1; transform: translateX(-50%); visibility: hidden; }
+.clipper-giro-b { opacity: 0; transition: opacity 0.16s linear; }
+/* Dissolvência de 0,2s entre a imagem e os quadros. `visibility` entra na transição de propósito: a imagem
+   continua visível até o fim da dissolvência e depois NÃO é mais pintada (medido: deixá-la só quase transparente
+   obriga a refazer, a cada quadro, as duas sombras do filtro dela; escondida de verdade, não custa nada). */
+.clipper-pos.has-spin .clipper { transition: opacity 0.2s linear, visibility 0.2s linear; }
+.clipper-pos.is-spinning .clipper { opacity: 0; visibility: hidden; }
+.clipper-pos.is-spinning .clipper-sombra { opacity: 0.7; }
+
+/* Brilho especular: uma faixa de luz que atravessa o metal da cabeça à base quando a máquina pousa. Fica presa ao
+   formato da própria máquina (máscara com a imagem) e só anda (transform); ver script.js, glint(). */
+.clipper-brilho {
+  position: absolute; z-index: 3; left: 50%; top: 0; height: 100%; aspect-ratio: 513 / 1635;
+  transform: translateX(-50%); overflow: hidden; pointer-events: none;
+  -webkit-mask: url("imagens/maquina-doug-funny.webp") center / 100% 100% no-repeat;
+          mask: url("imagens/maquina-doug-funny.webp") center / 100% 100% no-repeat;
+}
+.clipper-brilho i {
+  position: absolute; left: -20%; right: -20%; top: 0; height: 20%;
+  background: linear-gradient(180deg, transparent, rgba(255, 244, 232, 0.3) 34%, rgba(255, 255, 255, 0.7) 50%, rgba(255, 244, 232, 0.3) 66%, transparent);
+  transform: translateY(-130%) skewY(-10deg);
 }
 
 .cutline {
@@ -920,6 +963,10 @@ button { font: inherit; color: inherit; }
    a troca por uma sombra curta e clara. Mesma estrutura (duas drop-shadow) para a transição ser suave. */
 [data-theme="light"] .hero.is-traveling .clipper { transition: filter 0.5s ease; }
 [data-theme="light"] .clipper-pos.is-off-stage .clipper { filter: drop-shadow(0 16px 22px rgba(60, 36, 18, 0.22)) drop-shadow(0 0 40px rgba(255, 85, 0, 0.18)); }
+/* o mesmo para a cópia que faz a sombra enquanto a máquina gira (styles.css §5): sombra curta e clara fora do palco */
+[data-theme="light"] .hero.is-traveling .clipper-sombra { transition: opacity 0.2s linear, filter 0.5s ease, transform 0.5s ease; }
+[data-theme="light"] .clipper-pos.is-off-stage .clipper-sombra { transform: translate(-50%, 16px); filter: brightness(0) blur(11px); }
+[data-theme="light"] .clipper-pos.is-spinning.is-off-stage .clipper-sombra { opacity: 0.22; }
 [data-theme="light"] .hero-since { color: #C7BEB4; }
 [data-theme="light"] .hero-since strong { color: #F5F3F0; }
 [data-theme="light"] .team-section {
