@@ -3,16 +3,27 @@
 Uso (com o módulo bpy instalado: pip install bpy):
   python render_maquina.py view=hero samples=160 pct=100 out=maquina.png   # imagem do hero (fundo transparente)
   python render_maquina.py view=macro samples=128 pct=100 out=detalhe.png  # close da gravação
+
+Giro em torno do próprio eixo (só no view=hero), para a sequência do hero:
+  python render_maquina.py view=hero roll=90 out=giro90.png                # um quadro com a máquina girada 90°
+  python render_maquina.py view=hero rolls=0,5,10 outdir=quadros           # vários ângulos numa só execução
+`roll` gira a máquina no eixo longo ANTES da pose de sempre (inclinação e giro do view=hero), então o eixo
+não se move e só a face muda. roll=0 (padrão) é o render de sempre. Com `rolls`, cada ângulo vira
+`outdir/quadro_<ângulo>.png` (ângulo negativo com "m", ex.: quadro_m30.png). Para montar o sprite a partir
+dos quadros: montar_giro.py.
 Depois converta para WebP (ver DESIGN.md, seção Imagens).
 """
-import bpy, addon_utils, math, os, sys
-from mathutils import Vector, Euler
+import bpy, addon_utils, math, os, sys, time
+from mathutils import Vector, Euler, Quaternion
 
 ARGS = dict(a.split('=', 1) for a in sys.argv[1:] if '=' in a)
 SAMPLES = int(ARGS.get('samples', 24))
 PCT = int(ARGS.get('pct', 40))
 OUT = os.path.abspath(ARGS.get('out', 'maquina_preview.png'))
 VIEW = ARGS.get('view', 'hero')
+ROLL = float(ARGS.get('roll', 0))
+ROLLS = [float(v) for v in ARGS['rolls'].split(',')] if 'rolls' in ARGS else None
+OUTDIR = os.path.abspath(ARGS.get('outdir', 'quadros'))
 FONT = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Anton-Regular.ttf')
 
 addon_utils.enable("cycles", default_set=True)
@@ -234,7 +245,18 @@ bpy.context.view_layer.update()
 root = bpy.data.objects.new('clipper', None); bpy.context.collection.objects.link(root)
 for p in parts: p.parent = root
 pose = {'hero': (math.radians(4), 0, math.radians(-30)), 'macro': (math.radians(28), 0, math.radians(-22))}[VIEW]
-root.rotation_euler = pose
+
+def posar(roll_deg):
+    """Pose de sempre + giro local no eixo longo (Z do modelo). roll=0 usa exatamente os ângulos de Euler
+    originais (mesmo render de antes); os outros ângulos giram o objeto ANTES da inclinação e do giro da pose."""
+    if roll_deg == 0:
+        root.rotation_mode = 'XYZ'
+        root.rotation_euler = pose
+    else:
+        root.rotation_mode = 'QUATERNION'
+        root.rotation_quaternion = Euler(pose, 'XYZ').to_quaternion() @ Quaternion((0, 0, 1), math.radians(roll_deg))
+
+posar(ROLL if ROLLS is None else ROLLS[0])
 
 # ---------- luz ----------
 def area(name, loc, size, energy, color=(1, 1, 1), shape='RECTANGLE', sx=None, sy=None, target=(0, 0, 0.5)):
@@ -282,6 +304,17 @@ try:
     sc.view_settings.view_transform = 'AgX'; sc.view_settings.look = 'AgX - Punchy'
 except Exception as e:
     print('look fallback', e)
-sc.render.filepath = OUT
-bpy.ops.render.render(write_still=True)
-print('DONE', OUT)
+if ROLLS is None:
+    sc.render.filepath = OUT
+    bpy.ops.render.render(write_still=True)
+    print('DONE', OUT)
+else:
+    os.makedirs(OUTDIR, exist_ok=True)
+    t0 = time.time()
+    for i, r in enumerate(ROLLS):
+        posar(r)
+        sc.render.filepath = os.path.join(OUTDIR, 'quadro_%s.png' % ('%g' % r).replace('-', 'm'))
+        t = time.time()
+        bpy.ops.render.render(write_still=True)
+        print('quadro %d/%d roll=%g (%.1fs, total %.0fs)' % (i + 1, len(ROLLS), r, time.time() - t, time.time() - t0), flush=True)
+    print('DONE', OUTDIR)

@@ -79,3 +79,19 @@ O comando gera 24 quadros de 450×650, juntos lado a lado em `imagens/poste-spri
 Cada quadro desloca a fase das listras em 1/24 de meia volta, então a sequência fecha um laço, e o
 quadro 0 é igual a `poste-barbeiro.webp`. Se mudar `frames` ou `res`, ajuste `POLE_FRAMES` em
 `motion.js` e `.pole-sprite` em `styles.css`.
+
+### Giro da máquina em torno do próprio eixo (sequência do hero)
+
+```bash
+cd ferramentas
+# quadros: um PNG por ângulo, com a mesma câmera e a mesma luz do hero
+../.bpyenv/Scripts/python.exe render_maquina.py view=hero rolls=0,5,10,15 samples=96 pct=50 outdir=quadros
+../.bpyenv/Scripts/python.exe render_maquina.py view=hero roll=90 out=giro90.png     # um ângulo só, para conferir
+# sprite: recorta (alinhado à imagem do site), reduz e junta os quadros numa grade + um .json com os ângulos
+../.bpyenv/Scripts/python.exe montar_giro.py quadros --altura 817 --saida ../imagens/maquina-giro --formato webp
+```
+
+`roll` gira a máquina no eixo longo **antes** da pose do hero, então o eixo fica parado na tela e só a face
+muda. `roll=0` é o render de sempre: o recorte de `imagens/maquina-doug-funny.webp` é um corte 1:1 do render de
+900×2250 (`samples=160 pct=100`), e `montar_giro.py` usa essa imagem como referência para que o quadro 0 caia
+exatamente em cima dela. Ângulos negativos entram como `m` no nome do arquivo (`quadro_m30.png`).
