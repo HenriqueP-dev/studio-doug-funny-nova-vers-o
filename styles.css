@@ -455,7 +455,7 @@ main > .section { isolation: isolate; }
 #trabalhos, #contato { background: var(--bg); }
 /* um tom por fronteira */
 #trabalhos { --sheet-shadow: 0 -20px 50px -14px rgba(58, 19, 0, 0.45); }                                              /* clara sobre o laranja */
-#equipe { --sheet-shadow: inset 0 1px 0 rgba(255, 150, 80, 0.45), 0 -22px 54px -14px rgba(33, 24, 17, 0.5); }          /* escura, com fio de luz na borda */
+#equipe { --sheet-shadow: inset 0 1px 0 rgba(255, 150, 80, 0.45), 0 -22px 54px -14px rgba(33, 24, 17, 0.42); }         /* escura, com fio de luz na borda */
 #agenda { --sheet-shadow: 0 -30px 80px -18px rgba(255, 176, 100, 0.38); }                                              /* a luz volta sobre o escuro */
 #contato { --sheet-r: clamp(14px, 1.8vw, 22px); --sheet-shadow: 0 -14px 36px -14px rgba(33, 24, 17, 0.14); }          /* fecho calmo */
 
