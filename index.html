@@ -388,35 +388,38 @@
 
         <!-- As imagens desta galeria são renders 3D (ferramentas/), não fotos de clientes.
              Cada legenda diz "Ilustração 3D"; os trabalhos reais ficam no Instagram, e o título diz isso.
-             Quando houver fotos reais (cortes, aulas, salão), troque as imagens no mesmo layout de 12 colunas,
-             tire as etiquetas "Ilustração 3D" e o aviso abaixo e ajuste o título ao que as fotos mostram. -->
+             Quando houver fotos reais (cortes, aulas, salão), troque as imagens no mesmo palco (cada cartão
+             tem a proporção da imagem em styles.css §6.4), tire as etiquetas "Ilustração 3D" e o aviso
+             abaixo e ajuste o título ao que as fotos mostram. -->
         <p class="gallery-note">
           <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
           <span><strong>Imagens ilustrativas:</strong> renders 3D criados para o site, não são fotos de cortes. Os trabalhos reais estão no Instagram do Studio.</span>
         </p>
 
         <div class="gallery">
-          <figure class="g-tile g-pole">
-            <img src="imagens/poste-barbeiro.webp" width="900" height="1300" alt="Poste de barbeiro com listras laranja, branca e preta" loading="lazy" decoding="async">
-            <figcaption>
-              <span class="g-tag">Ilustração 3D</span>
-              <span class="g-caption"><span class="g-num" aria-hidden="true">01</span>A tradição da barbearia</span>
-            </figcaption>
-          </figure>
-          <figure class="g-tile g-detail">
-            <img src="imagens/maquina-detalhe.webp" width="1200" height="825" alt="Detalhe da máquina de corte com a gravação Doug Funny em laranja" loading="lazy" decoding="async">
-            <figcaption>
-              <span class="g-tag">Ilustração 3D</span>
-              <span class="g-caption"><span class="g-num" aria-hidden="true">02</span>Detalhe que faz diferença</span>
-            </figcaption>
-          </figure>
-          <figure class="g-tile g-blade">
-            <img src="imagens/maquina-lamina.webp" width="840" height="640" alt="Lâmina de aço da máquina de corte" loading="lazy" decoding="async">
-            <figcaption>
-              <span class="g-tag">Ilustração 3D</span>
-              <span class="g-caption"><span class="g-num" aria-hidden="true">03</span>Lâmina afiada</span>
-            </figcaption>
-          </figure>
+          <div class="gallery-stage">
+            <figure class="g-tile g-pole">
+              <img src="imagens/poste-barbeiro.webp" width="900" height="1300" alt="Poste de barbeiro com listras laranja, branca e preta" loading="lazy" decoding="async">
+              <figcaption>
+                <span class="g-tag">Ilustração 3D</span>
+                <span class="g-caption"><span class="g-num" aria-hidden="true">01</span>A tradição da barbearia</span>
+              </figcaption>
+            </figure>
+            <figure class="g-tile g-detail">
+              <img src="imagens/maquina-detalhe.webp" width="1200" height="825" alt="Detalhe da máquina de corte com a gravação Doug Funny em laranja" loading="lazy" decoding="async">
+              <figcaption>
+                <span class="g-tag">Ilustração 3D</span>
+                <span class="g-caption"><span class="g-num" aria-hidden="true">02</span>Detalhe que faz diferença</span>
+              </figcaption>
+            </figure>
+            <figure class="g-tile g-blade">
+              <img src="imagens/maquina-lamina.webp" width="840" height="640" alt="Lâmina de aço da máquina de corte" loading="lazy" decoding="async">
+              <figcaption>
+                <span class="g-tag">Ilustração 3D</span>
+                <span class="g-caption"><span class="g-num" aria-hidden="true">03</span>Lâmina afiada</span>
+              </figcaption>
+            </figure>
+          </div>
           <a class="g-tile g-insta" href="https://www.instagram.com/studiodougfunny/" target="_blank" rel="noopener noreferrer">
             <svg class="icon" aria-hidden="true"><use href="#i-instagram"/></svg>
             <div class="g-insta-body">

@@ -99,7 +99,7 @@ Números sempre `lining-nums`.
 | `.combo` | Lista compacta em 3 colunas |
 | `.header` | Fixo; degradê escuro no topo e fundo sólido depois de 40px. No tema claro fica **escuro enquanto o hero estiver atrás dele** (`.is-over-hero`, `script.js` → `initScroll`, pelo IntersectionObserver do hero e pela base do hero) e claro depois |
 | `.course-section` | Seção inteira laranja, retrato do instrutor em duotom (`multiply`), limitado a 1,25× a largura do arquivo (357px) até haver uma foto maior |
-| `.g-tile` | Galeria em 12 colunas: poste (alto), detalhe (largo), lâmina, cartão laranja do Instagram ("Trabalhos reais"). Aviso `.gallery-note` antes das imagens e selo `.g-tag` "Ilustração 3D" em cada legenda: são renders, nunca fotos de cortes. O título ("Trabalhos & aulas no Instagram") diz onde estão os trabalhos reais; com fotos reais, troque as imagens no mesmo layout e ajuste o título |
+| `.g-tile` | **Palco dos trabalhos** (`.gallery` > `.gallery-stage`): três cartões em camadas sobre um painel escuro com a luz laranja do hero (poste alto à esquerda, detalhe largo ao fundo, lâmina à frente cruzando os dois) e o cartão laranja do Instagram ("Trabalhos reais") como adesivo que passa por cima da borda do painel. Aviso `.gallery-note` antes do palco e selo `.g-tag` "Ilustração 3D" em cada legenda: são renders, nunca fotos de cortes. O título ("Trabalhos & aulas no Instagram") diz onde estão os trabalhos reais; com fotos reais, troque as imagens no mesmo palco (cada cartão tem a proporção da imagem) e ajuste o título |
 | `.member` | Retrato recortado + nome gigante em contorno atrás + brilho laranja |
 | Agenda | Painel `.agenda-steps` com passos 01/02/03 (foto decorativa do profissional, dias em faixa rolável, manhã e tarde como **períodos** do horário real) + resumo `.agenda-summary` em `<dl>`, fixo à direita no desktop e abaixo dos passos ≤ 1024px. Selecionado = laranja cheio por `aria-pressed`; o período ganha também ✓ e halo. `#summary-period.is-empty` (script.js) deixa o texto de ajuda discreto. **Consulta**: monta uma mensagem para o WhatsApp com profissional, dia e período; nunca reserva |
 | `.turmas` | Tabela turma ↔ investimento + nota pedindo consulta das condições pelo WhatsApp |
@@ -152,9 +152,9 @@ Números sempre `lining-nums`.
 | Largura | Mudança |
 |---------|---------|
 | ≤ 1240px | Menu vira botão (painel opaco, fecha com Esc). O botão vem antes do `<nav>` no HTML, então o Tab entra nos links abertos |
-| ≤ 1024px | Pacotes e formação em 1 coluna; Instagram da galeria vira faixa larga; resumo da agenda abaixo dos passos |
-| ≤ 760px | **Hero vertical**: palco no alto, texto em fluxo; máquina menor (54svh), atrás da palavra; serviços e combos em 1 coluna; galeria 2 colunas (poste alto à esquerda); equipe 1 coluna; agenda em 1 coluna, faixa de dias mostra parte do próximo cartão |
-| ≤ 480px | Some o botão do cabeçalho (o hero tem o CTA); galeria em 1 coluna com alturas que mostram cada objeto inteiro |
+| ≤ 1024px | Pacotes e formação em 1 coluna; o palco dos trabalhos encolhe e o Instagram vira uma faixa larga embaixo dele; resumo da agenda abaixo dos passos |
+| ≤ 760px | **Hero vertical**: palco no alto, texto em fluxo; máquina menor (54svh), atrás da palavra; serviços e combos em 1 coluna; trabalhos em pilha vertical de cartões sobrepostos; equipe 1 coluna; agenda em 1 coluna, faixa de dias mostra parte do próximo cartão |
+| ≤ 480px | Some o botão do cabeçalho (o hero tem o CTA); o Instagram dos trabalhos empilha o ícone e o texto |
 
 Verificado sem rolagem horizontal em 320, 375, 390, 768, 834, 1024, 1280, 1440 e 1920px. Alvos de toque ≥ 44px no celular.
 
@@ -192,7 +192,7 @@ Verificado sem rolagem horizontal em 320, 375, 390, 768, 834, 1024, 1280, 1440 e
 7. **Seletores usados pelo `motion.js`:**
    - títulos: `.title.reveal` (com `.line > span`) e `#servicos-title` (com `.section-head` e `.section-note`), que definem onde a máquina pousa;
    - Serviços: `#servicos .cut-divider`;
-   - poste: `.g-pole` (com `img`);
+   - poste: `.g-pole` (com `img`); palco dos trabalhos: `.gallery`, `.gallery-stage`, `.g-pole`, `.g-detail`, `.g-blade`, `.g-insta`;
    - equipe: `.member-stage` (com `img` e `.member-ghost`);
    - botões magnéticos: `.btn-solid`, `.btn-outline-orange`, `.btn-ink`, `.footer-social a`.
 8. **Busca e compartilhamento:** Open Graph, ícones e JSON-LD `BarberShop` no `<head>`, com endereços absolutos do domínio atual (`https://studio-doug-funny-nova-vers-o.vercel.app/`) em `canonical`, `og:url`, `og:image` e no JSON-LD (`url`, `image`, `logo`). Ao ligar um domínio próprio, troque-o nesses lugares (há um comentário no HTML).
@@ -292,6 +292,7 @@ O ângulo 0 é **exatamente** a imagem da página (`maquina-doug-funny.webp` é 
 | 8 | **Saída do hero** (desktop) | ScrollTrigger `scrub`, do topo ao fim do hero | Texto e botões sobem 90px a mais que a página e vão a 30% de opacidade, enquanto a palavra fica para trás e a máquina segue para Serviços |
 | 9 | **Entradas das seções** | `ScrollTrigger.batch`, `once`, `top 88%`; `clearProps` no fim (hover e transições do CSS voltam intactos) | Ver a tabela de papéis abaixo |
 | 10 | **Agenda** | `MutationObserver` + CSS | Ao trocar de profissional ou dia, os novos períodos entram (450ms, 25ms entre eles). O valor do resumo que mudou pisca em laranja (900ms). A pílula escolhida pulsa (`press-pop`, 340ms, CSS puro) |
+| 11 | **Palco dos trabalhos** (§6.4) | `galleryDepth` (ScrollTrigger só escreve variáveis) e `galleryOrbit` (`quickTo`, 0,9s) na caixa `.gallery`; o CSS faz a conta de cada camada | Desktop: `--p` (0 a 1) enquanto o palco atravessa a tela; as camadas da frente andam e crescem mais (detalhe 80px, poste 10px, lâmina −100px, Instagram −150px; escala até +14%). Com mouse: `--ox`/`--oy` (−1 a 1) viram até 6° de giro e 52px de deslocamento por camada, em perspectiva de 1400px; se o intervalo médio entre as atualizações passa de 30ms, a órbita se desliga sozinha. Celular: `--k` em cada cartão (1 no miolo da passagem), que se aproxima e recua nas bordas da tela. O poste continua girando pelo sprite (§4). Só `transform` e `opacity`; `will-change` só com o palco na tela |
 
 **Papéis das entradas (motion.js §8):**
 
@@ -300,11 +301,11 @@ O ângulo 0 é **exatamente** a imagem da página (`maquina-doug-funny.webp` é 
 | Rótulo | `.section .eyebrow` | texto de −14px e linha laranja `--line` 0 → 1 | 1,1s |
 | Texto | notas, títulos de coluna, textos da formação, CTA, contato, agenda, nome/função da equipe, rodapé | `y` 40px (24px no celular) + opacidade | 0,9s, 0,08s entre itens |
 | Linha de lista | `.service`, `.combo`, `.hours-row` | `clip-path` corte da esquerda para a direita (folga vertical de 20% para não cortar acentos) | 1,1s, 0,05s entre linhas, +0,15s para o título da coluna chegar antes |
-| Imagem | `.g-pole`, `.g-detail`, `.g-blade`, `.course-figure` | cortina `inset(100% 0 0 0)` → 0; a foto assenta de `--zoom` +0,2 (o poste não tem zoom: o sprite fica por cima) | 1,3s (zoom 1,8s) |
+| Imagem | `.course-figure` | cortina `inset(100% 0 0 0)` → 0; a foto assenta de `--zoom` +0,2 | 1,3s (zoom 1,8s) |
+| Cartão do palco | `.g-pole`, `.g-detail`, `.g-blade`, `.g-insta` | chegam de longe (menores, mais baixos e transparentes) até o lugar pela variável `--in` (0 → 1); a cortina de `clip-path` não serve aqui porque achata a profundidade | 1,4s, 0,16s entre cartões |
 | Pílula | `.topics li`, `.perks li` | `y` 14px + opacidade | 0,7s, 0,04s entre itens |
 | Momento: ingresso | `.pass` + `.stamp` | o ingresso sobe girando 1,2° → 0; o carimbo cai de 1,9× e −40° para −12° (`back.out(2.2)`, +0,55s) | 1,1s / 0,45s |
 | Momento: rodapé | `.footer-mark` | `yPercent` 45 → 0 e opacidade 0,25 → 1 com a rolagem, até o fim da página | `scrub` |
-| Profundidade (desktop) | fotos de `.g-detail` e `.g-blade` | `--drift` −5% → 5% enquanto atravessam a tela (descansam em zoom 1,12 para cobrir a moldura) | `scrub` |
 
 **Teclado:** o Tab rola a página só até o elemento encostar na borda de baixo, antes do ponto de disparo. Se o foco entra num elemento que ainda espera a entrada, ele aparece na hora (0,35s). Verificado num ciclo completo de Tab: 43 elementos no desktop e 35 no celular (WCAG 2.4.7).
 

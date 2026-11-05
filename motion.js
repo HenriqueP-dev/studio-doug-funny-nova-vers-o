@@ -16,6 +16,7 @@
    7. Profundidade pelo ponteiro no hero (só com mouse, desktop)
    8. Entradas das seções (papéis por tipo de conteúdo)
    9. Agenda: retorno visual ao trocar de profissional, dia e horário
+   10. Palco dos trabalhos: camadas em profundidade (rolagem e ponteiro)
    ========================================================================== */
 (() => {
   'use strict';
@@ -47,6 +48,9 @@
     mm.add(DESKTOP, () => sectionEntrances(false));
     mm.add(MOBILE, () => sectionEntrances(true));
     mm.add(MOTION, () => agendaFeedback());
+    mm.add(DESKTOP, () => galleryDepth(false));
+    mm.add(MOBILE, () => galleryDepth(true));
+    mm.add(`${DESKTOP} and (hover: hover) and (pointer: fine)`, () => galleryOrbit());
 
     // posições dependem das fontes (títulos mudam de largura quando a Anton carrega)
     fontsReady.then(() => ScrollTrigger.refresh());
@@ -661,32 +665,35 @@
     add(enter('.turmas caption, .turmas tr', { opacity: 0, y: 16 }, risen, { stagger: 0.07 }));
 
     // imagens: cortina de baixo para cima; a foto assenta de um zoom (variável --zoom no CSS)
-    const media = gsap.utils.toArray('.g-pole, .g-detail, .g-blade, .course-figure');
-    const zoomed = el => !el.classList.contains('g-pole');   // o poste tem o sprite por cima, sem zoom
-    const restZoom = el => (!mobile && (el.classList.contains('g-detail') || el.classList.contains('g-blade')) ? 1.12 : 1);
+    const media = gsap.utils.toArray('.course-figure');
     if (media.length) {
       gsap.set(media, { clipPath: 'inset(100% 0% 0% 0%)' });
-      media.filter(zoomed).forEach(el => gsap.set(el, { '--zoom': restZoom(el) + 0.2 }));
-      media.forEach(el => hold(el, { clipPath: 'inset(0% 0% 0% 0%)', '--zoom': restZoom(el) }, 'clipPath'));
+      gsap.set(media, { '--zoom': 1.2 });
+      media.forEach(el => hold(el, { clipPath: 'inset(0% 0% 0% 0%)', '--zoom': 1 }, 'clipPath'));
       triggers.push(...ScrollTrigger.batch(media, {
         start: 'top 85%', once: true, interval: 0.1,
         onEnter: batch => {
           batch.forEach(el => pending.delete(el));
           gsap.to(batch, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.3, ease: 'expo.out', stagger: 0.12, clearProps: 'clipPath' });
-          batch.filter(zoomed).forEach((el, i) => gsap.to(el, { '--zoom': restZoom(el), duration: 1.8, delay: i * 0.12, ease: 'expo.out' }));
+          batch.forEach((el, i) => gsap.to(el, { '--zoom': 1, duration: 1.8, delay: i * 0.12, ease: 'expo.out' }));
         }
       }));
     }
-    add(enter('.course-figure figcaption, .g-insta', rise, risen, { delay: 0.25 }));
+    add(enter('.course-figure figcaption', rise, risen, { delay: 0.25 }));
 
-    // desktop: dentro das molduras, as fotos andam mais devagar que a página (profundidade)
-    if (!mobile) {
-      gsap.utils.toArray('.g-detail, .g-blade').forEach(tile => {
-        gsap.fromTo(tile, { '--drift': '-5%' }, {
-          '--drift': '5%', ease: 'none',
-          scrollTrigger: { trigger: tile, start: 'top bottom', end: 'bottom top', scrub: true }
-        });
-      });
+    // trabalhos: os cartões chegam de longe (menores e transparentes) até o lugar, um depois do outro. A cortina
+    // (clip-path) não serve aqui: ela achata a profundidade dos cartões. A conta de --in está no CSS (§6.4).
+    const cards = gsap.utils.toArray('.g-pole, .g-detail, .g-blade, .g-insta');
+    if (cards.length) {
+      gsap.set(cards, { '--in': 0 });
+      cards.forEach(el => hold(el, { '--in': 1 }, '--in'));
+      triggers.push(...ScrollTrigger.batch(cards, {
+        start: mobile ? 'top 92%' : 'top 88%', once: true, interval: 0.1,
+        onEnter: batch => {
+          batch.forEach(el => pending.delete(el));
+          gsap.to(batch, { '--in': 1, duration: 1.4, ease: 'expo.out', stagger: 0.16, clearProps: '--in' });
+        }
+      }));
     }
 
     // equipe: nome e função depois da cortina do retrato
@@ -742,6 +749,92 @@
     });
     summary.forEach(el => summaryObserver.observe(el, { childList: true, characterData: true, subtree: true }));
     return () => { slotsObserver.disconnect(); summaryObserver.disconnect(); };
+  }
+
+  /* ==========================================================================
+     10. PALCO DOS TRABALHOS (profundidade, styles.css §6.4)
+     O CSS faz toda a conta; aqui só se escrevem variáveis, sempre em uma só caixa (a galeria):
+     - desktop: --p, de 0 a 1, enquanto o palco atravessa a tela (as camadas da frente andam e crescem mais);
+     - desktop com mouse: --ox e --oy, de -1 a 1, a posição do ponteiro sobre o palco (o palco orbita);
+     - celular: --k em cada cartão, 1 no meio da tela e menor nas bordas (o cartão se aproxima e recua).
+     Só transform e opacity. Se o aparelho não acompanha o ponteiro, a órbita se desliga sozinha.
+     ========================================================================== */
+  /* Mede o intervalo entre as atualizações de um efeito e chama onSlow uma vez se o aparelho não acompanha
+     (média acima de 30 ms em 30 medidas seguidas, ou seja, menos de ~33 quadros por segundo). */
+  const slowWatch = onSlow => {
+    let last = 0, average = 0, count = 0, fired = false;
+    return () => {
+      if (fired) return;
+      const now = performance.now(), gap = now - last;
+      if (gap < 4) return;   // mais de uma chamada no mesmo quadro: conta uma vez só
+      if (last && gap < 200) {
+        average = count ? average * 0.85 + gap * 0.15 : gap;
+        if (++count > 30 && average > 30) { fired = true; onSlow(); }
+      } else {
+        count = 0;
+      }
+      last = now;
+    };
+  };
+
+  function galleryDepth(mobile) {
+    const gallery = document.querySelector('.gallery');
+    const stage = gallery && gallery.querySelector('.gallery-stage');
+    if (!stage) return undefined;
+    const cards = gsap.utils.toArray('.g-pole, .g-detail, .g-blade');
+    const triggers = [];
+    if (mobile) {
+      cards.forEach(card => triggers.push(ScrollTrigger.create({
+        trigger: card, start: 'top bottom', end: 'bottom top',
+        // 1 (em repouso) durante o miolo da passagem; cai só perto das bordas da tela
+        onUpdate: self => card.style.setProperty('--k', Math.min(1, (1 - Math.abs(2 * self.progress - 1)) * 1.8).toFixed(3))
+      })));
+    } else {
+      const watch = slowWatch(() => gallery.classList.add('is-flat'));   // aparelho lento: modo leve (sem giros em 3D)
+      triggers.push(ScrollTrigger.create({
+        trigger: stage, start: 'top bottom', end: 'bottom top',
+        onUpdate: self => { watch(); gallery.style.setProperty('--p', self.progress.toFixed(3)); },
+        onToggle: self => gallery.classList.toggle('is-live', self.isActive)   // will-change só enquanto o palco está na tela
+      }));
+    }
+    return () => {
+      triggers.forEach(t => t.kill());
+      gallery.classList.remove('is-live', 'is-flat');
+      gallery.style.removeProperty('--p');
+      cards.forEach(card => card.style.removeProperty('--k'));
+    };
+  }
+
+  function galleryOrbit() {
+    const gallery = document.querySelector('.gallery');
+    if (!gallery) return undefined;
+    const state = { x: 0, y: 0 };
+    let off = false;
+    const watch = slowWatch(() => { off = true; state.x = 0; state.y = 0; gallery.classList.add('is-flat'); });   // não acompanha: para a órbita e aliviam-se os cartões
+    const apply = () => {
+      watch();
+      gallery.style.setProperty('--ox', state.x.toFixed(3));
+      gallery.style.setProperty('--oy', state.y.toFixed(3));
+    };
+    const xTo = gsap.quickTo(state, 'x', { duration: 0.9, ease: 'power3.out', onUpdate: apply });
+    const yTo = gsap.quickTo(state, 'y', { duration: 0.9, ease: 'power3.out', onUpdate: apply });
+    const move = event => {
+      if (off) return;
+      const box = gallery.getBoundingClientRect();
+      xTo(clamp(-1, 1, ((event.clientX - box.left) / box.width) * 2 - 1));
+      yTo(clamp(-1, 1, ((event.clientY - box.top) / box.height) * 2 - 1));
+    };
+    const leave = () => { xTo(0); yTo(0); };
+    gallery.addEventListener('pointermove', move, { passive: true });
+    gallery.addEventListener('pointerleave', leave);
+    return () => {
+      gallery.removeEventListener('pointermove', move);
+      gallery.removeEventListener('pointerleave', leave);
+      gsap.killTweensOf(state);
+      gallery.style.removeProperty('--ox');
+      gallery.style.removeProperty('--oy');
+      gallery.classList.remove('is-flat');
+    };
   }
 
   /* Celular: profundidade dentro do hero, sem viagem até Serviços. A máquina desce devagar e GIRA em torno do
