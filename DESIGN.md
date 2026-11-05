@@ -100,6 +100,10 @@ Números sempre `lining-nums`.
 | `.header` | Fixo; degradê escuro no topo e fundo sólido depois de 40px. No tema claro fica **escuro enquanto o hero estiver atrás dele** (`.is-over-hero`, `script.js` → `initScroll`, pelo IntersectionObserver do hero e pela base do hero) e claro depois |
 | `.course-section` | Seção inteira laranja, retrato do instrutor em duotom (`multiply`), limitado a 1,25× a largura do arquivo (357px) até haver uma foto maior |
 | `.g-tile` | **Palco dos trabalhos** (`.gallery` > `.gallery-stage`): três cartões em camadas sobre um painel escuro com a luz laranja do hero (poste alto à esquerda, detalhe largo ao fundo, lâmina à frente cruzando os dois) e o cartão laranja do Instagram ("Trabalhos reais") como adesivo que passa por cima da borda do painel. Aviso `.gallery-note` antes do palco e selo `.g-tag` "Ilustração 3D" em cada legenda: são renders, nunca fotos de cortes. O título ("Trabalhos & aulas no Instagram") diz onde estão os trabalhos reais; com fotos reais, troque as imagens no mesmo palco (cada cartão tem a proporção da imagem) e ajuste o título |
+| **Folha** (`.section-sheet`) | Pacotes, Trabalhos, Equipe, Agenda e Contato são **folhas** que passam por cima do fim da seção anterior: cantos superiores arredondados (18–32px; 14–22px no Contato), sombra de um tom por fronteira (suave sobre o bege, marrom sobre o laranja, fio de luz laranja na Equipe, brilho quente na Agenda) e uma sobreposição do tamanho do raio, compensada no `padding-top`: **a altura da página e a posição de todo conteúdo ficam as mesmas** (§6.0 do CSS). Trabalhos e Contato ganham `background: var(--bg)` para os cantos aparecerem |
+| **Lâmina** | Cunha laranja de borda diagonal (`#pacotes::after`, `clip-path`), a inclinação da lâmina da máquina, que sai do fim de Pacotes e se funde ao laranja da Formação (entra 2px por baixo dela, sem costura). Sobe com a rolagem (`--blade`) |
+| **Véu** (`.veil`) | Camada decorativa (`aria-hidden`, sem eventos) que `motion.js` cria no fim das seções que recuam: Serviços, Formação, Trabalhos e Equipe. A cor muda com a seção (`--veil`) |
+| **Linha de leitura** | Fio laranja de 2px sob o cabeçalho (`.header::after`), desenhado de 0 a 100% enquanto se lê a página (`--read`) |
 | `.member` | Retrato recortado + nome gigante em contorno atrás + brilho laranja |
 | Agenda | Painel `.agenda-steps` com passos 01/02/03 (foto decorativa do profissional, dias em faixa rolável, manhã e tarde como **períodos** do horário real) + resumo `.agenda-summary` em `<dl>`, fixo à direita no desktop e abaixo dos passos ≤ 1024px. Selecionado = laranja cheio por `aria-pressed`; o período ganha também ✓ e halo. `#summary-period.is-empty` (script.js) deixa o texto de ajuda discreto. **Consulta**: monta uma mensagem para o WhatsApp com profissional, dia e período; nunca reserva |
 | `.turmas` | Tabela turma ↔ investimento + nota pedindo consulta das condições pelo WhatsApp |
@@ -122,7 +126,8 @@ Números sempre `lining-nums`.
 - Luz: brilhos radiais laranja, feixe diagonal, granulação SVG (8–9%) e vinheta no hero.
 - Sombra só na máquina (`drop-shadow`). No palco escuro ela é longa e escura (`0 40px 60px rgba(0,0,0,.7)`) e dá profundidade sobre as letras e a luz laranja. Na viagem até Serviços (desktop), quando essa sombra alcançaria o bege visível, `motion.js` §2 põe `.is-off-stage` em `.clipper-pos` e o CSS (§10) a troca, em 0,5s, por uma sombra curta e clara (`0 16px 22px rgba(60,36,18,.22)`); de volta ao topo, a escura retorna. A conta usa só medidas feitas no refresh, sem ler o layout a cada quadro.
 - Cards separados por tom e borda de 1px (`--line`).
-- Raios: 4px (base), 10–14px (cards, galeria), 999px (botões, pílulas).
+- Raios: 4px (base), 10–14px (cards, galeria), 18–32px (folhas de seção, palco dos trabalhos), 999px (botões, pílulas).
+- **Camadas entre seções:** cada seção é uma folha sobre a anterior (§4 e §10). Sombra de folha = profundidade entre seções; a sombra da máquina e a sombra de folha nunca se misturam. Cada `main > .section` tem `isolation: isolate`, para que os `z-index` de dentro (Formação, palco) não furem a folha que sobe.
 
 ---
 
@@ -140,7 +145,9 @@ Números sempre `lining-nums`.
 ### Don't
 - Não usar fotos de banco como se fossem trabalhos do Studio. A galeria usa renders 3D e diz isso.
 - Não usar texto branco sobre o laranja em tamanho pequeno.
-- Não inventar um efeito novo por seção: toda entrada usa um dos papéis da §10 (rótulo, texto, linha de lista, imagem) ou um momento próprio já documentado. Nada de animação em loop infinito, nada que suma ao rolar de volta.
+- Não inventar um efeito novo por seção: toda entrada usa um dos papéis da §10 (rótulo, texto, linha de lista, imagem, mergulho) ou um momento próprio já documentado. Nada de animação em loop infinito, nada que suma ao rolar de volta.
+- Não usar `position: sticky` nem `pin` para cobrir uma seção com outra: `html` e `body` têm `overflow-x: hidden`. A cobertura é a folha (CSS) mais o recuo da seção anterior (`motion.js` §11), com a rolagem sempre 1:1.
+- Não esconder um bloco com `opacity: 0` para fazê-lo "chegar": o mergulho só usa `translate`, `scale` e `rotate` (o bloco está sempre visível, também para o teclado e para o leitor de tela).
 - Não adicionar bibliotecas além das que já estão em `vendor/` (GSAP, ScrollTrigger, SplitText e Lenis, servidas localmente). Nada por CDN. A abertura do hero continua em Web Animations API.
 - Não criar animação que só funcione com as bibliotecas: sem `vendor/`, o site precisa ficar igual ao que era antes delas.
 - Não usar a foto comercial de máquina enviada como referência: licença desconhecida.
@@ -241,7 +248,7 @@ Passo a passo para gerar de novo cada arquivo: **`ferramentas/README.md`**. Rend
 | Retorno de ação (pulso da agenda, varredura, sublinhado) | 0,32–0,5s | `--ease-out` |
 | Toque (`:active`) | 120ms | `ease` |
 
-Escalonamento de 0,04–0,12s entre itens do mesmo grupo. Tudo acontece **uma vez**; ao rolar de volta, nada desaparece.
+Escalonamento de 0,04–0,12s entre itens do mesmo grupo. As entradas acontecem **uma vez**; a camada entre seções (linha 12 abaixo) é ligada à rolagem e reversível. Ao rolar de volta, nada desaparece.
 
 **A abertura (≈2,9s no desktop, 2,7s no celular).** Toda em Web Animations API (`script.js`), sem `setTimeout` no cronograma: cada passo é uma animação com `delay`, então a sequência inteira obedece ao mesmo relógio (e pode ser testada em câmera lenta).
 1. 0s: a **luz acende**. Uma cortina preta sólida (`.hero-dark`) perde a opacidade em 1,2s. Não se anima o `.hero-bg`: ele tem granulação em `mix-blend-mode` e feixe com `blur`, e animá-lo redesenha a tela inteira a cada quadro.
@@ -293,18 +300,20 @@ O ângulo 0 é **exatamente** a imagem da página (`maquina-doug-funny.webp` é 
 | 9 | **Entradas das seções** | `ScrollTrigger.batch`, `once`, `top 88%`; `clearProps` no fim (hover e transições do CSS voltam intactos) | Ver a tabela de papéis abaixo |
 | 10 | **Agenda** | `MutationObserver` + CSS | Ao trocar de profissional ou dia, os novos períodos entram (450ms, 25ms entre eles). O valor do resumo que mudou pisca em laranja (900ms). A pílula escolhida pulsa (`press-pop`, 340ms, CSS puro) |
 | 11 | **Palco dos trabalhos** (§6.4) | `galleryDepth` (ScrollTrigger só escreve variáveis) e `galleryOrbit` (`quickTo`, 0,9s) na caixa `.gallery`; o CSS faz a conta de cada camada | Desktop: `--p` (0 a 1) enquanto o palco atravessa a tela; as camadas da frente andam e crescem mais (detalhe 80px, poste 10px, lâmina −100px, Instagram −150px; escala até +14%). Com mouse: `--ox`/`--oy` (−1 a 1) viram até 6° de giro e 52px de deslocamento por camada, em perspectiva de 1400px; se o intervalo médio entre as atualizações passa de 30ms, a órbita se desliga sozinha. Celular: `--k` em cada cartão (1 no miolo da passagem), que se aproxima e recua nas bordas da tela. O poste continua girando pelo sprite (§4). Só `transform` e `opacity`; `will-change` só com o palco na tela |
+| 12 | **Camada entre seções** (§6.0 do CSS) | `sectionCamera` (`motion.js` §11), tudo por ScrollTrigger com `scrub: true` e reversível. **Recuo:** a seção anterior recua enquanto a próxima (a folha) sobe por cima, do topo da folha na borda de baixo da tela até a de cima, escrevendo direto no `.wrap` e no véu (nunca numa variável herdada pela seção inteira). **Lâmina:** `--blade` de 0 a 1 do topo da Formação na borda de baixo até 45% da tela. **Mergulho:** `--dive` de 0 a 1 em cada bloco enquanto o topo dele sobe de 98% a ≈62% da tela. **Linha de leitura:** `--read` de 0 a 1 na página toda | Recuo no desktop: Serviços 0,975 / véu 8% / desce até 10% da altura da tela; Formação 0,95 / 38% / 12%; Trabalhos só véu de 14% (o palco 3D já custa o bastante); Equipe 0,96 / 32% / 10%. A escala parte da base do `.wrap`; o véu entra com `power2.in`, tarde, para o foco do teclado nunca ficar escurecido. Celular: 45% da escala, 70% do véu, sem deslocamento (a rolagem nativa chega ao JavaScript um quadro depois). Mergulho: o bloco sobe 44px (ingresso 64px com giro de 1,2°, itens de contato 18px) e cresce de 94% a 100% (celular 28–40px e 97%), só com `translate`, `scale` e `rotate` individuais, nunca `opacity`. `.dive` é posta por `motion.js` e `.is-arrived` tira as propriedades de vez quando o bloco chega: em repouso ele é igual ao de antes. Se o intervalo médio entre as atualizações passa de 30ms, o recuo e o véu se desligam sozinhos (`slowWatch`); ficam a folha, a lâmina e o mergulho |
 
-**Papéis das entradas (motion.js §8):**
+**Papéis das entradas (motion.js §8 e §11):**
 
 | Papel | Elementos | De → para | Tempo |
 |-------|-----------|-----------|-------|
 | Rótulo | `.section .eyebrow` | texto de −14px e linha laranja `--line` 0 → 1 | 1,1s |
-| Texto | notas, títulos de coluna, textos da formação, CTA, contato, agenda, nome/função da equipe, rodapé | `y` 40px (24px no celular) + opacidade | 0,9s, 0,08s entre itens |
+| Texto | notas, títulos de coluna, textos da formação, CTA, títulos do contato, nome/função da equipe, rodapé | `y` 40px (24px no celular) + opacidade | 0,9s, 0,08s entre itens |
 | Linha de lista | `.service`, `.combo`, `.hours-row` | `clip-path` corte da esquerda para a direita (folga vertical de 20% para não cortar acentos) | 1,1s, 0,05s entre linhas, +0,15s para o título da coluna chegar antes |
 | Imagem | `.course-figure` | cortina `inset(100% 0 0 0)` → 0; a foto assenta de `--zoom` +0,2 | 1,3s (zoom 1,8s) |
 | Cartão do palco | `.g-pole`, `.g-detail`, `.g-blade`, `.g-insta` | chegam de longe (menores, mais baixos e transparentes) até o lugar pela variável `--in` (0 → 1); a cortina de `clip-path` não serve aqui porque achata a profundidade | 1,4s, 0,16s entre cartões |
 | Pílula | `.topics li`, `.perks li` | `y` 14px + opacidade | 0,7s, 0,04s entre itens |
-| Momento: ingresso | `.pass` + `.stamp` | o ingresso sobe girando 1,2° → 0; o carimbo cai de 1,9× e −40° para −12° (`back.out(2.2)`, +0,55s) | 1,1s / 0,45s |
+| Mergulho | `.pass`, `.packs-side .pack`, `.agenda-steps`, `.agenda-summary`, `.info-item` | sobem e crescem até o lugar ligados à rolagem (`--dive`, linha 12), sempre visíveis; o ingresso ainda gira 1,2° → 0 | o trecho da rolagem, sem tempo |
+| Momento: carimbo | `.pass .stamp` | cai de 1,9× e −40° para −12° (`back.out(2.2)`) quando o ingresso termina de chegar (topo a 64% da tela, +0,1s) | 0,45s |
 | Momento: rodapé | `.footer-mark` | `yPercent` 45 → 0 e opacidade 0,25 → 1 com a rolagem, até o fim da página | `scrub` |
 
 **Teclado:** o Tab rola a página só até o elemento encostar na borda de baixo, antes do ponto de disparo. Se o foco entra num elemento que ainda espera a entrada, ele aparece na hora (0,35s). Verificado num ciclo completo de Tab: 43 elementos no desktop e 35 no celular (WCAG 2.4.7).
@@ -320,7 +329,7 @@ O ângulo 0 é **exatamente** a imagem da página (`maquina-doug-funny.webp` é 
 |---------|-----------|
 | > 760px com mouse | Tudo, incluindo giro da máquina na abertura e na viagem, profundidade e perspectiva pelo ponteiro, e magnetismo |
 | > 760px com toque (tablet) | Abertura completa (com giro), viagem da máquina com giro, entradas; sem ponteiro nem magnetismo |
-| ≤ 760px | Abertura mais curta e menor (sem giro na entrada), profundidade no hero com giro da máquina e recuo da palavra pela rolagem, entradas com distâncias menores (24px), sem deriva nas fotos |
+| ≤ 760px | Abertura mais curta e menor (sem giro na entrada), profundidade no hero com giro da máquina e recuo da palavra pela rolagem, entradas com distâncias menores (24px), sem deriva nas fotos; folhas de seção com raio de 18px, recuo da seção anterior com 45% da escala e sem deslocamento, mergulho de 28–40px |
 
 **Desempenho:**
 - Medido no Chromium sem placa de vídeo (pior caso): abertura no desktop com ~156 quadros em 4s (a versão anterior tinha 137); celular a 60 fps; rolagem com mediana de 16,7ms nos três aparelhos.
@@ -330,7 +339,7 @@ O ângulo 0 é **exatamente** a imagem da página (`maquina-doug-funny.webp` é 
 - A imagem da máquina some com `visibility`, não com `opacity`, enquanto os quadros assumem (ver "Giro da máquina em 3D"); a folha leve deixa de ser redesenhada quando a nítida a cobre; o ângulo só é redesenhado quando muda mais de 0,25° ou a máquina anda rápido.
 - A máscara de profundidade lê dois retângulos por quadro, e só enquanto o hero está na tela; os valores de pose (`--rot`, `--depth-y`) ficam em cache até o próximo resize.
 
-**Movimento reduzido:** nada anima e tudo aparece no estado final. O `motion.js` não cria nada (nem Lenis, nem divisão de títulos, nem cortina, nem magnetismo, nem entradas de seção, nem profundidade), o poste mostra a foto parada, que é o quadro 0 do sprite, e as folhas do giro da máquina nem são baixadas. As transições e animações do CSS (varredura, sublinhado, menu, pulso da agenda) ficam instantâneas, com atrasos zerados.
+**Movimento reduzido:** nada anima e tudo aparece no estado final. O `motion.js` não cria nada (nem Lenis, nem divisão de títulos, nem cortina, nem magnetismo, nem entradas de seção, nem profundidade), o poste mostra a foto parada, que é o quadro 0 do sprite, e as folhas do giro da máquina nem são baixadas. As transições e animações do CSS (varredura, sublinhado, menu, pulso da agenda) ficam instantâneas, com atrasos zerados. Da camada entre seções ficam só as **formas** (folha com cantos e sombra, lâmina em repouso): véu, recuo, mergulho e linha de leitura não existem, e os blocos nunca têm transformação. O mesmo vale sem `vendor/` (conferido: texto, altura e ordem do Tab idênticos aos da versão anterior).
 
 ---
 

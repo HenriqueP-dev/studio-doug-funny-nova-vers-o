@@ -17,6 +17,7 @@
    8. Entradas das seções (papéis por tipo de conteúdo)
    9. Agenda: retorno visual ao trocar de profissional, dia e horário
    10. Palco dos trabalhos: camadas em profundidade (rolagem e ponteiro)
+   11. Câmera entre seções: recuo, lâmina, mergulho e linha de leitura
    ========================================================================== */
 (() => {
   'use strict';
@@ -51,6 +52,8 @@
     mm.add(DESKTOP, () => galleryDepth(false));
     mm.add(MOBILE, () => galleryDepth(true));
     mm.add(`${DESKTOP} and (hover: hover) and (pointer: fine)`, () => galleryOrbit());
+    mm.add(DESKTOP, () => sectionCamera(false));
+    mm.add(MOBILE, () => sectionCamera(true));
 
     // posições dependem das fontes (títulos mudam de largura quando a Anton carrega)
     fontsReady.then(() => ScrollTrigger.refresh());
@@ -102,6 +105,7 @@
       const target = hash.length > 1 && document.getElementById(hash.slice(1));
       if (!target) return;
       event.preventDefault();
+      // (a Lenis também respeita o scroll-margin-top da folha, styles.css §6.0, então o título cai onde caía antes)
       lenis.scrollTo(target, {
         offset: headerOffset(),
         onComplete: () => {
@@ -573,8 +577,10 @@
      - linhas de lista (serviços, combos, horário): "corte" horizontal da esquerda para a direita,
        o mesmo gesto da máquina no hero
      - imagens: cortina de baixo para cima com um zoom que assenta (como a cortina da equipe)
-     - momentos próprios: o ingresso do pacote destaque recebe o carimbo; o "Doug Funny" do rodapé
-       sobe junto com o fim da página
+     - momentos próprios: o carimbo do ingresso do pacote destaque; o "Doug Funny" do rodapé sobe junto
+       com o fim da página
+     - o ingresso, os cartões de pacote, a agenda e os itens de contato não aparecem de uma vez: mergulham
+       em profundidade, ligados à rolagem e sempre visíveis (§11)
      Tudo acontece uma vez (once) e termina limpando os estilos em linha (clearProps), então o
      hover e as transições do CSS voltam intactos. Sem GSAP ou com movimento reduzido, nada disto
      existe e o conteúdo fica sempre visível.
@@ -639,24 +645,21 @@
       { clipPath: 'inset(-20% 100% -20% 0%)' }, { clipPath: 'inset(-20% 0% -20% 0%)' },
       { duration: 1.1, stagger: 0.05, delay: 0.15, clear: 'clipPath' }));   // o título da coluna chega antes
 
-    // pacotes: o ingresso chega e recebe o carimbo; os cartões laterais vêm logo depois
+    // pacotes: o ingresso e os cartões laterais chegam em profundidade, ligados à rolagem (mergulho, §11), sem
+    // nunca ficarem transparentes. Aqui fica só o carimbo, que bate quando o ingresso termina de chegar.
     const pass = document.querySelector('.pass');
-    if (pass) {
-      const stamp = pass.querySelector('.stamp');
-      gsap.set(pass, { opacity: 0, y: d * 1.6, rotation: mobile ? 0 : 1.2, transformOrigin: '0% 100%' });
-      if (stamp) gsap.set(stamp, { opacity: 0, scale: 1.9, rotation: -40 });
-      hold(pass, { opacity: 1, y: 0, rotation: 0 }, 'opacity,transform,transformOrigin');
-      if (stamp) hold(stamp, { opacity: 1, scale: 1, rotation: -12 }, 'opacity,transform');
+    const stamp = pass && pass.querySelector('.stamp');
+    if (stamp) {
+      gsap.set(stamp, { opacity: 0, scale: 1.9, rotation: -40 });
+      hold(stamp, { opacity: 1, scale: 1, rotation: -12 }, 'opacity,transform');
       triggers.push(ScrollTrigger.create({
-        trigger: pass, start: 'top 85%', once: true,
+        trigger: pass, start: 'top 64%', once: true,
         onEnter: () => {
-          pending.delete(pass); pending.delete(stamp);
-          gsap.to(pass, { opacity: 1, y: 0, rotation: 0, duration: 1.1, ease: 'expo.out', clearProps: 'opacity,transform,transformOrigin' });
-          if (stamp) gsap.to(stamp, { opacity: 1, scale: 1, rotation: -12, duration: 0.45, delay: 0.55, ease: 'back.out(2.2)', clearProps: 'opacity,transform' });
+          pending.delete(stamp);
+          gsap.to(stamp, { opacity: 1, scale: 1, rotation: -12, duration: 0.45, delay: 0.1, ease: 'back.out(2.2)', clearProps: 'opacity,transform' });
         }
       }));
     }
-    add(enter('.packs-side .pack', rise, risen, { delay: mobile ? 0 : 0.2, stagger: 0.12, duration: 1 }));
 
     // formação: texto em sequência, pílulas e linhas da tabela
     add(enter('.course-stat, .course-name, .course-text, .turmas-note, .course .btn-ink', rise, risen));
@@ -699,11 +702,9 @@
     // equipe: nome e função depois da cortina do retrato
     add(enter('.member-info', rise, risen, { delay: 0.35, stagger: 0.12, start: 'top 95%' }));
 
-    // agenda: passos e resumo, em ordem de leitura
-    add(enter('.agenda-block, .agenda-summary', rise, risen, { stagger: 0.1 }));
+    // agenda e contato: os painéis e os itens chegam em profundidade, ligados à rolagem (mergulho, §11)
 
-    // contato e rodapé
-    add(enter('.info-item', rise, risen, { stagger: 0.06 }));
+    // rodapé
     add(enter('.footer-top > *, .footer-copy', { opacity: 0, y: 20, transition: 'none' }, risen, { stagger: 0.08, start: 'top 98%' }));
     const mark = document.querySelector('.footer-mark');
     if (mark) {
@@ -873,6 +874,124 @@
       hero.setExtraRotation(0);
       hero.spin.rest();
       hero.updateDepthMask();
+    };
+  }
+
+  /* ==========================================================================
+     11. CÂMERA ENTRE SEÇÕES (styles.css §6.0)
+     A página é uma câmera que atravessa as seções, não uma pilha de blocos que aparecem sozinhos:
+     - recuo: enquanto a próxima seção (a "folha") sobe por cima, a anterior encolhe um pouco, escurece (véu)
+       e anda mais devagar que a rolagem. Escrito direto em dois elementos (o .wrap e o véu), não em variável
+       herdada: uma variável numa seção inteira obrigaria o navegador a recalcular o estilo da subárvore a cada
+       quadro;
+     - lâmina: a cunha laranja entre Pacotes e Formação sobe com a rolagem (--blade);
+     - mergulho: ingresso, cartões, agenda e contato chegam já em movimento de profundidade (--dive, de 0 a 1),
+       sempre visíveis (só translate, scale e rotate; nada de opacity 0, então nada se esconde de ninguém);
+     - linha de leitura: um fio laranja sob o cabeçalho, desenhado pela rolagem (--read).
+     Tudo é ligado à rolagem (scrub) e reversível. Se o aparelho não acompanha, o recuo se desliga sozinho e
+     ficam a folha, a lâmina e o mergulho, que são baratos. Sem GSAP ou com movimento reduzido nada disto existe.
+     ========================================================================== */
+  // Seção que recua, seção que sobe por cima dela (a "folha"), escala final, opacidade final do véu e deslocamento
+  // (em alturas de tela). Trabalhos recua só com véu: o palco 3D já custa o bastante.
+  const RECEDE = [
+    { from: '#servicos', by: '#pacotes', scale: 0.975, veil: 0.08, drift: 0.10 },
+    { from: '#cursos', by: '#trabalhos', scale: 0.95, veil: 0.38, drift: 0.12 },
+    { from: '#trabalhos', by: '#equipe', scale: 1, veil: 0.14, drift: 0 },
+    { from: '#equipe', by: '#agenda', scale: 0.96, veil: 0.32, drift: 0.10 }
+  ];
+  // Mergulho: seletor e trecho da rolagem (posição do topo do elemento na tela) em que ele chega ao lugar.
+  const DIVES = [
+    ['.pass', 'top 98%', 'top 62%'],
+    ['.packs-side .pack', 'top 98%', 'top 66%'],
+    ['.agenda-steps', 'top 98%', 'top 60%'],
+    ['.agenda-summary', 'top 98%', 'top 64%'],
+    ['.info-item', 'top 100%', 'top 74%']
+  ];
+  const MOBILE_SHARE = 0.45;   // no celular o recuo é uma fração do desktop, e sem paralaxe de translação
+
+  function sectionCamera(mobile) {
+    const q = selector => document.querySelector(selector);
+    const receding = [];   // { section, veil, timeline }
+
+    // aparelho lento: sem recuo e sem véu. A folha, a lâmina e o mergulho ficam (são baratos).
+    const calm = () => {
+      receding.forEach(({ section, veil, timeline }) => {
+        if (timeline.scrollTrigger) timeline.scrollTrigger.kill(true);
+        veil.remove();
+        section.classList.remove('is-receding');
+      });
+      receding.length = 0;
+    };
+    const watch = slowWatch(calm);
+
+    // 1. recuo da seção que fica para trás
+    RECEDE.forEach(cfg => {
+      const section = q(cfg.from), by = q(cfg.by);
+      const wrap = section && section.querySelector(':scope > .wrap');
+      if (!section || !by || !wrap) return;
+      const veil = document.createElement('span');
+      veil.className = 'veil';
+      veil.setAttribute('aria-hidden', 'true');
+      section.append(veil);
+
+      const scale = mobile ? 1 - (1 - cfg.scale) * MOBILE_SHARE : cfg.scale;
+      const dim = mobile ? cfg.veil * 0.7 : cfg.veil;
+      const drift = mobile ? 0 : cfg.drift;
+      const timeline = gsap.timeline({
+        defaults: { ease: 'none' },
+        scrollTrigger: {
+          trigger: by, start: 'top bottom', end: 'top top', scrub: true, invalidateOnRefresh: true,
+          onUpdate: watch,
+          onToggle: self => section.classList.toggle('is-receding', self.isActive)
+        }
+      });
+      if (scale !== 1 || drift) {
+        gsap.set(wrap, { transformOrigin: '50% 100%' });
+        timeline.fromTo(wrap, { scale: 1, y: 0 }, { scale, y: () => drift * window.innerHeight }, 0);
+      }
+      timeline.fromTo(veil, { opacity: 0 }, { opacity: dim, ease: 'power2.in' }, 0);   // o véu entra mais tarde que o recuo: o foco do teclado nunca fica escurecido
+      receding.push({ section, veil, timeline });
+    });
+
+    // 2. lâmina: a cunha laranja entre Pacotes e Formação sobe com a rolagem
+    const packs = q('#pacotes'), course = q('#cursos');
+    if (packs && course) {
+      gsap.fromTo(packs, { '--blade': 0 }, {
+        '--blade': 1, ease: 'none',
+        scrollTrigger: { trigger: course, start: 'top bottom', end: 'top 45%', scrub: true, onToggle: self => packs.classList.toggle('is-blading', self.isActive) }
+      });
+    }
+
+    // 3. mergulho: cada bloco chega ao lugar enquanto o topo dele sobe pela tela
+    // .dive marca quem participa (sem JavaScript o bloco nunca tem transformação); .is-arrived tira as propriedades
+    // de transformação de vez quando o bloco chega ao lugar, então em repouso ele é igual ao de antes
+    DIVES.forEach(([selector, start, end]) => gsap.utils.toArray(selector).forEach(el => {
+      el.classList.add('dive');
+      gsap.fromTo(el, { '--dive': 0 }, {
+        '--dive': 1, ease: 'none',
+        scrollTrigger: {
+          trigger: el, start, end, scrub: true,
+          onToggle: self => el.classList.toggle('is-diving', self.isActive),
+          onRefresh: self => el.classList.toggle('is-arrived', self.progress >= 1),
+          onLeave: () => el.classList.add('is-arrived'),
+          onEnterBack: () => el.classList.remove('is-arrived')
+        }
+      });
+    }));
+
+    // 4. linha de leitura sob o cabeçalho
+    const header = q('.header');
+    const read = header && ScrollTrigger.create({
+      trigger: document.documentElement, start: 0, end: 'max',
+      onUpdate: self => header.style.setProperty('--read', self.progress.toFixed(4))
+    });
+
+    return () => {
+      if (read) read.kill();
+      if (header) header.style.removeProperty('--read');
+      receding.forEach(({ section, veil }) => { veil.remove(); section.classList.remove('is-receding'); });
+      receding.length = 0;
+      document.querySelectorAll('.dive, .is-diving, .is-arrived, .is-blading').forEach(el => el.classList.remove('dive', 'is-diving', 'is-arrived', 'is-blading'));
     };
   }
 })();

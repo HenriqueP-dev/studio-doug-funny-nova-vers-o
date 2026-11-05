@@ -8,6 +8,7 @@
    4. Cabeçalho
    5. Hero
    6. Seções
+      6.0 Camada entre seções (folha, véu, lâmina, mergulho, linha de leitura)
       6.1 Serviços · 6.2 Pacotes · 6.3 Formação · 6.4 Trabalhos
       6.5 Equipe · 6.6 Agenda · 6.7 Contato
    7. Rodapé
@@ -425,6 +426,91 @@ button { font: inherit; color: inherit; }
 .cut-divider { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--brand); transform-origin: 0 50%; box-shadow: 0 0 18px rgba(255, 85, 0, 0.7); transition: transform 1.2s var(--ease-io); }
 .js .cut-divider:not(.is-in) { transform: scaleX(0); }
 .cut-divider.is-driven { transition: none; }   /* desenhada pela rolagem (motion.js), sem transição CSS */
+
+/* ---------- 6.0 Camada entre seções (motion.js §11) ----------
+   A página é uma câmera que atravessa as seções, não uma pilha de blocos que aparecem sozinhos. Cada seção é uma
+   "folha" que passa por cima do fim da anterior (cantos arredondados, sombra e uma sobreposição do tamanho do
+   raio), e a anterior recua enquanto a folha sobe (motion.js: escala, véu e paralaxe ligados à rolagem).
+   A folha sobe --sheet-r sobre a seção de cima e ganha o mesmo tanto de espaço no topo: a altura da página e a
+   posição de todo conteúdo são as de antes, só a borda muda. Cada seção é uma pilha de empilhamento própria, para
+   que os z-index de dentro (Formação, palco dos trabalhos) não furem a folha que sobe. Os tons abaixo foram
+   pensados para o tema claro, o tema em uso (seção 10). Sem JavaScript ou com movimento reduzido tudo fica em
+   repouso: as variáveis abaixo valem 1 (ou 0, na linha de leitura) e nada some. */
+@property --blade { syntax: '<number>'; inherits: false; initial-value: 1; }   /* lâmina: 0 escondida, 1 à mostra */
+@property --dive { syntax: '<number>'; inherits: false; initial-value: 1; }    /* mergulho: 0 longe, 1 no lugar */
+@property --read { syntax: '<number>'; inherits: false; initial-value: 0; }    /* leitura da página, de 0 a 1 */
+
+main > .section { isolation: isolate; }
+
+.section-sheet {
+  --sheet-r: clamp(18px, 2.4vw, 32px);
+  --sheet-shadow: 0 -18px 44px -14px rgba(33, 24, 17, 0.2);
+  margin-top: calc(-1 * var(--sheet-r));
+  padding-top: calc(var(--section-pad) + var(--sheet-r));
+  scroll-margin-top: calc(-1 * var(--sheet-r));   /* o salto de âncora deixa o título onde ficava antes da folha */
+  border-radius: var(--sheet-r) var(--sheet-r) 0 0;
+  box-shadow: var(--sheet-shadow);
+}
+/* a folha precisa de fundo próprio para os cantos aparecerem (a cor é a mesma da página) */
+#trabalhos, #contato { background: var(--bg); }
+/* um tom por fronteira */
+#trabalhos { --sheet-shadow: 0 -20px 50px -14px rgba(58, 19, 0, 0.45); }                                              /* clara sobre o laranja */
+#equipe { --sheet-shadow: inset 0 1px 0 rgba(255, 150, 80, 0.45), 0 -22px 54px -14px rgba(33, 24, 17, 0.5); }          /* escura, com fio de luz na borda */
+#agenda { --sheet-shadow: 0 -30px 80px -18px rgba(255, 176, 100, 0.38); }                                              /* a luz volta sobre o escuro */
+#contato { --sheet-r: clamp(14px, 1.8vw, 22px); --sheet-shadow: 0 -14px 36px -14px rgba(33, 24, 17, 0.14); }          /* fecho calmo */
+
+/* Véu: motion.js cria um por seção que recua (decorativo, aria-hidden). A cor muda com a seção */
+.veil { position: absolute; inset: 0; z-index: 6; border-radius: inherit; background: var(--veil, #211811); opacity: 0; pointer-events: none; }
+#servicos { --veil: #211811; }
+#cursos { --veil: #3a1300; }
+#trabalhos { --veil: #211811; }
+#equipe { --veil: #080605; }
+.is-receding > .wrap { will-change: transform; }   /* só enquanto a fronteira está na tela (motion.js) */
+.is-receding > .veil { will-change: opacity; }
+
+/* Lâmina (ponte entre Pacotes e Formação): uma cunha laranja de borda diagonal, a inclinação da lâmina da máquina,
+   sai do fundo de Pacotes e se funde ao laranja da Formação (2 px por baixo dela, para não haver costura). */
+#pacotes { --blade-h: clamp(40px, 5.4vw, 88px); }
+#pacotes::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -2px; height: var(--blade-h);
+  background: var(--brand); pointer-events: none;
+  clip-path: polygon(0 100%, 100% 0, 100% 100%);   /* a borda sobe para a direita */
+  --blade: inherit;                                 /* a variável é registrada sem herança: a pseudo-caixa a pede à seção */
+  translate: 0 calc((1 - var(--blade, 1)) * 100%);
+}
+#pacotes.is-blading::after { will-change: translate; }
+
+/* Mergulho: ingresso, cartões, agenda e contato chegam já em movimento de profundidade (sobem e crescem até o
+   lugar), ligado à rolagem por --dive. Só translate, scale e rotate individuais: não brigam com o transform do
+   hover (.pack:hover) e nada fica transparente. A classe .dive é posta por motion.js (sem ela o bloco não tem
+   transformação nenhuma) e .is-arrived a tira de vez quando o bloco chega ao lugar. */
+@supports (translate: 0 0) and (scale: 1) {
+  .pass, .packs-side .pack, .agenda-steps, .agenda-summary, .info-item { --dive-y: 44px; --dive-s: 0.06; }
+  .pass { --dive-y: 64px; --dive-s: 0.05; transform-origin: 0 100%; }
+  .info-item { --dive-y: 18px; --dive-s: 0; }
+  .dive:not(.is-arrived) {
+    translate: 0 calc((1 - var(--dive, 1)) * var(--dive-y));
+    scale: calc(1 - (1 - var(--dive, 1)) * var(--dive-s));
+  }
+  .pass.dive:not(.is-arrived) { rotate: calc((1 - var(--dive, 1)) * 1.2deg); }
+  .is-diving { will-change: translate, scale; }
+}
+
+/* Linha de leitura: um fio laranja sob o cabeçalho, desenhado pela rolagem (motion.js) */
+.header::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; pointer-events: none;
+  background: var(--brand); box-shadow: 0 0 10px rgba(255, 85, 0, 0.55);
+  transform-origin: 0 50%; --read: inherit; transform: scaleX(var(--read, 0));
+}
+
+@media (max-width: 760px) {
+  @supports (translate: 0 0) and (scale: 1) {
+    .pass, .packs-side .pack, .agenda-steps, .agenda-summary { --dive-y: 28px; --dive-s: 0.03; }
+    .pass { --dive-y: 40px; }
+    .pass.dive:not(.is-arrived) { rotate: none; }
+    .info-item { --dive-y: 14px; }
+  }
+}
 
 /* ---------- 6.1 Serviços ---------- */
 .services-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(2rem, 6vw, 6rem); border-top: 1px solid var(--line); }
@@ -973,6 +1059,7 @@ button { font: inherit; color: inherit; }
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; transition-delay: 0s !important; animation-delay: 0s !important; }
   .js .reveal:not(.is-in) .line > span { transform: none; }
   .js .cut-divider:not(.is-in) { transform: none; }
+  .veil { display: none; }   /* a camada entre seções (6.0) não cria nada com movimento reduzido; por garantia */
 }
 
 /* ==========================================================================
