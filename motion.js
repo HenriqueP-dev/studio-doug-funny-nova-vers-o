@@ -523,20 +523,10 @@
     const stopWaiting = afterIntro(app, ctx, () => {
       hero.el.classList.add('has-depth');
       /* Em aparelho que não acompanha, a inclinação do palco (a parte mais cara da profundidade) se desliga sozinha:
-         enquanto o ponteiro se move, mede o intervalo entre as atualizações e, se a média passa de 30 ms (menos de
+         enquanto o ponteiro se move, mede o intervalo entre as atualizações (slowWatch: x, y e giro são três
+         animações e chamam apply no mesmo quadro, e isso conta uma vez só) e, se a mediana passa de 30 ms (menos de
          ~33 qps), tira a inclinação. O giro da máquina e o deslocamento das camadas continuam. */
-      let lastTick = 0, average = 0, ticks = 0;
-      const guard = () => {
-        const now = performance.now();
-        if (now - lastTick < 4) return;   // x, y e giro são três animações e chamam apply no mesmo quadro: conta uma vez só
-        if (lastTick && now - lastTick < 200) {
-          average = ticks ? average * 0.85 + (now - lastTick) * 0.15 : now - lastTick;
-          if (++ticks > 30 && average > 30) hero.el.classList.add('no-tilt');
-        } else {
-          ticks = 0;
-        }
-        lastTick = now;
-      };
+      const guard = slowWatch(() => hero.el.classList.add('no-tilt'));
       const apply = () => {
         guard();
         hero.el.style.setProperty('--mx', state.x.toFixed(3));
@@ -760,21 +750,24 @@
      - celular: --k em cada cartão, 1 no meio da tela e menor nas bordas (o cartão se aproxima e recua).
      Só transform e opacity. Se o aparelho não acompanha o ponteiro, a órbita se desliga sozinha.
      ========================================================================== */
-  /* Mede o intervalo entre as atualizações de um efeito e chama onSlow uma vez se o aparelho não acompanha
-     (média acima de 30 ms em 30 medidas seguidas, ou seja, menos de ~33 quadros por segundo). */
+  /* Mede o intervalo entre as atualizações de um efeito e chama onSlow uma vez se o aparelho não acompanha:
+     a MEDIANA dos últimos 24 intervalos acima de 30 ms (menos de ~33 quadros por segundo). A mediana não se
+     deixa enganar por um engasgo isolado (decodificar uma imagem, coleta de lixo; com a média, um só quadro de
+     105 ms bastava para desligar o efeito pelo resto da sessão num aparelho rápido). Pausas de 200 ms ou mais
+     (rolagem ou ponteiro parados) não contam, mas também não zeram a conta: uma passagem curta por uma seção
+     soma com a seguinte. */
   const slowWatch = onSlow => {
-    let last = 0, average = 0, count = 0, fired = false;
+    let last = 0, fired = false;
+    const gaps = [];
     return () => {
       if (fired) return;
       const now = performance.now(), gap = now - last;
       if (gap < 4) return;   // mais de uma chamada no mesmo quadro: conta uma vez só
-      if (last && gap < 200) {
-        average = count ? average * 0.85 + gap * 0.15 : gap;
-        if (++count > 30 && average > 30) { fired = true; onSlow(); }
-      } else {
-        count = 0;
-      }
       last = now;
+      if (gap >= 200) return;
+      gaps.push(gap);
+      if (gaps.length > 24) gaps.shift();
+      if (gaps.length === 24 && [...gaps].sort((a, b) => a - b)[12] > 30) { fired = true; onSlow(); }
     };
   };
 
