@@ -899,13 +899,15 @@
     { from: '#trabalhos', by: '#equipe', scale: 1, veil: 0.14, drift: 0 },
     { from: '#equipe', by: '#agenda', scale: 0.96, veil: 0.32, drift: 0.10 }
   ];
-  // Mergulho: seletor e trecho da rolagem (posição do topo do elemento na tela) em que ele chega ao lugar.
+  // Mergulho: o que mergulha e onde o trecho começa (topo do bloco na tela). O fim é calculado por bloco: é a
+  // posição de leitura, onde o topo dele fica quando o menu abre a seção. Assim ele já chegou ao lugar depois de
+  // um salto de âncora, em qualquer altura de tela.
   const DIVES = [
-    ['.pass', 'top 98%', 'top 62%'],
-    ['.packs-side .pack', 'top 98%', 'top 66%'],
-    ['.agenda-steps', 'top 98%', 'top 60%'],
-    ['.agenda-summary', 'top 98%', 'top 64%'],
-    ['.info-item', 'top 100%', 'top 74%']
+    ['.pass', 'top 98%'],
+    ['.packs-side .pack', 'top 98%'],
+    ['.agenda-steps', 'top 98%'],
+    ['.agenda-summary', 'top 98%'],
+    ['.info-item', 'top 100%']
   ];
   const MOBILE_SHARE = 0.45;   // no celular o recuo é uma fração do desktop, e sem paralaxe de translação
 
@@ -962,17 +964,33 @@
       });
     }
 
-    // 3. mergulho: cada bloco chega ao lugar enquanto o topo dele sobe pela tela
+    // 3. mergulho: cada bloco chega ao lugar enquanto o topo dele sobe pela tela.
     // .dive marca quem participa (sem JavaScript o bloco nunca tem transformação); .is-arrived tira as propriedades
-    // de transformação de vez quando o bloco chega ao lugar, então em repouso ele é igual ao de antes
-    DIVES.forEach(([selector, start, end]) => gsap.utils.toArray(selector).forEach(el => {
-      el.classList.add('dive');
+    // de transformação de vez quando o bloco chega ao lugar, então em repouso ele é igual ao de antes.
+    // O ScrollTrigger mede as posições com o bloco no estado inicial da animação (deslocado e encolhido), o que
+    // empurraria o fim do trecho 60 a 90px para a frente: por isso o bloco começa "chegado" e volta ao repouso
+    // antes de cada medida (refreshInit); depois da medida, onRefresh põe o estado certo.
+    const header = q('.header');
+    const settle = () => document.querySelectorAll('.dive').forEach(el => el.classList.add('is-arrived'));
+    ScrollTrigger.addEventListener('refreshInit', settle);
+    // posição de leitura: onde o topo do bloco fica na tela quando o menu leva à seção dele (a seção para logo
+    // abaixo do cabeçalho; a folha sobe `lift` px sobre a seção de cima, e o scroll-margin-top compensa isso)
+    const readingTop = el => {
+      const section = el.closest('main > .section');
+      const lift = -(parseFloat(getComputedStyle(section).marginTop) || 0);
+      return el.getBoundingClientRect().top - section.getBoundingClientRect().top + (header ? header.offsetHeight : 0) - lift;
+    };
+    DIVES.forEach(([selector, start]) => gsap.utils.toArray(selector).forEach(el => {
+      el.classList.add('dive', 'is-arrived');
       gsap.fromTo(el, { '--dive': 0 }, {
         '--dive': 1, ease: 'none',
         scrollTrigger: {
-          trigger: el, start, end, scrub: true,
+          trigger: el, start,
+          // o fim fica na posição de leitura (com 8px de folga), mas nunca acima de 45% da tela nem a menos de 140px do começo
+          end: () => `top ${Math.round(clamp(window.innerHeight * 0.45, window.innerHeight * 0.98 - 140, readingTop(el) + 8))}px`,
+          scrub: true,
           onToggle: self => el.classList.toggle('is-diving', self.isActive),
-          onRefresh: self => el.classList.toggle('is-arrived', self.progress >= 1),
+          onRefresh: self => el.classList.toggle('is-arrived', self.scroll() >= self.end),
           onLeave: () => el.classList.add('is-arrived'),
           onEnterBack: () => el.classList.remove('is-arrived')
         }
@@ -980,13 +998,13 @@
     }));
 
     // 4. linha de leitura sob o cabeçalho
-    const header = q('.header');
     const read = header && ScrollTrigger.create({
       trigger: document.documentElement, start: 0, end: 'max',
       onUpdate: self => header.style.setProperty('--read', self.progress.toFixed(4))
     });
 
     return () => {
+      ScrollTrigger.removeEventListener('refreshInit', settle);
       if (read) read.kill();
       if (header) header.style.removeProperty('--read');
       receding.forEach(({ section, veil }) => { veil.remove(); section.classList.remove('is-receding'); });
