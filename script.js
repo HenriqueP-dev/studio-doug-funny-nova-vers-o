@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const scroll = initScroll(root, reduceMotion, hero);
   const reveals = initReveals();
   initAgenda();
+  initWorks(reduceMotion);
 
   /* Ponte para motion.js (GSAP + Lenis), que roda depois deste arquivo e pode assumir partes do
      movimento. Sem motion.js, nada aqui muda: a página funciona só com este arquivo. */
@@ -784,6 +785,14 @@ function initAgenda() {
     render();
   }));
 
+  // "Agendar com Funny" (seção Trabalhos): já chega na agenda com o profissional escolhido.
+  // O link continua sendo um #agenda comum: a rolagem até lá é a de sempre (nativa ou a da Lenis).
+  document.addEventListener('click', event => {
+    const link = event.target.closest('[data-agendar]');
+    const button = link && barberButtons.find(b => b.dataset.barber === link.dataset.agendar);
+    if (button && button.getAttribute('aria-pressed') !== 'true') button.click();
+  });
+
   renderDays();
   render();
 
@@ -794,4 +803,62 @@ function initAgenda() {
     if (first && !sameDay(first, new Date(dayStrip.firstElementChild.dataset.date))) renderDays();
     render();
   }, 60 * 1000);
+}
+
+/* ==========================================================================
+   7. TRABALHOS: UM PROFISSIONAL DE CADA VEZ (styles.css §6.4)
+   No HTML os trabalhos são blocos simples, um embaixo do outro, e os nomes ficam escondidos: é o que aparece
+   sem JavaScript. Aqui eles viram abas acessíveis (padrão WAI-ARIA: Tab entra na aba ativa, setas e Home/End
+   trocam). Ao trocar, a foto entra num "corte" (CSS, .is-switching); com movimento reduzido a troca é instantânea.
+   ========================================================================== */
+function initWorks(reduceMotion) {
+  const root = $('[data-works]');
+  const list = root && $('.works-tabs', root);
+  if (!list) return;
+  const tabs = $$('.works-tab', list);
+  const panels = $$('.work', root);
+  if (!tabs.length || tabs.length !== panels.length) return;
+
+  list.hidden = false;
+  list.setAttribute('role', 'tablist');
+  list.setAttribute('aria-label', 'Trabalhos por profissional');
+  tabs.forEach((tab, i) => {
+    const panel = panels[i];
+    tab.id = `aba-${panel.id}`;
+    tab.setAttribute('role', 'tab');
+    tab.setAttribute('aria-controls', panel.id);
+    panel.setAttribute('role', 'tabpanel');
+    panel.removeAttribute('aria-label');
+    panel.setAttribute('aria-labelledby', tab.id);
+  });
+
+  let current = -1;
+  const select = (index, focus) => {
+    if (index === current) return;
+    const first = current === -1;
+    current = index;
+    tabs.forEach((tab, i) => {
+      const on = i === index;
+      tab.setAttribute('aria-selected', String(on));
+      tab.tabIndex = on ? 0 : -1;
+      panels[i].hidden = !on;
+    });
+    if (focus) tabs[index].focus();
+    if (first || reduceMotion) return;
+    root.classList.remove('is-switching');
+    void root.offsetWidth;   // reinicia as animações de entrada a cada troca
+    root.classList.add('is-switching');
+  };
+
+  tabs.forEach((tab, i) => {
+    tab.addEventListener('click', () => select(i));
+    tab.addEventListener('keydown', event => {
+      const last = tabs.length - 1;
+      const next = { ArrowRight: i === last ? 0 : i + 1, ArrowLeft: i === 0 ? last : i - 1, Home: 0, End: last }[event.key];
+      if (next === undefined) return;
+      event.preventDefault();
+      select(next, true);
+    });
+  });
+  select(0);
 }

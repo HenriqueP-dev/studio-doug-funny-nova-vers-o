@@ -9,7 +9,7 @@
    5. Hero
    6. Seções
       6.0 Camada entre seções (folha, véu, lâmina, mergulho, linha de leitura)
-      6.1 Serviços · 6.2 Pacotes · 6.3 Formação · 6.4 Trabalhos
+      6.1 Serviços · 6.2 Pacotes · 6.3 Formação · 6.4 Trabalhos (um profissional de cada vez)
       6.5 Equipe · 6.6 Agenda · 6.7 Contato
    7. Rodapé
    8. Responsivo
@@ -485,7 +485,8 @@ main > .section { isolation: isolate; }
    hover (.pack:hover) e nada fica transparente. A classe .dive é posta por motion.js (sem ela o bloco não tem
    transformação nenhuma) e .is-arrived a tira de vez quando o bloco chega ao lugar. */
 @supports (translate: 0 0) and (scale: 1) {
-  .pass, .packs-side .pack, .agenda-steps, .agenda-summary, .info-item { --dive-y: 44px; --dive-s: 0.06; }
+  .pass, .packs-side .pack, .works, .agenda-steps, .agenda-summary, .info-item { --dive-y: 44px; --dive-s: 0.06; }
+  .works { --dive-s: 0.04; }
   .pass { --dive-y: 64px; --dive-s: 0.05; transform-origin: 0 100%; }
   .info-item { --dive-y: 18px; --dive-s: 0; }
   .dive:not(.is-arrived) {
@@ -505,7 +506,7 @@ main > .section { isolation: isolate; }
 
 @media (max-width: 760px) {
   @supports (translate: 0 0) and (scale: 1) {
-    .pass, .packs-side .pack, .agenda-steps, .agenda-summary { --dive-y: 28px; --dive-s: 0.03; }
+    .pass, .packs-side .pack, .works, .agenda-steps, .agenda-summary { --dive-y: 28px; --dive-s: 0.03; }
     .pass { --dive-y: 40px; }
     .pass.dive:not(.is-arrived) { rotate: none; }
     .info-item { --dive-y: 14px; }
@@ -619,135 +620,89 @@ main > .section { isolation: isolate; }
 .turmas-note .icon { flex: none; margin-top: 0.2rem; font-size: 1.05rem; }
 .course .btn-ink { margin-top: var(--s-5); }
 
-/* ---------- 6.4 Trabalhos (galeria) ---------- */
-/* Aviso antes das imagens: são renders 3D, não fotos de cortes (DESIGN.md §7) */
-.gallery-note {
-  display: flex; gap: var(--s-3); align-items: flex-start; max-width: 64ch;
-  margin-bottom: var(--s-4); color: var(--muted); font-size: 0.92rem; line-height: 1.55;
-}
-.gallery-note .icon { margin-top: 0.2rem; font-size: 1.1rem; color: var(--accent); }
-.gallery-note strong { color: var(--text); font-weight: 600; }
-
-/* Palco dos trabalhos. Os três renders têm fundo preto, então viram cartões em camadas, de tamanhos e profundidades
-   diferentes, que se sobrepõem, sobre um painel escuro com a luz laranja do hero. O cartão do Instagram é um adesivo
-   que passa por cima da borda do painel. Cada camada anda com a rolagem (--p, de 0 a 1; 0,5 = palco no meio da tela)
-   e com o ponteiro (--ox e --oy, de -1 a 1). O motion.js só escreve essas variáveis; a conta é toda daqui. Sem ele, ou
-   com movimento reduzido, a composição fica parada no ponto de repouso (DESIGN.md §10). */
-.gallery { --ox: 0; --oy: 0; --p: 0.5; position: relative; padding-bottom: 38px; }
-.gallery-stage {
+/* ---------- 6.4 Trabalhos (um profissional de cada vez) ---------- */
+/* Fotos reais do Instagram do Studio sobre um painel escuro com a luz laranja do hero. script.js (initWorks)
+   transforma as três em abas: um profissional por vez, trocado pelos nomes no alto (clique ou setas do teclado).
+   Sem JavaScript as três aparecem uma embaixo da outra. Ao trocar, a foto entra num "corte" da esquerda para a
+   direita, o mesmo gesto da lâmina no hero; com movimento reduzido, a troca é instantânea (seção 9). */
+.works {
+  --text: #F5F1EB; --muted: #C7BEB4; --accent: var(--brand-hi); --accent-hi: var(--brand-hi); --focus: var(--brand-hi);
   position: relative; isolation: isolate; overflow: hidden;
-  height: clamp(540px, 54vw, 760px);
-  border: 1px solid rgba(245, 241, 235, 0.1); border-radius: 28px;
+  padding: clamp(1.25rem, 3.4vw, 3rem);
+  border: 1px solid rgba(245, 241, 235, 0.1); border-radius: 28px; color: var(--text);
   background:
-    radial-gradient(44% 64% at 29% 58%, rgba(255, 85, 0, 0.34), transparent 72%),
-    radial-gradient(40% 54% at 80% 12%, rgba(255, 150, 90, 0.14), transparent 72%),
+    radial-gradient(48% 62% at 26% 56%, rgba(255, 85, 0, 0.3), transparent 72%),
+    radial-gradient(40% 54% at 86% 8%, rgba(255, 150, 90, 0.12), transparent 72%),
     linear-gradient(180deg, #1d1917, #0c0a09);
 }
-.gallery-stage::before {   /* o grão do hero, só no fundo (atrás dos cartões) */
-  content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.07;
+.works::before {   /* o grão do hero, só no fundo */
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0.07;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-.g-tile {
-  position: relative; overflow: hidden; margin: 0;
+/* Abas: os nomes, grandes, com o número em serifada; a ativa ganha a linha de corte laranja */
+.works-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: clamp(1.5rem, 3.4vw, 2.75rem); border-bottom: 1px solid rgba(245, 241, 235, 0.14); }
+.works-tabs[hidden] { display: none; }
+.works-tab {
+  position: relative; display: flex; align-items: baseline; gap: 0.6rem; min-height: 56px; padding: 0.6rem 0.25rem 1rem;
+  border: 0; background: none; cursor: pointer; text-align: left;
+  font-family: var(--display); font-size: clamp(1.5rem, 3.2vw, 2.6rem); line-height: 1; text-transform: uppercase; letter-spacing: 0.01em;
+  color: rgba(245, 241, 235, 0.42); transition: color 0.3s ease;
+}
+.works-tab-num { font-family: var(--serif); font-style: italic; font-size: 0.5em; text-transform: none; color: var(--accent); }
+.works-tab::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--brand);
+  box-shadow: 0 0 14px rgba(255, 85, 0, 0.6); transform: scaleX(0); transform-origin: 0 50%; transition: transform 0.5s var(--ease-io);
+}
+.works-tab:hover { color: rgba(245, 241, 235, 0.75); }
+.works-tab[aria-selected="true"] { color: var(--text); }
+.works-tab[aria-selected="true"]::after { transform: scaleX(1); }
+
+/* Cada trabalho: foto à esquerda, nome e ação à direita */
+.work { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); align-items: center; gap: clamp(1.5rem, 5vw, 4.5rem); }
+.work + .work { margin-top: var(--s-8); }                   /* sem JavaScript: um embaixo do outro */
+.js .works-tabs:not([hidden]) ~ .work { margin-top: 0; }   /* em abas, só um aparece */
+.work[hidden] { display: none; }
+.work-photo {
+  position: relative; overflow: hidden; margin: 0; aspect-ratio: 4 / 5;
   border: 1px solid rgba(245, 241, 235, 0.16); border-radius: 18px; background: #050505;
-  box-shadow: 0 46px 70px -34px rgba(0, 0, 0, 0.9), 0 18px 30px -18px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 46px 70px -34px rgba(0, 0, 0, 0.9), 0 0 110px -30px rgba(255, 85, 0, 0.45);
 }
-.g-tile img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.9s var(--ease-out); scale: var(--zoom, 1); translate: 0 var(--drift, 0%); }   /* entrada e profundidade (motion.js) */
-.g-tile:hover img { transform: scale(1.05); }
+.work-photo img { width: 100%; height: 100%; object-fit: cover; object-position: var(--focus-x, 50%) var(--focus-y, 35%); transition: scale 0.9s var(--ease-out); }
+.work-photo:hover img { scale: 1.03; }
+.work-status {
+  display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.8rem;
+  border: 1px solid rgba(255, 116, 51, 0.55); border-radius: 999px;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent);
+}
+.work-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.work-status.is-done { border-color: var(--brand); background: var(--brand); color: var(--ink); }
+.work-name { margin: var(--s-5) 0 var(--s-2); font-family: var(--display); font-weight: 400; font-size: clamp(3.4rem, 7.4vw, 6.6rem); line-height: 0.88; text-transform: uppercase; }
+.work-role { font-family: var(--serif); font-style: italic; font-size: clamp(1.4rem, 2.2vw, 1.9rem); line-height: 1.1; color: var(--accent); }
+.work-text { max-width: 30ch; margin: var(--s-5) 0 var(--s-6); color: var(--muted); font-size: 1.05rem; }
 
-/* As quatro camadas: a mesma conta, com um "peso de profundidade" próprio.
-   --sx e --sy: quanto andam com o ponteiro e com a rolagem; --ry e --rx: quanto giram com o ponteiro; --r0y e --r0z:
-   o giro de repouso; --ss: quanto crescem enquanto o palco atravessa a tela (as da frente andam e crescem mais).
-   --in (0 a 1) é a entrada: de longe, pequena e transparente, até o lugar. */
-.g-pole, .g-detail, .g-blade, .g-insta {
-  --sx: 0px; --sy: 0px; --ry: 0deg; --rx: 0deg; --r0y: 0deg; --r0z: 0deg; --ss: 0;
-  opacity: var(--in, 1);
-  transform:
-    perspective(1400px)
-    translate3d(calc(var(--ox) * var(--sx)), calc((var(--p) - 0.5) * var(--sy) + (1 - var(--in, 1)) * 70px), 0)
-    rotateY(calc(var(--r0y) + var(--ox) * var(--ry)))
-    rotateX(calc(var(--oy) * var(--rx) * -1))
-    rotateZ(var(--r0z))
-    scale(calc((1 + (var(--p) - 0.5) * var(--ss)) * (0.9 + 0.1 * var(--in, 1))));
-}
-.g-pole, .g-detail, .g-blade { position: absolute; }
-.gallery-stage .g-tile { z-index: 1; }
-.gallery.is-live :is(.g-pole, .g-detail, .g-blade, .g-insta) { will-change: transform; }   /* motion.js: só enquanto o palco está na tela */
-/* Modo leve: se o aparelho não acompanha a profundidade (motion.js mede o intervalo entre os quadros), os cartões perdem a
-   perspectiva e os giros em 3D e ficam só com deslocamento, escala e o giro no plano. Medido sem placa de vídeo, as rotações em
-   3D são o que mais pesa na rolagem. */
-.gallery.is-flat :is(.g-pole, .g-detail, .g-blade, .g-insta) {
-  --r0y: 0deg; --ry: 0deg; --rx: 0deg;
-  box-shadow: 0 24px 34px -22px rgba(0, 0, 0, 0.8);
-  transform:
-    translate3d(calc(var(--ox) * var(--sx)), calc((var(--p) - 0.5) * var(--sy) + (1 - var(--in, 1)) * 70px), 0)
-    rotateZ(var(--r0z))
-    scale(calc((1 + (var(--p) - 0.5) * var(--ss)) * (0.9 + 0.1 * var(--in, 1))));
-}
+/* A troca: a foto entra num corte da esquerda para a direita e o texto sobe logo depois */
+@keyframes work-cut { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes work-rise { from { opacity: 0; translate: 0 14px; } to { opacity: 1; translate: 0 0; } }
+.works.is-switching .work:not([hidden]) .work-photo { animation: work-cut 0.6s var(--ease-io) both; }
+.works.is-switching .work:not([hidden]) .work-body > * { animation: work-rise 0.55s var(--ease-out) both; }
+.works.is-switching .work:not([hidden]) .work-body > :nth-child(2) { animation-delay: 0.06s; }
+.works.is-switching .work:not([hidden]) .work-body > :nth-child(3) { animation-delay: 0.12s; }
+.works.is-switching .work:not([hidden]) .work-body > :nth-child(4) { animation-delay: 0.18s; }
+.works.is-switching .work:not([hidden]) .work-body > :nth-child(5) { animation-delay: 0.24s; }
 
-/* Legenda: selo "Ilustração 3D" e número + texto; cada cartão a põe onde o render tem fundo preto livre */
-.g-tile figcaption {
-  position: absolute; inset: 0; z-index: 2;
-  display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; gap: var(--s-3);
-  padding: clamp(0.9rem, 1.7vw, 1.4rem); pointer-events: none;
+/* Instagram: o caminho para mais trabalhos, numa faixa no pé do painel */
+.works-insta {
+  display: flex; align-items: center; gap: var(--s-4); margin-top: clamp(1.5rem, 3.4vw, 2.75rem); padding-top: var(--s-5);
+  border-top: 1px solid rgba(245, 241, 235, 0.14); color: var(--text);
 }
-.g-tag {
-  padding: 0.3rem 0.7rem; border: 1px solid rgba(245, 243, 240, 0.28); border-radius: 999px;
-  background: rgba(10, 10, 10, 0.7); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; white-space: nowrap; color: var(--text);
-}
-.g-caption {
-  display: flex; align-items: baseline; gap: var(--s-3);
-  font-family: var(--serif); font-style: italic; font-size: clamp(1.15rem, 1.7vw, 1.6rem); line-height: 1.1;
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.7);
-}
-.g-num { flex: none; font-family: var(--display); font-style: normal; font-size: 0.85rem; letter-spacing: 0.1em; color: var(--brand); }   /* sobre a foto escura */
-
-/* Poste: alto, à esquerda, sobre a luz laranja. A proporção é a da imagem (900×1300), então o sprite que gira
-   com a rolagem (motion.js) cobre a foto sem recorte. */
-.g-pole { z-index: 2; left: 6%; top: 5%; height: 90%; aspect-ratio: 900 / 1300; container-type: size; box-shadow: 0 46px 70px -34px rgba(0, 0, 0, 0.9), 0 0 110px -26px rgba(255, 85, 0, 0.5); --sx: 22px; --sy: 10px; --ry: 4deg; --rx: 3deg; --r0y: 5deg; --ss: 0.08; }
-.g-pole::after { content: ''; position: absolute; inset: 55% 0 0; background: linear-gradient(180deg, transparent, rgba(5, 5, 5, 0.9)); pointer-events: none; }
-/* Poste girando com a rolagem (motion.js): sprite de 24 quadros renderizados (ferramentas/render_poste.py)
-   por cima da foto estática. Mesmo enquadramento da foto (cover, 50% 40%); o quadro muda em passos
-   inteiros de background-position, sem interpolar entre quadros. */
-.pole-sprite {
-  position: absolute; left: 50%; top: 40%;
-  width: max(100cqw, 100cqh * 450 / 650); aspect-ratio: 450 / 650;
-  translate: -50% -40%;
-  background: 0 0 / 2400% 100% no-repeat;
-  opacity: 0; pointer-events: none;
-  transition: scale 0.9s var(--ease-out);
-}
-.pole-sprite.is-ready { opacity: 1; }
-.g-tile:hover .pole-sprite { scale: 1.06; }
-/* Detalhe: o maior, ao fundo e à direita. O canto de cima à direita do render é preto livre: a legenda fica lá. */
-.g-detail { z-index: 1; right: 3%; top: 8%; width: 58%; aspect-ratio: 1200 / 825; --sx: -16px; --sy: 80px; --ry: -3deg; --rx: 3deg; --r0y: -8deg; --ss: 0.06; }
-.g-detail figcaption { justify-content: flex-start; align-items: flex-end; text-align: right; }
-.g-detail::after { content: ''; position: absolute; inset: 0 0 52% 0; background: linear-gradient(180deg, rgba(5, 5, 5, 0.8), transparent); pointer-events: none; }
-.g-detail img { transform-origin: 0% 50%; }   /* o zoom de repouso (1,12, motion.js §8) cresce para a direita e não corta a gravação "DOUG FUNNY" */
-/* Lâmina: a da frente, cruzando o poste e o detalhe. O alto do render é preto livre: a legenda fica lá. */
-.g-blade { z-index: 3; left: 34%; bottom: 7%; width: 31%; aspect-ratio: 840 / 640; box-shadow: 0 46px 70px -34px rgba(0, 0, 0, 0.9), 0 0 80px -28px rgba(255, 120, 40, 0.38); --sx: 42px; --sy: -100px; --ry: 6deg; --rx: 4deg; --r0y: 7deg; --r0z: -2.5deg; --ss: 0.14; }
-.g-blade figcaption { justify-content: flex-start; }
-
-/* Cartão do Instagram: o caminho para os trabalhos reais, em laranja (ação) com texto escuro. Um adesivo que passa
-   por cima da borda do painel. */
-.g-insta {
-  position: absolute; z-index: 4; right: 2.5%; bottom: 0; width: clamp(240px, 23%, 300px);
-  display: flex; flex-direction: column; justify-content: space-between; gap: var(--s-5);
-  padding: clamp(1.25rem, 2vw, 1.75rem);
-  border-color: var(--brand); background: var(--brand); color: var(--ink);
-  box-shadow: 0 34px 50px -26px rgba(0, 0, 0, 0.55);
-  --sx: 52px; --sy: -150px; --r0z: -2deg; --ss: 0.06;
-  transition: background-color 0.3s ease, border-color 0.3s ease, translate 0.3s ease;
-}
-.g-insta:hover { background: var(--brand-hi); border-color: var(--brand-hi); translate: 0 -4px; }
-.g-insta .icon { font-size: 2.2rem; }
-.g-insta-kicker { display: block; margin-bottom: var(--s-2); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; }
-.g-insta strong { display: block; margin-bottom: var(--s-4); font-family: var(--display); font-weight: 400; font-size: clamp(1.6rem, 2.2vw, 2.1rem); text-transform: uppercase; line-height: 0.95; }
-.g-insta-handle { display: inline-flex; align-items: center; gap: var(--s-2); padding-top: var(--s-3); border-top: 1.5px solid rgba(10, 10, 10, 0.4); font-weight: 700; font-size: 0.95rem; }
-.g-insta-handle span { transition: transform 0.3s var(--ease-out); }
-.g-insta:hover .g-insta-handle span { transform: translateX(4px); }
+.works-insta .icon { font-size: 1.9rem; color: var(--accent); }
+.works-insta-text { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 1rem; }
+.works-insta strong { font-family: var(--display); font-weight: 400; font-size: clamp(1.3rem, 2vw, 1.7rem); text-transform: uppercase; }
+.works-insta-handle { color: var(--muted); }
+.works-insta-handle span { display: inline-block; transition: transform 0.3s var(--ease-out); }
+.works-insta:hover strong { color: var(--accent); }
+.works-insta:hover .works-insta-handle span { transform: translateX(4px); }
 
 /* ---------- 6.5 Equipe ---------- */
 .team-section { background: radial-gradient(70% 60% at 50% 100%, rgba(255, 85, 0, 0.14), transparent 70%), var(--bg); }
@@ -946,22 +901,6 @@ main > .section { isolation: isolate; }
 @media (max-width: 1024px) {
   .section-head { grid-template-columns: 1fr; }
 
-  /* Galeria: o palco encolhe e o Instagram vira uma faixa larga embaixo dele */
-  .gallery { padding-bottom: 0; }
-  .gallery-stage { height: clamp(500px, 66vw, 640px); }
-  .g-pole { left: 4%; top: 5%; height: 88%; }
-  .g-detail { right: 2.5%; top: 6%; width: 62%; }
-  .g-blade { left: 41%; bottom: 7%; width: 38%; aspect-ratio: 840 / 760; background: #0d0d0d; }   /* #0d0d0d é o preto do render da lâmina: o espaço extra no alto some e a legenda cabe sem tocar nos dentes */
-  .g-blade img { object-fit: contain; object-position: 50% 100%; }
-  .g-insta {
-    position: relative; right: auto; bottom: auto; width: auto; margin-top: var(--s-4);
-    flex-direction: row; align-items: center; justify-content: flex-start; gap: var(--s-5);
-    --sx: 0px; --sy: 0px; --r0z: 0deg; --ss: 0;
-  }
-  .g-insta .icon { font-size: 2.8rem; }
-  .g-insta strong { margin-bottom: var(--s-2); }
-  .g-insta-handle { padding-top: 0; border-top: 0; }
-
   /* Agenda: resumo abaixo dos passos, em duas colunas (dados | botão) */
   .agenda-layout { grid-template-columns: minmax(0, 1fr); }
   .agenda-summary {
@@ -994,26 +933,12 @@ main > .section { isolation: isolate; }
   .services-list, .combos { grid-template-columns: 1fr; }
   .stamp { width: 92px; height: 92px; font-size: 0.85rem; }
 
-  /* Galeria no celular: os três cartões em pilha, sobrepostos, no mesmo painel escuro. Sem inclinação pelo ponteiro:
-     cada cartão se aproxima ao cruzar o centro da tela e recua ao sair (--k, de 0 a 1, escrita pelo motion.js). */
-  .gallery-stage { display: grid; justify-items: start; height: auto; padding: 22px 14px 30px; border-radius: 22px; }
-  .g-pole, .g-detail, .g-blade { position: relative; left: auto; right: auto; top: auto; bottom: auto; --k: 1; --sx: 0px; --sy: 0px; --ss: 0; --ry: 0deg; --rx: 0deg; --r0y: 0deg; }
-  .g-pole, .g-detail, .g-blade {
-    transform:
-      perspective(900px)
-      translateY(calc((1 - var(--k)) * 26px + (1 - var(--in, 1)) * 50px))
-      rotateX(calc((1 - var(--k)) * 8deg))
-      rotateZ(var(--r0z))
-      scale(calc((0.93 + 0.07 * var(--k)) * (0.92 + 0.08 * var(--in, 1))));
-  }
-  .g-pole { width: 76%; height: auto; margin-left: 2%; }
-  .g-detail { width: 90%; margin: -62px 0 0 auto; --r0z: 1.2deg; }
-  .g-blade { width: 72%; margin: -44px auto 0 0; --r0z: -1.8deg; }
-  .g-caption { font-size: 1.2rem; }
-  .g-tag { padding: 0.2rem 0.55rem; font-size: 0.6rem; }
-  .g-tile figcaption { padding: 0.75rem; }
-  .g-pole figcaption { padding-bottom: 4.6rem; }      /* a legenda fica acima de onde o detalhe sobrepõe o poste */
-  .g-blade { aspect-ratio: 840 / 780; }
+  /* Trabalhos no celular: foto em cima, nome e ação embaixo */
+  .work { grid-template-columns: 1fr; gap: var(--s-5); }
+  .works-tab { gap: 0.4rem; font-size: 1.35rem; }
+  .work-name { margin-top: var(--s-4); }
+  .work-text { margin: var(--s-4) 0 var(--s-5); }
+  .work .btn { width: 100%; }
 
   .team { grid-template-columns: 1fr; max-width: 420px; margin-inline: auto; }
   .member-info { flex-direction: row; }
@@ -1035,8 +960,6 @@ main > .section { isolation: isolate; }
 
 @media (max-width: 480px) {
   .header .btn { display: none; }
-  .g-insta { flex-direction: column; align-items: flex-start; }
-  .g-insta .icon { font-size: 2.4rem; }
   .turmas tbody th { font-size: 1.35rem; }
   .turmas .turma-price { font-size: 1.9rem; }
 }
@@ -1044,6 +967,7 @@ main > .section { isolation: isolate; }
 /* Telas muito estreitas (320px): a palavra mais longa dos títulos ("DISPONIBILIDADE") precisa caber
    inteira, senão a divisão em letras do motion.js deixa a linha quebrar no meio da palavra. */
 @media (max-width: 360px) {
+  .works-tab-num { display: none; }   /* em telas muito estreitas só os nomes cabem */
   .title { font-size: 2.75rem; }
   /* Agenda: nomes e datas inteiros, sem quebrar no meio da palavra */
   .barber-tab-name { font-size: 0.72rem; letter-spacing: 0.04em; }
@@ -1141,8 +1065,6 @@ main > .section { isolation: isolate; }
 [data-theme="light"] .member-stage::after { background: linear-gradient(180deg, transparent, rgba(10, 10, 10, 0.38)); }
 [data-theme="light"] .member-ghost { -webkit-text-stroke-color: rgba(245, 241, 235, 0.38); }
 [data-theme="light"] .agenda-summary { background: radial-gradient(120% 80% at 100% 0%, rgba(200, 70, 10, 0.10), transparent 60%), var(--surface); }
-[data-theme="light"] .g-tag { border-color: rgba(255, 252, 248, 0.4); background: rgba(33, 27, 23, 0.76); color: #FFFCF8; }
-[data-theme="light"] .g-caption { color: #FFFCF8; }
 [data-theme="light"] .barber-avatar { background: #D8CFC5; }
 
 @media (max-width: 1240px) {

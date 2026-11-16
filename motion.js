@@ -10,13 +10,13 @@
    1. Rolagem suave (Lenis)
    2. A máquina conduz do hero até Serviços (desktop) / paralaxe leve (celular)
    3. Títulos revelados letra por letra (SplitText)
-   4. Poste de barbeiro girando com a rolagem (sprite de 24 quadros)
+   4. (o poste girando saiu: a seção Trabalhos usa fotos reais, script.js §7)
    5. Retratos da equipe com efeito de cortina
    6. Botões magnéticos (só com mouse)
    7. Profundidade pelo ponteiro no hero (só com mouse, desktop)
    8. Entradas das seções (papéis por tipo de conteúdo)
    9. Agenda: retorno visual ao trocar de profissional, dia e horário
-   10. Palco dos trabalhos: camadas em profundidade (rolagem e ponteiro)
+   10. Guarda de aparelho lento (slowWatch)
    11. Câmera entre seções: recuo, lâmina, mergulho e linha de leitura
    ========================================================================== */
 (() => {
@@ -42,16 +42,12 @@
     mm.add(DESKTOP, ctx => clipperTravel(app, ctx));
     mm.add(MOBILE, ctx => clipperParallax(app, ctx));
     mm.add(MOTION, ctx => splitTitles(app, ctx));
-    mm.add(MOTION, () => spinPole());
     mm.add(MOTION, () => curtainTeam());
     mm.add(`${MOTION} and (hover: hover) and (pointer: fine)`, () => magneticButtons());
     mm.add(`${DESKTOP} and (hover: hover) and (pointer: fine)`, ctx => pointerDepth(app, ctx));
     mm.add(DESKTOP, () => sectionEntrances(false));
     mm.add(MOBILE, () => sectionEntrances(true));
     mm.add(MOTION, () => agendaFeedback());
-    mm.add(DESKTOP, () => galleryDepth(false));
-    mm.add(MOBILE, () => galleryDepth(true));
-    mm.add(`${DESKTOP} and (hover: hover) and (pointer: fine)`, () => galleryOrbit());
     mm.add(DESKTOP, () => sectionCamera(false));
     mm.add(MOBILE, () => sectionCamera(true));
 
@@ -348,58 +344,6 @@
   }
 
   /* ==========================================================================
-     4. POSTE DE BARBEIRO GIRANDO COM A ROLAGEM
-     A foto é estática, então girá-la em CSS ficaria falso: usamos 24 quadros renderizados
-     (meia volta = um ciclo das listras) e avançamos o quadro conforme a rolagem, em passos
-     inteiros. O sprite só é baixado quando a galeria se aproxima; até ficar pronto (e com
-     movimento reduzido, quando nada disto roda) a foto original, que é o quadro 0, aparece.
-     ========================================================================== */
-  const POLE_SPRITE = 'imagens/poste-sprite.webp';
-  const POLE_FRAMES = 24;
-  const POLE_CYCLES = 3;   // ciclos completos das listras enquanto o poste atravessa a tela
-
-  function spinPole() {
-    const tile = document.querySelector('.g-pole');
-    if (!tile) return undefined;
-    const sprite = document.createElement('span');
-    sprite.className = 'pole-sprite';
-    sprite.setAttribute('aria-hidden', 'true');
-    tile.querySelector('img').after(sprite);
-
-    let frame = -1;
-    const show = progress => {
-      const next = Math.floor(progress * POLE_CYCLES * POLE_FRAMES) % POLE_FRAMES;
-      if (next === frame) return;   // só escreve quando o quadro muda
-      frame = next;
-      sprite.style.backgroundPosition = `${(frame * 100 / (POLE_FRAMES - 1)).toFixed(4)}% 0`;
-    };
-
-    // baixa e decodifica o sprite antes de mostrá-lo (sem pisca e sem baixar à toa)
-    const load = ScrollTrigger.create({
-      trigger: tile,
-      start: 'top bottom+=600',
-      once: true,
-      onEnter: () => {
-        const img = new Image();
-        img.src = POLE_SPRITE;
-        (img.decode ? img.decode() : Promise.resolve()).then(() => {
-          sprite.style.backgroundImage = `url("${POLE_SPRITE}")`;
-          show(spin.progress);
-          sprite.classList.add('is-ready');
-        }).catch(() => sprite.remove());   // sem o sprite, a foto estática continua
-      }
-    });
-    const spin = ScrollTrigger.create({
-      trigger: tile,
-      start: 'top bottom',
-      end: 'bottom top',
-      onUpdate: self => show(self.progress)
-    });
-
-    return () => { load.kill(); spin.kill(); sprite.remove(); };
-  }
-
-  /* ==========================================================================
      5. RETRATOS DA EQUIPE COM EFEITO DE CORTINA
      Cada .member-stage se revela de baixo para cima (clip-path); a foto sobe de leve e o nome em
      contorno desliza no sentido oposto. Foto e nome usam a propriedade CSS `translate` (via
@@ -628,7 +572,7 @@
       { duration: 1.1, clear: 'opacity,transform,--line' }));
 
     // texto corrido e blocos de apoio
-    add(enter('.section-note, .gallery-note, .combos-head h3, .cta-band > p, .cta-band > .btn, .contact-col > h3', rise, risen));
+    add(enter('.section-note, .combos-head h3, .cta-band > p, .cta-band > .btn, .contact-col > h3', rise, risen));
 
     // linhas de lista: corte horizontal (a folga vertical não corta acentos nem o itálico)
     add(enter('.service, .combo, .hours-row',
@@ -673,21 +617,6 @@
       }));
     }
     add(enter('.course-figure figcaption', rise, risen, { delay: 0.25 }));
-
-    // trabalhos: os cartões chegam de longe (menores e transparentes) até o lugar, um depois do outro. A cortina
-    // (clip-path) não serve aqui: ela achata a profundidade dos cartões. A conta de --in está no CSS (§6.4).
-    const cards = gsap.utils.toArray('.g-pole, .g-detail, .g-blade, .g-insta');
-    if (cards.length) {
-      gsap.set(cards, { '--in': 0 });
-      cards.forEach(el => hold(el, { '--in': 1 }, '--in'));
-      triggers.push(...ScrollTrigger.batch(cards, {
-        start: mobile ? 'top 92%' : 'top 88%', once: true, interval: 0.1,
-        onEnter: batch => {
-          batch.forEach(el => pending.delete(el));
-          gsap.to(batch, { '--in': 1, duration: 1.4, ease: 'expo.out', stagger: 0.16, clearProps: '--in' });
-        }
-      }));
-    }
 
     // equipe: nome e função depois da cortina do retrato
     add(enter('.member-info', rise, risen, { delay: 0.35, stagger: 0.12, start: 'top 95%' }));
@@ -743,12 +672,8 @@
   }
 
   /* ==========================================================================
-     10. PALCO DOS TRABALHOS (profundidade, styles.css §6.4)
-     O CSS faz toda a conta; aqui só se escrevem variáveis, sempre em uma só caixa (a galeria):
-     - desktop: --p, de 0 a 1, enquanto o palco atravessa a tela (as camadas da frente andam e crescem mais);
-     - desktop com mouse: --ox e --oy, de -1 a 1, a posição do ponteiro sobre o palco (o palco orbita);
-     - celular: --k em cada cartão, 1 no meio da tela e menor nas bordas (o cartão se aproxima e recua).
-     Só transform e opacity. Se o aparelho não acompanha o ponteiro, a órbita se desliga sozinha.
+     10. GUARDA DE APARELHO LENTO
+     Usada pela inclinação do palco do hero (§7) e pelo recuo entre seções (§11).
      ========================================================================== */
   /* Mede o intervalo entre as atualizações de um efeito e chama onSlow uma vez se o aparelho não acompanha:
      a MEDIANA dos últimos 24 intervalos acima de 30 ms (menos de ~33 quadros por segundo). A mediana não se
@@ -770,66 +695,6 @@
       if (gaps.length === 24 && [...gaps].sort((a, b) => a - b)[12] > 30) { fired = true; onSlow(); }
     };
   };
-
-  function galleryDepth(mobile) {
-    const gallery = document.querySelector('.gallery');
-    const stage = gallery && gallery.querySelector('.gallery-stage');
-    if (!stage) return undefined;
-    const cards = gsap.utils.toArray('.g-pole, .g-detail, .g-blade');
-    const triggers = [];
-    if (mobile) {
-      cards.forEach(card => triggers.push(ScrollTrigger.create({
-        trigger: card, start: 'top bottom', end: 'bottom top',
-        // 1 (em repouso) durante o miolo da passagem; cai só perto das bordas da tela
-        onUpdate: self => card.style.setProperty('--k', Math.min(1, (1 - Math.abs(2 * self.progress - 1)) * 1.8).toFixed(3))
-      })));
-    } else {
-      const watch = slowWatch(() => gallery.classList.add('is-flat'));   // aparelho lento: modo leve (sem giros em 3D)
-      triggers.push(ScrollTrigger.create({
-        trigger: stage, start: 'top bottom', end: 'bottom top',
-        onUpdate: self => { watch(); gallery.style.setProperty('--p', self.progress.toFixed(3)); },
-        onToggle: self => gallery.classList.toggle('is-live', self.isActive)   // will-change só enquanto o palco está na tela
-      }));
-    }
-    return () => {
-      triggers.forEach(t => t.kill());
-      gallery.classList.remove('is-live', 'is-flat');
-      gallery.style.removeProperty('--p');
-      cards.forEach(card => card.style.removeProperty('--k'));
-    };
-  }
-
-  function galleryOrbit() {
-    const gallery = document.querySelector('.gallery');
-    if (!gallery) return undefined;
-    const state = { x: 0, y: 0 };
-    let off = false;
-    const watch = slowWatch(() => { off = true; state.x = 0; state.y = 0; gallery.classList.add('is-flat'); });   // não acompanha: para a órbita e aliviam-se os cartões
-    const apply = () => {
-      watch();
-      gallery.style.setProperty('--ox', state.x.toFixed(3));
-      gallery.style.setProperty('--oy', state.y.toFixed(3));
-    };
-    const xTo = gsap.quickTo(state, 'x', { duration: 0.9, ease: 'power3.out', onUpdate: apply });
-    const yTo = gsap.quickTo(state, 'y', { duration: 0.9, ease: 'power3.out', onUpdate: apply });
-    const move = event => {
-      if (off) return;
-      const box = gallery.getBoundingClientRect();
-      xTo(clamp(-1, 1, ((event.clientX - box.left) / box.width) * 2 - 1));
-      yTo(clamp(-1, 1, ((event.clientY - box.top) / box.height) * 2 - 1));
-    };
-    const leave = () => { xTo(0); yTo(0); };
-    gallery.addEventListener('pointermove', move, { passive: true });
-    gallery.addEventListener('pointerleave', leave);
-    return () => {
-      gallery.removeEventListener('pointermove', move);
-      gallery.removeEventListener('pointerleave', leave);
-      gsap.killTweensOf(state);
-      gallery.style.removeProperty('--ox');
-      gallery.style.removeProperty('--oy');
-      gallery.classList.remove('is-flat');
-    };
-  }
 
   /* Celular: profundidade dentro do hero, sem viagem até Serviços. A máquina desce devagar e GIRA em torno do
      próprio eixo (quadros renderizados, baixados depois da abertura), enquanto "BARBEARIA" recua e fica menor. */
@@ -878,18 +743,18 @@
        herdada: uma variável numa seção inteira obrigaria o navegador a recalcular o estilo da subárvore a cada
        quadro;
      - lâmina: a cunha laranja entre Pacotes e Formação sobe com a rolagem (--blade);
-     - mergulho: ingresso, cartões, agenda e contato chegam já em movimento de profundidade (--dive, de 0 a 1),
+     - mergulho: ingresso, cartões, painel dos trabalhos, agenda e contato chegam já em movimento de profundidade (--dive, de 0 a 1),
        sempre visíveis (só translate, scale e rotate; nada de opacity 0, então nada se esconde de ninguém);
      - linha de leitura: um fio laranja sob o cabeçalho, desenhado pela rolagem (--read).
      Tudo é ligado à rolagem (scrub) e reversível. Se o aparelho não acompanha, o recuo se desliga sozinho e
      ficam a folha, a lâmina e o mergulho, que são baratos. Sem GSAP ou com movimento reduzido nada disto existe.
      ========================================================================== */
   // Seção que recua, seção que sobe por cima dela (a "folha"), escala final, opacidade final do véu e deslocamento
-  // (em alturas de tela). Trabalhos recua só com véu: o palco 3D já custa o bastante.
+  // (em alturas de tela).
   const RECEDE = [
     { from: '#servicos', by: '#pacotes', scale: 0.975, veil: 0.08, drift: 0.10 },
     { from: '#cursos', by: '#trabalhos', scale: 0.95, veil: 0.38, drift: 0.12 },
-    { from: '#trabalhos', by: '#equipe', scale: 1, veil: 0.14, drift: 0 },
+    { from: '#trabalhos', by: '#equipe', scale: 0.97, veil: 0.14, drift: 0.08 },
     { from: '#equipe', by: '#agenda', scale: 0.96, veil: 0.32, drift: 0.10 }
   ];
   // Mergulho: o que mergulha e onde o trecho começa (topo do bloco na tela). O fim é calculado por bloco: é a
@@ -898,6 +763,7 @@
   const DIVES = [
     ['.pass', 'top 98%'],
     ['.packs-side .pack', 'top 98%'],
+    ['.works', 'top 98%'],
     ['.agenda-steps', 'top 98%'],
     ['.agenda-summary', 'top 98%'],
     ['.info-item', 'top 100%']

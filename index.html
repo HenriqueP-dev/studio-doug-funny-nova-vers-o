@@ -377,56 +377,69 @@
       <div class="wrap">
         <header class="section-head">
           <div>
-            <span class="eyebrow">Portfólio</span>
+            <span class="eyebrow">Na cadeira</span>
             <h2 class="title reveal" id="trabalhos-title">
-              <span class="line"><span>Trabalhos &amp; aulas</span></span>
-              <span class="line"><span><em>no Instagram</em></span></span>
+              <span class="line"><span>Trabalhos</span></span>
+              <span class="line"><span><em>da equipe</em></span></span>
             </h2>
           </div>
-          <p class="section-note">Os cortes, as aulas e o dia a dia do Studio são publicados no perfil @studiodougfunny.</p>
+          <p class="section-note">Cortes feitos aqui no Studio, um profissional de cada vez. Mais cortes, aulas e o dia a dia no perfil @studiodougfunny.</p>
         </header>
 
-        <!-- As imagens desta galeria são renders 3D (ferramentas/), não fotos de clientes.
-             Cada legenda diz "Ilustração 3D"; os trabalhos reais ficam no Instagram, e o título diz isso.
-             Quando houver fotos reais (cortes, aulas, salão), troque as imagens no mesmo palco (cada cartão
-             tem a proporção da imagem em styles.css §6.4), tire as etiquetas "Ilustração 3D" e o aviso
-             abaixo e ajuste o título ao que as fotos mostram. -->
-        <p class="gallery-note">
-          <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
-          <span><strong>Imagens ilustrativas:</strong> renders 3D criados para o site, não são fotos de cortes. Os trabalhos reais estão no Instagram do Studio.</span>
-        </p>
-
-        <div class="gallery">
-          <div class="gallery-stage">
-            <figure class="g-tile g-pole">
-              <img src="imagens/poste-barbeiro.webp" width="900" height="1300" alt="Poste de barbeiro com listras laranja, branca e preta" loading="lazy" decoding="async">
-              <figcaption>
-                <span class="g-tag">Ilustração 3D</span>
-                <span class="g-caption"><span class="g-num" aria-hidden="true">01</span>A tradição da barbearia</span>
-              </figcaption>
-            </figure>
-            <figure class="g-tile g-detail">
-              <img src="imagens/maquina-detalhe.webp" width="1200" height="825" alt="Detalhe da máquina de corte com a gravação Doug Funny em laranja" loading="lazy" decoding="async">
-              <figcaption>
-                <span class="g-tag">Ilustração 3D</span>
-                <span class="g-caption"><span class="g-num" aria-hidden="true">02</span>Detalhe que faz diferença</span>
-              </figcaption>
-            </figure>
-            <figure class="g-tile g-blade">
-              <img src="imagens/maquina-lamina.webp" width="840" height="640" alt="Lâmina de aço da máquina de corte" loading="lazy" decoding="async">
-              <figcaption>
-                <span class="g-tag">Ilustração 3D</span>
-                <span class="g-caption"><span class="g-num" aria-hidden="true">03</span>Lâmina afiada</span>
-              </figcaption>
-            </figure>
+        <!-- Fotos reais do Instagram do Studio, uma por profissional (imagens/trabalho-*.webp).
+             Sem JavaScript as três aparecem uma embaixo da outra; script.js (initWorks) as transforma em abas,
+             mostrando um profissional por vez. Para trocar ou acrescentar uma foto, repita o bloco .work e o botão
+             .works-tab na mesma ordem. Quando houver um par de antes e depois do mesmo cliente (mesmo ângulo e luz),
+             ele entra dentro do .work-photo. -->
+        <div class="works" data-works>
+          <div class="works-tabs" hidden>
+            <button class="works-tab" type="button"><span class="works-tab-num" aria-hidden="true">01</span>Funny</button>
+            <button class="works-tab" type="button"><span class="works-tab-num" aria-hidden="true">02</span>Miguel</button>
+            <button class="works-tab" type="button"><span class="works-tab-num" aria-hidden="true">03</span>Thaylor</button>
           </div>
-          <a class="g-tile g-insta" href="https://www.instagram.com/studiodougfunny/" target="_blank" rel="noopener noreferrer">
-            <svg class="icon" aria-hidden="true"><use href="#i-instagram"/></svg>
-            <div class="g-insta-body">
-              <span class="g-insta-kicker">Trabalhos reais</span>
-              <strong>Veja cortes e aulas no Instagram</strong>
-              <span class="g-insta-handle">@studiodougfunny <span aria-hidden="true">→</span></span>
+
+          <article class="work" id="trabalho-funny" aria-label="Trabalho de Funny">
+            <figure class="work-photo">
+              <img src="imagens/trabalho-funny.webp" width="773" height="1024" alt="Funny em pé ao lado de um cliente sentado, com degradê, risco na lateral e barba alinhada" loading="lazy" decoding="async" style="--focus-x: 46%; --focus-y: 40%">
+            </figure>
+            <div class="work-body">
+              <span class="work-status is-done">Corte finalizado</span>
+              <h3 class="work-name">Funny</h3>
+              <p class="work-role">Barbeiro &amp; Instrutor</p>
+              <p class="work-text">Degradê com risco na lateral e barba alinhada.</p>
+              <a class="btn btn-solid" href="#agenda" data-agendar="Funny">Agendar com Funny</a>
             </div>
+          </article>
+
+          <article class="work" id="trabalho-miguel" aria-label="Trabalho de Miguel">
+            <figure class="work-photo">
+              <img src="imagens/trabalho-miguel.webp" width="572" height="1024" alt="Miguel cortando na tesoura o cabelo longo de uma cliente" loading="lazy" decoding="async" style="--focus-x: 55%; --focus-y: 22%">
+            </figure>
+            <div class="work-body">
+              <span class="work-status">Em ação</span>
+              <h3 class="work-name">Miguel</h3>
+              <p class="work-role">Barbeiro</p>
+              <p class="work-text">Corte na tesoura em cabelo longo.</p>
+              <a class="btn btn-solid" href="#agenda" data-agendar="Miguel">Agendar com Miguel</a>
+            </div>
+          </article>
+
+          <article class="work" id="trabalho-thaylor" aria-label="Trabalho de Thaylor">
+            <figure class="work-photo">
+              <img src="imagens/trabalho-thaylor.webp" width="572" height="1024" alt="Thaylor fazendo o degradê na nuca de um cliente de cabelo acobreado" loading="lazy" decoding="async" style="--focus-x: 45%; --focus-y: 20%">
+            </figure>
+            <div class="work-body">
+              <span class="work-status">Em ação</span>
+              <h3 class="work-name">Thaylor</h3>
+              <p class="work-role">Barbeiro</p>
+              <p class="work-text">Degradê na nuca em cabelo acobreado.</p>
+              <a class="btn btn-solid" href="#agenda" data-agendar="Thaylor">Agendar com Thaylor</a>
+            </div>
+          </article>
+
+          <a class="works-insta" href="https://www.instagram.com/studiodougfunny/" target="_blank" rel="noopener noreferrer">
+            <svg class="icon" aria-hidden="true"><use href="#i-instagram"/></svg>
+            <span class="works-insta-text"><strong>Mais cortes e aulas no Instagram</strong><span class="works-insta-handle">@studiodougfunny <span aria-hidden="true">→</span></span></span>
           </a>
         </div>
       </div>
