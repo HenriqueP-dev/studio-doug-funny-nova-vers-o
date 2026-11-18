@@ -859,6 +859,11 @@ main > .section { isolation: isolate; }
    ========================================================================== */
 .footer { padding: clamp(3rem, 6vw, 5rem) var(--gutter) 0; background: var(--bg); border-top: 1px solid var(--line); overflow: hidden; }
 .footer-top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s-6); flex-wrap: wrap; margin-bottom: var(--s-6); }
+/* Logo oficial no rodapé: o medalhão dourado ao lado do nome. O arquivo tem 150 px, então não passa de 88 px
+   na tela (fica nítido até em tela de alta densidade). */
+.brand-logo { flex-direction: row; align-items: center; gap: var(--s-4); }
+.brand-logo img { flex: none; width: 88px; height: 88px; border-radius: 50%; box-shadow: 0 10px 24px -12px rgba(33, 24, 17, 0.55); }
+.brand-text { display: flex; flex-direction: column; line-height: 0.9; }
 .footer-links { display: grid; grid-template-columns: repeat(3, max-content); gap: 0 var(--s-6); }
 .footer-links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--muted); font-size: 0.95rem; transition: color 0.2s ease; }
 .footer-links a:hover { color: var(--accent); }
